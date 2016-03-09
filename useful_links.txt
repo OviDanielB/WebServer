@@ -1,0 +1,3 @@
+https://en.wikipedia.org/wiki/Common_Log_Format
+
+http://courses.cs.vt.edu/~cs4244/spring.09/documents/WebServerArchitectures.pdf
