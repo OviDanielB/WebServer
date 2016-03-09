@@ -3,6 +3,6 @@ project(WebServer)
 
 set(CMAKE_C_COMPILER "/usr/bin/gcc")
 
-set(SOURCE_FILES main.c)
+set(SOURCE_FILES web_server.c)
 
 add_executable(WebServer ${SOURCE_FILES})
