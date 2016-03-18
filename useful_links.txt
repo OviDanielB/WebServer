@@ -1,3 +1,23 @@
 https://en.wikipedia.org/wiki/Common_Log_Format
 
 http://courses.cs.vt.edu/~cs4244/spring.09/documents/WebServerArchitectures.pdf
+
+
+
+LO PRESTI:
+"Nell’applicazione echo due situazioni critiche:
+ unsigned int alarm(unsigned int seconds);
+ – alarm() predispone l’invio di SIGALRM dopo seconds secondi,
+ calcolati sul tempo reale trascorso (il clock time)
+ – Restituisce il numero di secondi rimanenti all’invio dell’allarme
+ programmato in precedenza
+ – alarm(0) per cancellare una programmazione precedente del
+ timer
+ – Terminazione precoce della connessione effettuata dal client
+ (invio RST) prima che il server abbia chiamato accept()
+ – Terminazione precoce del server, ad esempio del processo
+ figlio per un errore fatale: il server non ha il tempo di mandare
+ nessun messaggio al client
+ • Per la soluzione delle due situazioni critiche vedi
+ Stevens o GaPiL"
+
