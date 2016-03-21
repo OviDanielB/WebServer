@@ -8,14 +8,18 @@ Interface to function to images adaption.
 #ifndef WEBSERVER_MANAGE_IMG_H
 #define WEBSERVER_MANAGE_IMG_H
 
+#include "constants.h"
+
 /*  Function prototypes  */
 
-int convertQuality(const char *filename, float q);
+int execCommand(const char *command);
 
-int convertType(const char *filename, char *type);
+struct img convertQuality(struct img *image);
 
-int resize(const char *filename, int size1, int size2);
+struct img convertType(struct img *image, const char *newType);
 
-int reduceColors(const char *filename, int colors);
+struct img resize(struct img *image);
+
+struct img reduceColors(struct img *image, int colors);
 
 #endif //WEBSERVER_MANAGE_IMG_H

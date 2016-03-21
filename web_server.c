@@ -9,9 +9,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define DEFAULT_PORT       5193            /* default protocol port number */
-#define BACKLOG           10            /* size of request queue        */
-#define MAXLINE             1024
+#include "constants.h"
 
 
 /*------------------------------------------------------------------------
@@ -27,20 +25,31 @@
  *            the server uses the default given by PROTOPORT.
  *------------------------------------------------------------------------ */
 
-static int num_child;
 static pid_t *pids;
+
+pid_t child_make(int, int, int);
+
+pid_t child_make(int i, int listenfd, int addrlen){
+    pid_t pid;
+
+    // if it's father return pid
+    if((pid = fork()) > 0){
+        return pid;
+    }
+
+    printf("CIao %d\n",getpid());
+
+}
 
 int main(int argc, char **argv)
 {
     int listensd, connsd, i;
     struct sockaddr_in servaddr;
-    char buff[MAXLINE];
+    char buff[MAX_LINE];
     socklen_t addrlen = 2;
 
     in_port_t port;
     time_t ticks;
-
-    pid_t child_make(int, int, int);
 
     // TODO arguments
     if(argc <= 2){
@@ -82,32 +91,17 @@ int main(int argc, char **argv)
     }
 
     // creates memory for pids
-    pids = calloc( (size_t) num_child,sizeof(pid_t));
+    pids = calloc( (size_t) CHILDREN_NUM,sizeof(pid_t));
 
     // create lock file for child processes
     // my_lock_init("filename");
 
-    num_child = 4;
     // create pids array with children pids
-    for(i = 0; i < num_child; i++ ){
+    for(i = 0; i < CHILDREN_NUM; i++ ){
         pids[i] = child_make(i, listensd, addrlen);
     }
 
     printf("Finished %d\n", getpid());
 
     return 0;
-
-
-}
-
-pid_t child_make(int i, int listenfd, int addrlen){
-    pid_t pid;
-
-    // if it's father return pid
-    if((pid = fork()) > 0){
-        return pid;
-    }
-
-    printf("CIao %d\n",getpid());
-
 }
