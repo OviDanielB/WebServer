@@ -5,23 +5,26 @@
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "adaptImage.h"
+#include "helper.h"
+#include "caching.h"
+#include "constants.h"
+#include "calendar.h"
 
 
 /**
- *  This function executes system command.
+ *  This function executes a system command line.
  *
- *  @param command = command to execute
+ *  @param command: command string to execute on terminal
  */
-int execCommand(const char *command) {
-    // check terminal availability
-    while (system(NULL)==0) {}
-
-    // execution of command
-    if (system(command)==-1) {
-        perror("error in system");
+int execCommand(const char *command)
+{
+    // execution of command if system is available
+    if (system(NULL)==0 || system(command)==-1) {
+        perror("error in system\n");
         return 1;
     }
     return 0;
@@ -32,86 +35,85 @@ int execCommand(const char *command) {
  * 1 (lowest image quality and highest compression)
  * to 100 (best quality but least effective compression)
  *
- * @param q = decimal quality factor
- * @param filename = original image's path */
-int convertQuality(const char* filename, float q) {
-    size_t n = strlen(filename);
+ * @param image = original image with modified field of quality for manipulation
+ */
+struct img convertQuality(struct img *image)
+{
+    size_t n = strlen(image->name);
     int i;
     // converted image's path
-    char newFilename[n+4];
-    // filename without extension type
-    char nameCut[n-4];
-    strncpy(nameCut,filename,n-4);
-    // image's extension type
-    char type[3] = {filename[n-3],filename[n-2],filename[n-1]};
+    char newName[n+4];
     // command line
     char command[2*n+50];
-
     // percent quality factor
-    int factor = (int) (q * 100);
+    int factor = (int) (image->quality * 100);
 
     // converted image's path
-    if (sprintf(newFilename,"%s%d.%s",nameCut,factor,type)<0) {
+    if (sprintf(newName,"%s%d",image->name,factor)<0) {
         perror("error in sprintf");
-        return 1;
+        return NULL;
     }
 
-    if (sprintf(command, "convert %s -quality %d%% %s\n",filename, factor, newFilename)<0) {
+    if (sprintf(command, "convert %s.%s -quality %d%% %s%s.%s\n",
+                image->name,image->type,factor,CACHE_PATH,newName,image->type)<0) {
         perror("error in sprintf");
-        return 1;
+        return NULL;
     }
-    return execCommand(command);
+    while (execCommand(command)==1){}
+    image->name = newName;
+    image->date = getToday();
+    return image;
 }
 
 /**
  *  This function convert type of the image, creating a copy.
  *
- *  @param filename = image path
- *  @param type = extension of the new image to convert
+ *  @param image = original image
+ *  @param newType = string with new type of image for conversion
  */
-int convertType(const char* filename, char *type) {
-    size_t n = strlen(filename);
-    char command[150];
+struct img *convertType(struct img *image, const char *newType)
+{
+    size_t n = strlen(image->name);
+    char command[2*n+20];
 
-    // filename without extension type
-    char nameCut[n-4];
-    strncpy(nameCut,filename,n-4);
-
-    if (sprintf(command, "convert %s %s.%s",filename, nameCut,type)<0) {
+    if (sprintf(command, "convert %s.%s %s%s.%s",image->name,image->type,CACHE_PATH,image->name,newType)<0) {
         perror("error in sprintf");
-        return 1;
+        return NULL;
     }
-    return execCommand(command);
+    while (execCommand(command)==1){}
+    image->type = newType;
+    image->date = getToday();
+    return image;
 }
 
 /**
  * This function create a copy resize of the original image.
  *
- * @param filename = image's path
- * @param width = new width of images
- * @param height = new height of images
+ * @param image = original image with width and height fields modified with value fot resizing
  */
-int resize(const char *filename, int width, int height) {
-    size_t  n = strlen(filename);
+struct img *resize(struct img *image)
+{
+    size_t  n = strlen(image->name);
     //command line
     char command[n+50];
-    // filename without extension type
-    char nameCut[n-4];
-    strncpy(nameCut,filename,n-4);
-    // image's extension type
-    char type[3] = {filename[n-3],filename[n-2],filename[n-1]};
     // copy image's path
-    char newFilename[n+10];
-    if (sprintf(newFilename,"%s%dx%d.%s",nameCut,width,height,type)<0) {
+    char newName[n+10];
+    if (sprintf(newName,"%s%dx%d",image->name,width,height,image->type)<0) {
         perror("error in sprintf");
-        return 1;
+        return NULL;
     }
 
-    if (sprintf(command, "convert %s -resize %dx%d %s\n",filename,width,height,newFilename)<0) {
+    if (sprintf(command, "convert %s.%s -resize %dx%d %s%s.%s\n",
+                image->name,image->type,width,height,CACHE_PATH,newName,img->type)<0) {
         perror("error in sprintf");
-        return 1;
+        return NULL;
     }
-    return execCommand(command);
+    while (execCommand(command)==1){}
+    image->name = newName;
+    image->width = width;
+    image->heigth = height;
+    image->date = getToday();
+    return image;
 }
 
 /**
@@ -120,28 +122,27 @@ int resize(const char *filename, int width, int height) {
  * The color reduction also can happen automatically when saving images
  * to color-limited image file formats, such as GIF, and PNG8.
  *
- * @param filename = image path
+ * @param image = original image
  * @param colors = number of image's colors
  */
-int reduceColors(const char *filename, int colors) {
-    size_t  n = strlen(filename);
+struct img *reduceColors(struct img *image, int colors)
+{
     //command line
-    char command[n+50];
-    // filename without extension type
-    char nameCut[n-4];
-    strncpy(nameCut,filename,n-4);
-    // image's extension type
-    char type[3] = {filename[n-3],filename[n-2],filename[n-1]};
+    char command[MAX_LINE];
     // copy image's path
-    char newFilename[n+10];
-    if (sprintf(newFilename,"%s_no%d.%s",nameCut,colors,type)<0) {
-        perror("error in sprintf");
-        return 1;
+    size_t  n = strlen(image->name);
+    char newName[n+10];
+    if (sprintf(newName,"%s_no%d",image->name,colors)<0) {
+        perror("error in sprintf\n");
+        return NULL;
     }
 
-    if (sprintf(command, "convert %s -dither None -colors %d %s\n",filename,colors,newFilename)<0) {
-        perror("error in sprintf");
-        return 1;
+    if (sprintf(command, "convert %s -dither None -colors %d %s%s.%s\n",filename,colors,CACHE_PATH,newName,image->type)<0) {
+        perror("error in sprintf\n");
+        return NULL;
     }
-    return execCommand(command);
+    while (execCommand(command)==1){}
+    image->name = newName;
+    image->date = getToday();
+    return image;
 }
