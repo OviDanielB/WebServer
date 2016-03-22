@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <time.h>
 
 #define DEFAULT_PORT       5193            /* default protocol port number */
 #define BACKLOG           10            /* size of request queue        */
@@ -30,6 +32,48 @@
 static int num_child;
 static pid_t *pids;
 
+static struct flock lock_it,unlock_it;
+
+void my_lock_init(char *pathname);
+
+static int lock_fd = -1;
+
+
+void child_main(int index, int listenfd, int addrlen) {
+
+    int connfd;
+    socklen_t clilen;
+    struct sockaddr * cliaddr;
+    time_t ticks;
+    char buff[MAXLINE];
+
+    cliaddr = malloc((size_t)addrlen);
+    printf("child %ld starting \n", (long) getpid());
+
+    for(;;){
+        clilen = (socklen_t) addrlen;
+        //TODO file lock
+        connfd = accept(listenfd,cliaddr,clilen);
+        // TODO file unlock
+
+
+        /* accetta una connessione con un client */
+        ticks = time(NULL); /* legge l'orario usando la chiamata di sistema time */
+        /* scrive in buff l'orario nel formato ottenuto da ctime;
+           snprintf impedisce l'overflow del buffer. */
+        snprintf(buff, sizeof(buff), "%.24s\r\n", ctime(&ticks)); /* ctime trasforma la data
+        e l�ora da binario in ASCII. \r\n per carriage return e line feed*/
+
+        printf("%d",ticks);
+        /* scrive sul socket di connessione il contenuto di buff */
+        if (write(connfd, buff, strlen(buff)) != strlen(buff)) {
+            perror("errore in write");
+            exit(1);
+        }
+        close(connfd);
+    }
+}
+
 int main(int argc, char **argv)
 {
     int listensd, connsd, i;
@@ -48,7 +92,7 @@ int main(int argc, char **argv)
         port = (in_port_t) DEFAULT_PORT;
     } else if(argc == 3) {
         // use specified port
-        port = (in_port_t ) argv[2];
+        port = (in_port_t) argv[2];
     } else {
         printf("Usage : ./web_server <ip Address> <port number>");
         exit(EXIT_FAILURE);
@@ -85,7 +129,7 @@ int main(int argc, char **argv)
     pids = calloc( (size_t) num_child,sizeof(pid_t));
 
     // create lock file for child processes
-    // my_lock_init("filename");
+    my_lock_init("/tmp/lock.XXXXXX");
 
     num_child = 4;
     // create pids array with children pids
@@ -95,10 +139,44 @@ int main(int argc, char **argv)
 
     printf("Finished %d\n", getpid());
 
+    for(;;){
+
+    }
     return 0;
 
 
 }
+
+void my_lock_init(char *pathname){
+
+    char lock_file[1024];
+
+    strncpy(lock_file,pathname,sizeof(lock_file));
+
+    if((lock_fd = mkstemp(lock_file)) < 0){
+        perror("mkstemp error");
+        exit(EXIT_FAILURE);
+    }
+
+    if(unlink(lock_file) == -1 ){
+        perror("unlink error");
+        exit(EXIT_FAILURE);
+    }
+
+    lock_it.l_type = F_WRLCK;
+    lock_it.l_whence = SEEK_SET;
+    lock_it.l_start = 0;
+    // len = 0 -> all bytes from l_start
+    lock_it.l_len = 0;
+
+
+    unlock_it.l_type = F_UNLCK;
+    unlock_it.l_whence = SEEK_SET;
+    unlock_it.l_start = 0;
+    unlock_it.l_len = 0;
+
+}
+
 
 pid_t child_make(int i, int listenfd, int addrlen){
     pid_t pid;
@@ -110,4 +188,13 @@ pid_t child_make(int i, int listenfd, int addrlen){
 
     printf("CIao %d\n",getpid());
 
+    // TODO REMOVE
+    //exit(EXIT_SUCCESS);
+    child_main(i,listenfd,addrlen);
+
 }
+
+
+
+
+
