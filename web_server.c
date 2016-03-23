@@ -10,6 +10,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
+#include <arpa/inet.h>
+
+
+#include "prefork_io.h"
 
 #define DEFAULT_PORT       5193            /* default protocol port number */
 #define BACKLOG           10            /* size of request queue        */
@@ -41,35 +45,71 @@ static int lock_fd = -1;
 
 void child_main(int index, int listenfd, int addrlen) {
 
-    int connfd;
+    int connfd, imagefd,pictfd;
     socklen_t clilen;
     struct sockaddr * cliaddr;
     time_t ticks;
     char buff[MAXLINE];
+    FILE * image, *pict;
+    ssize_t numRead;
 
+    char * clientIPAddr;
+    struct sockaddr_in * addr;
+
+    memset(buff,'0',MAXLINE);
     cliaddr = malloc((size_t)addrlen);
+    clilen = sizeof(cliaddr);
     printf("child %ld starting \n", (long) getpid());
 
     for(;;){
-        clilen = (socklen_t) addrlen;
+        //clilen = (socklen_t) addrlen;
         //TODO file lock
-        connfd = accept(listenfd,cliaddr,clilen);
+        connfd = accept(listenfd, cliaddr, &clilen);
         // TODO file unlock
 
 
+        // convert sockaddr to sockaddr_in
+        addr = (struct sockaddr_in *) cliaddr;
+        // use ntoa to convert client address from binary form to readable string
+        clientIPAddr = inet_ntoa(addr->sin_addr);
+
+        pict = fopen("/home/ovi/Desktop/3806.jpg","rb");
+
+        // fread((void *) buff,sizeof(char),sizeof(buff), pict)
+        while(1){
+
+           // unsigned char buff1[MAXLINE] = {0};
+            size_t nread = fread(buff, 1, MAXLINE, pict);
+            printf("Bytes read %d \n", nread);
+
+            if(nread > 0){
+                printf("Sending \n");
+                write(connfd,buff,nread);
+
+            }
+
+            if(nread < MAXLINE){
+                if(feof(pict)){
+                    printf("End of file \n ");
+                }
+                if(ferror(pict)){
+                    printf("Error Reading \n");
+                }
+                break;
+            }
+        }
         /* accetta una connessione con un client */
-        ticks = time(NULL); /* legge l'orario usando la chiamata di sistema time */
+        //ticks = time(NULL); /* legge l'orario usando la chiamata di sistema time */
         /* scrive in buff l'orario nel formato ottenuto da ctime;
            snprintf impedisce l'overflow del buffer. */
-        snprintf(buff, sizeof(buff), "%.24s\r\n", ctime(&ticks)); /* ctime trasforma la data
+        /*snprintf(buff, sizeof(buff), "%.24s pid = %ld clAdd = %s\r\n", ctime(&ticks), (long)getpid(), clientIPAddr); /* ctime trasforma la data
         e l�ora da binario in ASCII. \r\n per carriage return e line feed*/
 
-        printf("%d",ticks);
         /* scrive sul socket di connessione il contenuto di buff */
-        if (write(connfd, buff, strlen(buff)) != strlen(buff)) {
-            perror("errore in write");
-            exit(1);
-        }
+
+
+
+
         close(connfd);
     }
 }
@@ -79,7 +119,7 @@ int main(int argc, char **argv)
     int listensd, connsd, i;
     struct sockaddr_in servaddr;
     char buff[MAXLINE];
-    socklen_t addrlen = 2;
+    socklen_t addrlen;
 
     in_port_t port;
     time_t ticks;
@@ -112,6 +152,7 @@ int main(int argc, char **argv)
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY); // returns host_uint32 converted to network byte order
     servaddr.sin_port = htons(port); // returns host_uint16 converted to network byte order
 
+    addrlen = sizeof(servaddr);
     // bind the listening socket to the address; needs casting to sockaddr *
     if(bind(listensd, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0){
         perror("Error in Bind");
@@ -131,7 +172,7 @@ int main(int argc, char **argv)
     // create lock file for child processes
     my_lock_init("/tmp/lock.XXXXXX");
 
-    num_child = 4;
+    num_child = 2;
     // create pids array with children pids
     for(i = 0; i < num_child; i++ ){
         pids[i] = child_make(i, listensd, addrlen);
