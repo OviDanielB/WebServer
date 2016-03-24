@@ -11,14 +11,16 @@
 #include <fcntl.h>
 #include <time.h>
 #include <arpa/inet.h>
+#include <signal.h>
 
 
-#include "prefork_io.h"
 
 #define DEFAULT_PORT       5193            /* default protocol port number */
 #define BACKLOG           10            /* size of request queue        */
 #define MAXLINE             1024
 
+// define sigfunc to simplify signal sys call
+typedef void sigfunc(int);
 
 /*------------------------------------------------------------------------
  * Program:   web_server
@@ -43,6 +45,34 @@ void my_lock_init(char *pathname);
 static int lock_fd = -1;
 
 
+/* generic function for signal handling
+ * define behavior in case: SIGNALNUMBER for specific signal
+ * call signal(sig,sig_handler)
+ */
+void sig_handler(int sig){
+    int i ;
+
+    switch (sig) {
+
+        /* kills all children processes and the father itself; call on terminal ^C (ctrl-C)
+         * within the process or by "kill -SIGINT <father pid>"
+         */
+        case SIGINT:
+            for (i = 0; i < sizeof(pids) / sizeof(pid_t); i++) {
+                 if (kill(pids[i], SIGKILL) == -1) {
+                    perror("error in children kill signal");
+                    exit(EXIT_FAILURE);
+                }
+                printf("pid = %ld killed by SIGINT\n", (long) pids[i]);
+            }
+            exit(EXIT_SUCCESS);
+
+        default:
+            fprintf(stderr,"no action for sig num %d\n", sig);
+    }
+
+}
+
 void child_main(int index, int listenfd, int addrlen) {
 
     int connfd, imagefd,pictfd;
@@ -50,7 +80,7 @@ void child_main(int index, int listenfd, int addrlen) {
     struct sockaddr * cliaddr;
     time_t ticks;
     char buff[MAXLINE];
-    FILE * image, *pict;
+    FILE * clientRequest, *pict;
     ssize_t numRead;
 
     char * clientIPAddr;
@@ -59,7 +89,8 @@ void child_main(int index, int listenfd, int addrlen) {
     memset(buff,'0',MAXLINE);
     cliaddr = malloc((size_t)addrlen);
     clilen = sizeof(cliaddr);
-    printf("child %ld starting \n", (long) getpid());
+
+    printf("child process %ld starting \n", (long) getpid());
 
     for(;;){
         //clilen = (socklen_t) addrlen;
@@ -78,7 +109,13 @@ void child_main(int index, int listenfd, int addrlen) {
         // fread((void *) buff,sizeof(char),sizeof(buff), pict)
         while(1){
 
-           // unsigned char buff1[MAXLINE] = {0};
+            //ssize_t reqRead = read(connfd,buff,MAXLINE);
+
+            //recv(connfd,buff,1,0);
+            //fwrite(buff,1,MAXLINE,clientRequest);
+
+
+
             size_t nread = fread(buff, 1, MAXLINE, pict);
             printf("Bytes read %d \n", nread);
 
@@ -97,6 +134,7 @@ void child_main(int index, int listenfd, int addrlen) {
                 }
                 break;
             }
+
         }
         /* accetta una connessione con un client */
         //ticks = time(NULL); /* legge l'orario usando la chiamata di sistema time */
@@ -129,10 +167,10 @@ int main(int argc, char **argv)
     // TODO arguments
     if(argc <= 2){
         // if not specified, use default port
-        port = (in_port_t) DEFAULT_PORT;
+        port = DEFAULT_PORT;
     } else if(argc == 3) {
         // use specified port
-        port = (in_port_t) argv[2];
+        port = (in_port_t) atoi(argv[2]);
     } else {
         printf("Usage : ./web_server <ip Address> <port number>");
         exit(EXIT_FAILURE);
@@ -178,10 +216,17 @@ int main(int argc, char **argv)
         pids[i] = child_make(i, listensd, addrlen);
     }
 
-    printf("Finished %d\n", getpid());
+    // when SIGINT arrives (press ctrl-C) the father process and the children terminate
+    if(signal(SIGINT,sig_handler) == SIG_ERR){
+        perror("error in signal SIGINT");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Father pid = %ld\n", (long) getpid());
 
     for(;;){
 
+        pause();
     }
     return 0;
 
@@ -227,10 +272,6 @@ pid_t child_make(int i, int listenfd, int addrlen){
         return pid;
     }
 
-    printf("CIao %d\n",getpid());
-
-    // TODO REMOVE
-    //exit(EXIT_SUCCESS);
     child_main(i,listenfd,addrlen);
 
 }
