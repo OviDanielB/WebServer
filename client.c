@@ -1,30 +1,27 @@
 //
 // Created by ovi on 3/22/16.
 //
-
-/* daytime_clientTCP.c - code for example client program that uses TCP
-   Tratto da W.R. Stevens, "Network Programming Vol. 1"
-   Ultima revisione: 14 gennaio 2008 */
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
+#include <sys/stat.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <fcntl.h>
 #define SERV_PORT   5193
 #define MAXLINE     1024
 
-int main1(int argc, char **argv)
+int main(int argc, char **argv)
 {
-    int              sockfd, n;
-    char             recvline[MAXLINE + 1];
+    int              sockfd, bytesRec = 0,imagefd;
+    char             recvline[MAXLINE];
     struct sockaddr_in   servaddr;
+    FILE * image, *image2;
 
+    memset(recvline,'0',sizeof(recvline));
     if (argc != 2) { /* controlla numero degli argomenti */
         fprintf(stderr, "utilizzo: daytime_clientTCP <indirizzo IP server>\n");
         exit(1);
@@ -52,19 +49,30 @@ int main1(int argc, char **argv)
         exit(1);
     }
 
+    image = fopen("/home/ovi/Desktop/cery.jpg", "ab");
+
     /* legge dal socket fino a quando non trova EOF */
-    while ((n = read(sockfd, recvline, MAXLINE)) > 0) {
-        recvline[n] = 0;        /* aggiunge il carattere di terminazione */
+    while ((bytesRec = read(sockfd, recvline, MAXLINE)) > 0) {
+        // recvline[n] = 0;
+        /* aggiunge il carattere di terminazione */
         /* stampa il contenuto di recvline sullo standard output */
-        if (fputs(recvline, stdout) == EOF) {
-            fprintf(stderr, "errore in fputs\n");
-            exit(1);
+/*    if (fputs(recvline, stdout) == EOF) {
+      fprintf(stderr, "errore in fputs\n");
+      exit(1);
+*/
+
+        printf("Bytes received %d \n", bytesRec);
+        if(fwrite(recvline,1,bytesRec,image) < 0){
+            perror("error in fwrite");
+            exit(EXIT_FAILURE);
         }
-    }
-    if (n < 0) {
-        perror("errore in read");
-        exit(1);
+
+        //  write(imagefd, recvline, sizeof(recvline));
+
+
     }
 
-    exit(0);
+
+    return 0;
 }
+

@@ -21,3 +21,7 @@ LO PRESTI:
  • Per la soluzione delle due situazioni critiche vedi
  Stevens o GaPiL"
 
+
+
+ server with HTTP 1.0 parser
+http://csapp.cs.cmu.edu/2e/ics2/code/netp/tiny/tiny.c

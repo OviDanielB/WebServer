@@ -94,6 +94,7 @@ void child_main(int index, int listenfd, int addrlen) {
 
     for(;;){
         //clilen = (socklen_t) addrlen;
+        clientRequest = fopen("/home/ovi/Desktop/request.txt","a");
         //TODO file lock
         connfd = accept(listenfd, cliaddr, &clilen);
         // TODO file unlock

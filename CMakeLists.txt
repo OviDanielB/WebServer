@@ -3,6 +3,7 @@ project(WebServer)
 
 set(CMAKE_C_COMPILER "/usr/bin/gcc")
 
-set(SOURCE_FILES web_server.c client.c prefork_io.c)
+set(SOURCE_FILES web_server.c client.c)
 
-add_executable(WebServer ${SOURCE_FILES})
+add_executable(server web_server.c)
+add_executable(client client.c)
