@@ -13,7 +13,7 @@
 #include <arpa/inet.h>
 #include <signal.h>
 
-
+#include "io_func.h"
 
 #define DEFAULT_PORT       5193            /* default protocol port number */
 #define BACKLOG           10            /* size of request queue        */
@@ -41,6 +41,8 @@ static pid_t *pids;
 static struct flock lock_it,unlock_it;
 
 void my_lock_init(char *pathname);
+
+void str_echo(int sockfd);
 
 static int lock_fd = -1;
 
@@ -94,7 +96,7 @@ void child_main(int index, int listenfd, int addrlen) {
 
     for(;;){
         //clilen = (socklen_t) addrlen;
-        clientRequest = fopen("/home/ovi/Desktop/request.txt","a");
+        //clientRequest = fopen("/home/ovi/Desktop/request.txt","a");
         //TODO file lock
         connfd = accept(listenfd, cliaddr, &clilen);
         // TODO file unlock
@@ -105,17 +107,11 @@ void child_main(int index, int listenfd, int addrlen) {
         // use ntoa to convert client address from binary form to readable string
         clientIPAddr = inet_ntoa(addr->sin_addr);
 
-        pict = fopen("/home/ovi/Desktop/3806.jpg","rb");
+        printf("server process %ld accepted request from client %s\n",(long) getpid(), clientIPAddr);
 
-        // fread((void *) buff,sizeof(char),sizeof(buff), pict)
-        while(1){
+       // pict = fopen("/home/ovi/Desktop/3806.jpg","rb");
 
-            //ssize_t reqRead = read(connfd,buff,MAXLINE);
-
-            //recv(connfd,buff,1,0);
-            //fwrite(buff,1,MAXLINE,clientRequest);
-
-
+/*        while(1){
 
             size_t nread = fread(buff, 1, MAXLINE, pict);
             printf("Bytes read %d \n", nread);
@@ -137,17 +133,9 @@ void child_main(int index, int listenfd, int addrlen) {
             }
 
         }
-        /* accetta una connessione con un client */
-        //ticks = time(NULL); /* legge l'orario usando la chiamata di sistema time */
-        /* scrive in buff l'orario nel formato ottenuto da ctime;
-           snprintf impedisce l'overflow del buffer. */
-        /*snprintf(buff, sizeof(buff), "%.24s pid = %ld clAdd = %s\r\n", ctime(&ticks), (long)getpid(), clientIPAddr); /* ctime trasforma la data
-        e l�ora da binario in ASCII. \r\n per carriage return e line feed*/
+*/
 
-        /* scrive sul socket di connessione il contenuto di buff */
-
-
-
+        str_echo(connfd);
 
         close(connfd);
     }
@@ -231,6 +219,7 @@ int main(int argc, char **argv)
     }
     return 0;
 
+    close(listensd);
 
 }
 
@@ -275,6 +264,29 @@ pid_t child_make(int i, int listenfd, int addrlen){
 
     child_main(i,listenfd,addrlen);
 
+}
+
+
+void str_echo(int sockfd){
+
+    ssize_t n;
+    char line[MAXLINE];
+
+    for(;;){
+        if(( n = readline(sockfd,line,MAXLINE)) == 0){
+            printf("Client quit connection\n");
+            return;
+        }
+
+        printf("server process %ld received %s\n", (long) getpid() ,line);
+
+        //writen(sockfd,line,(size_t) n);
+        write(sockfd,"HTTP/1.1 200 OK\n",16);
+        write(sockfd,"Content-length: 58\n",19);
+        write(sockfd,"Content-Type: text/html\n\n",25);
+        write(sockfd,"<html><body><h1>Ciao Laura e Francesco.</h1></body></html>",58);
+
+    }
 }
 
 

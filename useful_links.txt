@@ -25,3 +25,9 @@ LO PRESTI:
 
  server with HTTP 1.0 parser
 http://csapp.cs.cmu.edu/2e/ics2/code/netp/tiny/tiny.c
+
+HTTP 1.1 Request
+https://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html
+
+HTTP 1.1 PARSER
+https://github.com/nodejs/http-parser
