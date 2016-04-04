@@ -12,6 +12,7 @@
 #include <time.h>
 #include <arpa/inet.h>
 #include <signal.h>
+#include "sqlite3.h"
 
 #include "io_func.h"
 
@@ -151,6 +152,10 @@ int main(int argc, char **argv)
     in_port_t port;
     time_t ticks;
 
+    sqlite3* db;
+    int rc;
+    char * sqlStatement, * zErrorMsg;
+
     pid_t child_make(int, int, int);
 
     // TODO arguments
@@ -164,6 +169,20 @@ int main(int argc, char **argv)
         printf("Usage : ./web_server <ip Address> <port number>");
         exit(EXIT_FAILURE);
     }
+
+    // OPEN DATABASE; creates it if doesn't exist
+    rc = sqlite3_open("cache.db",&db);
+
+    if( rc ){
+        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+        exit(0);
+    }else{
+        fprintf(stderr, "Opened database successfully\n");
+    }
+
+    sqlStatement = "";
+
+
 
     // creates a listening socket
     if((listensd=socket(AF_INET,SOCK_STREAM,0)) < 0){
@@ -269,6 +288,7 @@ pid_t child_make(int i, int listenfd, int addrlen){
 
 void str_echo(int sockfd){
 
+    /* WORKING SEND HTML PAGE
     ssize_t n;
     char line[MAXLINE];
 
@@ -287,6 +307,56 @@ void str_echo(int sockfd){
         write(sockfd,"<html><body><h1>Ciao Laura e Francesco.</h1></body></html>",58);
 
     }
+     */
+
+    FILE * image;
+    size_t n;
+    int read;
+    char buff[MAXLINE];
+
+    image = fopen("/home/ovi/Desktop/firefox.jpg", "rb");
+
+    for(;;) {
+        if ((read = readline(sockfd, buff, MAXLINE)) == 0) {
+            printf("Client quit connection\n");
+            return;
+        }
+
+        char *httpOK = "HTTP/1.1 200 OK\n";
+        char *content = "Content-length: 52917\n";
+        char *type = "Content-Type: image/jpeg\n\n";
+
+
+        write(sockfd, httpOK, strlen(httpOK));
+        write(sockfd, content, strlen(content));
+        write(sockfd, type, strlen(type));
+
+        while (1) {
+
+            n = fread(buff, 1, MAXLINE, image);
+            printf("Bytes read %d \n", (int) n);
+
+            if (n > 0) {
+                printf("Sending \n");
+                write(sockfd, buff, n);
+
+            }
+
+            if (n < MAXLINE) {
+                if (feof(image)) {
+                    printf("End of file \n ");
+                }
+                if (ferror(image)) {
+                    printf("Error Reading \n");
+                }
+                break;
+            }
+
+        }
+    }
+
+
+
 }
 
 
