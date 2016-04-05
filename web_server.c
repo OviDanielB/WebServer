@@ -171,10 +171,20 @@ int main(int argc, char **argv)
     }
 
     // OPEN DATABASE; creates it if doesn't exist
-    db_open(db);
+    //db_open(db);
+
+    struct img * image;
+    image = malloc(sizeof(struct img));
+    image->name = "Foto";
+    image->type = "jpeg";
+    image->width = 800;
+    image->height = 600;
+    image->length = 800*600;
+
+    db_insert_img(image);
 
 
-    sqlStatement = "";
+   // db_close(db);
 
 
 
