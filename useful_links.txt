@@ -31,3 +31,16 @@ https://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html
 
 HTTP 1.1 PARSER
 https://github.com/nodejs/http-parser
+
+
+XML Parser
+http://xmlsoft.org/
+
+WURFL C Library
+https://github.com/filosganga/libwurfl
+
+Apache Installation Guide
+http://www.html.it/pag/18662/panoramica-generale/
+
+SQLITE3 C API
+http://www.tutorialspoint.com/sqlite/sqlite_c_cpp.htm
