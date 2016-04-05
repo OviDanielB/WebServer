@@ -1,0 +1,8 @@
+
+
+1) install sqlite3 autoconfig from http://sqlite.org/download.html
+    a) run ./configure in downloaded dir
+    b) run "make"
+    c) run "make install"
+
+    d) sudo apt-get install sqlitebrowser    // for brosing db

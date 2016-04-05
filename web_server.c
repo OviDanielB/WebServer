@@ -2,19 +2,19 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netdb.h>
+
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <time.h>
 #include <arpa/inet.h>
 #include <signal.h>
-#include "sqlite3.h"
+
 
 #include "io_func.h"
+#include "DataBase/db_helper.h"
 
 #define DEFAULT_PORT       5193            /* default protocol port number */
 #define BACKLOG           10            /* size of request queue        */
@@ -152,9 +152,9 @@ int main(int argc, char **argv)
     in_port_t port;
     time_t ticks;
 
-    sqlite3* db;
-    int rc;
-    char * sqlStatement, * zErrorMsg;
+    sqlite3 * db;
+    char * sqlStatement;
+
 
     pid_t child_make(int, int, int);
 
@@ -171,14 +171,8 @@ int main(int argc, char **argv)
     }
 
     // OPEN DATABASE; creates it if doesn't exist
-    rc = sqlite3_open("cache.db",&db);
+    db_open(db);
 
-    if( rc ){
-        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-        exit(0);
-    }else{
-        fprintf(stderr, "Opened database successfully\n");
-    }
 
     sqlStatement = "";
 
