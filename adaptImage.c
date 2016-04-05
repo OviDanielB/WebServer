@@ -9,10 +9,10 @@
 #include <string.h>
 
 #include "adaptImage.h"
-#include "helper.h"
+#include "helper/helper.h"
 #include "caching.h"
 #include "constants.h"
-#include "calendar.h"
+#include "helper/calendar.h"
 
 
 /**
@@ -61,7 +61,7 @@ struct img convertQuality(struct img *image)
     }
     while (execCommand(command)==1){}
     image->name = newName;
-    image->date = getToday();
+    image->date = getTodayString();
     return image;
 }
 
@@ -82,7 +82,7 @@ struct img *convertType(struct img *image, const char *newType)
     }
     while (execCommand(command)==1){}
     image->type = newType;
-    image->date = getToday();
+    image->date = getTodayString();
     return image;
 }
 
@@ -112,7 +112,7 @@ struct img *resize(struct img *image)
     image->name = newName;
     image->width = width;
     image->heigth = height;
-    image->date = getToday();
+    image->date = getTodayString();
     return image;
 }
 
@@ -143,6 +143,6 @@ struct img *reduceColors(struct img *image, int colors)
     }
     while (execCommand(command)==1){}
     image->name = newName;
-    image->date = getToday();
+    image->date = getTodayString();
     return image;
 }

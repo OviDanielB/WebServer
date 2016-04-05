@@ -9,5 +9,5 @@ set(SOURCE_FILES web_server.c client.c)
 
 link_libraries("dl")
 
-add_executable(server web_server.c io_func.c io_func.h sqlite3.c)
+add_executable(server web_server.c io_func.c io_func.h sqlite3.c locking.c)
 add_executable(client client.c io_func.c io_func.h)
