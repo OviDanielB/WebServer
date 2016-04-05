@@ -78,5 +78,6 @@ void db_insert_img(struct img *image){
         exit(EXIT_FAILURE);
     }
 
+    db_close(datab);
 
 }
