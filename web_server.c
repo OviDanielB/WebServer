@@ -2,19 +2,21 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-
+#include <netdb.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
+#include <time.h>
 #include <arpa/inet.h>
 #include <signal.h>
+#include "sqlite3.h"
 
-
+#include "locking.h"
 #include "io_func.h"
-#include "DataBase/db_helper.h"
+#include "serveRequest.h"
+
 
 #define DEFAULT_PORT       5193            /* default protocol port number */
 #define BACKLOG           10            /* size of request queue        */
@@ -39,14 +41,7 @@ typedef void sigfunc(int);
 static int num_child;
 static pid_t *pids;
 
-static struct flock lock_it,unlock_it;
-
-void my_lock_init(char *pathname);
-
 void str_echo(int sockfd);
-
-static int lock_fd = -1;
-
 
 /* generic function for signal handling
  * define behavior in case: SIGNALNUMBER for specific signal
@@ -98,9 +93,11 @@ void child_main(int index, int listenfd, int addrlen) {
     for(;;){
         //clilen = (socklen_t) addrlen;
         //clientRequest = fopen("/home/ovi/Desktop/request.txt","a");
-        //TODO file lock
+        // file lock
+        lock_wait();
         connfd = accept(listenfd, cliaddr, &clilen);
-        // TODO file unlock
+        // file unlock
+        lock_release();
 
 
         // convert sockaddr to sockaddr_in
@@ -136,7 +133,8 @@ void child_main(int index, int listenfd, int addrlen) {
         }
 */
 
-        str_echo(connfd);
+        //str_echo(connfd);
+        serveRequest(connfd);
 
         close(connfd);
     }
@@ -152,9 +150,9 @@ int main(int argc, char **argv)
     in_port_t port;
     time_t ticks;
 
-    sqlite3 * db;
-    char * sqlStatement;
-
+    sqlite3* db;
+    int rc;
+    char * sqlStatement, * zErrorMsg;
 
     pid_t child_make(int, int, int);
 
@@ -171,20 +169,16 @@ int main(int argc, char **argv)
     }
 
     // OPEN DATABASE; creates it if doesn't exist
-    //db_open(db);
+    rc = sqlite3_open("cache.db",&db);
 
-    struct img * image;
-    image = malloc(sizeof(struct img));
-    image->name = "Foto";
-    image->type = "jpeg";
-    image->width = 800;
-    image->height = 600;
-    image->length = 800*600;
+    if( rc ){
+        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+        exit(0);
+    }else{
+        fprintf(stderr, "Opened database successfully\n");
+    }
 
-    db_insert_img(image);
-
-
-   // db_close(db);
+    sqlStatement = "";
 
 
 
@@ -219,8 +213,8 @@ int main(int argc, char **argv)
     // creates memory for pids
     pids = calloc( (size_t) num_child,sizeof(pid_t));
 
-    // create lock file for child processes
-    my_lock_init("/tmp/lock.XXXXXX");
+    // initialize lock on template filename for child processes
+    lock_init("/tmp/lock.XXXXXX");
 
     num_child = 2;
     // create pids array with children pids
@@ -245,37 +239,6 @@ int main(int argc, char **argv)
     close(listensd);
 
 }
-
-void my_lock_init(char *pathname){
-
-    char lock_file[1024];
-
-    strncpy(lock_file,pathname,sizeof(lock_file));
-
-    if((lock_fd = mkstemp(lock_file)) < 0){
-        perror("mkstemp error");
-        exit(EXIT_FAILURE);
-    }
-
-    if(unlink(lock_file) == -1 ){
-        perror("unlink error");
-        exit(EXIT_FAILURE);
-    }
-
-    lock_it.l_type = F_WRLCK;
-    lock_it.l_whence = SEEK_SET;
-    lock_it.l_start = 0;
-    // len = 0 -> all bytes from l_start
-    lock_it.l_len = 0;
-
-
-    unlock_it.l_type = F_UNLCK;
-    unlock_it.l_whence = SEEK_SET;
-    unlock_it.l_start = 0;
-    unlock_it.l_len = 0;
-
-}
-
 
 pid_t child_make(int i, int listenfd, int addrlen){
     pid_t pid;

@@ -58,8 +58,7 @@ void lock_init(char *pathname)
 /*  This function acquires the lock, obtaining exclusive access to file */
 void lock_wait()
 {
-    int rc;
-    while ( (rc = fcntl(lock_fd, F_SETLKW, &lock_it)) < 0) {
+    while ( (fcntl(lock_fd, F_SETLKW, &lock_it)) < 0) {
         if (errno == EINTR) continue; // if interrupted by a signal
         else {
             fprintf(stderr, "error fcntl in lock_wait");
