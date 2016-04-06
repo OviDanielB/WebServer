@@ -8,16 +8,18 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <string.h>
+#include <stdlib.h>
 
 
 /* Today date
  *
  * @return: structure with day, month, year, sec... informations
  */
-struct tm getToday()
+struct tm *getToday()
 {
-    time_t timer = time();
-    return gmtime(timer);
+    time_t timer = time(NULL);
+    return gmtime(&timer);
 }
 
 
@@ -25,77 +27,80 @@ struct tm getToday()
  * Compose a string indicating date of today in the format:
  * "Thu, 19 Feb 2009 12:27:04 GMT"
  */
-char *getTodayString()
+char *getTodayToString()
 {
-    struct tm today = getToday();
+    struct tm *today = getToday();
     char weekDay[3];
     char month[3];
 
-    switch (today.tm_wday) {
+    switch (today->tm_wday) {
         case 0:
-            weekDay = "Mon";
+            sprintf(weekDay,"Mon");
         break;
         case 1:
-            weekDay = "Tue";
+            sprintf(weekDay,"Tue");
             break;
         case 2:
-            weekDay = "Wed";
+            sprintf(weekDay,"Wed");
             break;
         case 3:
-            weekDay = "Thu";
+            sprintf(weekDay,"Thu");
             break;
         case 4:
-            weekDay = "Fri";
+            sprintf(weekDay,"Fri");
             break;
         case 5:
-            weekDay = "Sat";
+            sprintf(weekDay,"Sat");
             break;
         case 6:
-            weekDay = "Sun";
+            sprintf(weekDay,"Sun");
             break;
+        default:break;
     }
 
-    switch (today.tm_mon) {
+    switch (today->tm_mon) {
         case 0:
-            month = "Jan";
+            sprintf(month,"Jan");
             break;
         case 1:
-            month = "Feb";
+            sprintf(month,"Feb");
             break;
         case 2:
-            month = "Mar";
+            sprintf(month,"Mar");
             break;
         case 3:
-            month = "Apr";
+            sprintf(month,"Apr");
             break;
         case 4:
-            month = "May";
+            sprintf(month,"May");
             break;
         case 5:
-            month = "Jun";
+            sprintf(month,"Jun");
             break;
         case 6:
-            month = "Jul";
+            sprintf(month,"Jul");
             break;
         case 7:
-            month = "Aug";
+            sprintf(month,"Aug");
             break;
         case 8:
-            month = "Sep";
+            sprintf(month,"Sep");
             break;
         case 9:
-            month = "Oct";
+            sprintf(month,"Oct");
             break;
         case 10:
-            month = "Nov";
+            sprintf(month,"Nov");
             break;
         case 11:
-            month = "Dec";
+            sprintf(month,"Dec");
             break;
+        default:break;
     }
 
-    char *date = weekDay+", "+today.tm_mday+" "+month+" "+today.tm_year+" "
-                 +today.tm_hour+":"+today.tm_min+":"+today.tm_sec+" GMT";
+    char date[50];
+    sprintf(date,"%s, %d %s %d %d:%d:%d GMT",
+            weekDay,today->tm_mday,month,today->tm_year,today->tm_hour,today->tm_min,today->tm_sec);
     return date;
 }
 
@@ -106,88 +111,111 @@ char *getTodayString()
  */
 struct tm *fromStringToTm(char *date)
 {
-    struct tm *date;
-    char weekDay = date[0]+date[1]+date[2];
-    char mDay = date[5]+date[6];
-    char month = date[8]+date[9]+date[10];
-    char year = date[12]+date[13]+date[14]+date[15];
-    char h = date[17]+date[18];
-    char m = date[20]+date[21];
-    char s = date[23]+date[24];
-
-    int wDay, mon;
-
-    switch (weekDay) {
-        case "Mon":
-            wDay = 0;
-            break;
-        case "Tue":
-            wDay = 1;
-            break;
-        case "Wed":
-            wDay = 2;
-            break;
-        case "Thu":
-            wDay = 3;
-            break;
-        case "Fri":
-            wDay = 4;
-            break;
-        case "Sat":
-            wDay = 5;
-            break;
-        case "Sun":
-            wDay = 6;
-            break;
+    struct tm *dateTm;
+    char weekDay[3];
+    char month[3];
+    if ((dateTm = malloc(sizeof(struct tm)))==NULL){
+        perror("error in malloc\n");
+        exit(1);
+    }
+    int mDay;
+    if ((mDay = (int) malloc(sizeof(int)))==NULL) {
+        perror("error in malloc\n");
+        exit(1);
+    }
+    int year;
+    if ((year = (int) malloc(sizeof(int)))==NULL){
+        perror("error in malloc\n");
+        exit(1);
+    }
+    int h; // hour
+    if ((h = (int) malloc(sizeof(int)))==NULL){
+        perror("error in malloc\n");
+        exit(1);
+    }
+    int m; // minutes
+    if ((m = (int) malloc(sizeof(int)))==NULL){
+        perror("error in malloc\n");
+        exit(1);
+    }
+    int s; // seconds
+    if ((s = (int) malloc(sizeof(int)))==NULL){
+        perror("error in malloc\n");
+        exit(1);
     }
 
-    switch (mon) {
-        case "Jan":
-            mon = 0;
-            break;
-        case "Feb":
-            mon = 1;
-            break;
-        case "Mar":
-            mon = 2;
-            break;
-        case "Apr":
-            mon = 3;
-            break;
-        case "May":
-            mon = 4;
-            break;
-        case "Jun":
-            mon = 5;
-            break;
-        case "Jul":
-            mon = 6;
-            break;
-        case "Aug":
-            mon = 7;
-            break;
-        case "Sep":
-            mon = 8;
-            break;
-        case "Oct":
-            mon = 9;
-            break;
-        case "Nov":
-            mon = 10;
-            break;
-        case "Dec":
-            mon = 11;
-            break;
+    sscanf(date,"%s, %d %s %d %d:%d:%d GMT", weekDay,&mDay,month,&year,&h,&m,&s);
+
+    int wDay=-1, mon=-1;
+
+    if (strcmp(weekDay,"Mon")==0) {
+        wDay = 0;
+    }
+    if (strcmp(weekDay,"Tue")==0) {
+        wDay = 1;
+    }
+    if (strcmp(weekDay,"Wed")==0) {
+        wDay = 2;
+    }
+    if (strcmp(weekDay,"Thu")==0) {
+        wDay = 3;
+    }
+    if (strcmp(weekDay,"Fri")==0) {
+        wDay = 4;
+    }
+    if (strcmp(weekDay,"Sat")==0) {
+        wDay = 5;
+    }
+    if (strcmp(weekDay,"Sun")==0) {
+        wDay = 6;
     }
 
-    date->tm_wday = wDay;
-    date->tm_mday = mDay;
-    date->tm_mon = mon;
-    date->tm_year = year;
-    date->tm_hour = h;
-    date->tm_min = m;
-    date->tm_sec = s;
-    return date;
+    if (strcmp(month,"Jan")==0) {
+        mon = 0;
+    }
+    if (strcmp(month,"Feb")==0) {
+        mon = 1;
+    }
+    if (strcmp(month,"Mar")==0) {
+        mon = 2;
+    }
+    if (strcmp(month,"Apr")==0) {
+        mon = 3;
+    }
+    if (strcmp(month,"May")==0) {
+        mon = 4;
+    }
+    if (strcmp(month,"Jun")==0) {
+        mon = 5;
+    }
+    if (strcmp(month,"Jul")==0) {
+        mon = 6;
+    }
+    if (strcmp(month,"Aug")==0) {
+        mon = 7;
+    }
+    if (strcmp(month,"Sep")==0) {
+        mon = 8;
+    }
+    if (strcmp(month,"Oct")==0) {
+        mon = 9;
+    }
+    if (strcmp(month,"Nov")==0) {
+        mon = 10;
+    }
+    if (strcmp(month,"Dec")==0) {
+        mon = 11;
+    }
+
+    dateTm->tm_wday = wDay;
+    dateTm->tm_mday = mDay;
+    dateTm->tm_mon = mon;
+    dateTm->tm_year = year;
+    dateTm->tm_hour = h;
+    dateTm->tm_min = m;
+    dateTm->tm_sec = s;
+
+    return dateTm;
 }
 
 /* Compare two dates.

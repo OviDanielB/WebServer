@@ -18,7 +18,7 @@ struct tm *fromStringToTm(char *date);
  * Compose a string indicating date of today in the format:
  * "Thu, 19 Feb 2009 12:27:04 GMT"
  */
-char *getTodayString();
+char *getTodayToString();
 
 /* Compare dates */
 int cmpDates(struct tm *date1, struct tm *date2);

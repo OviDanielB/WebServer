@@ -1,0 +1,129 @@
+//
+// Created by laura_trive on 06/04/16.
+//
+
+/**
+ * Implementations of functions to do server work for reading client's HTTP request,
+ * serve it, adapting the response to client's device, and sends an HTTP response
+ * back to the client.
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <zconf.h>
+#include <memory.h>
+
+#include "constants.h"
+// struct img
+#include "requestParser.h"
+#include "responseWriter.h"
+#include "io_func.h"
+
+#define MAXLINE             1024
+
+
+/*  Get image file length   */
+long getLength(FILE *image)
+{
+    long seek, len;
+    if ((seek = ftell(image))==-1){
+        perror("Error in ftell\n");
+        exit(1);
+    }
+    if (fseek(image,0L,SEEK_END)==-1) {
+        perror("Error in fseek\n");
+        exit(1);
+    }
+    if ((len = ftell(image))==-1) {
+        perror("Error in ftell\n");
+        exit(1);
+    }
+    if (fseek(image,seek,SEEK_SET)==-1) {
+        perror("Error in fseek\n");
+        exit(1);
+    }
+    return len;
+}
+
+/*  Read from connection socket the client request and
+ *  write on it the response, adapted on client device.
+ *
+ *  @param sockfd: file descriptor for connection socket
+ */
+void serveRequest(int sockfd)
+{
+
+    FILE * image;
+    size_t n;
+    int read;
+
+    struct img *reqImage;
+    //struct img reqImage = parseRequest(sockfd);
+    // requested image: {name, quality, width, height, type, last modified, file_length}
+    if ((reqImage = malloc(sizeof(struct img)))==NULL) {
+            perror("error in malloc\n");
+            exit(1);
+    }
+    sprintf(reqImage->name,"mare");
+    reqImage->width = 960;
+    reqImage->height = 600;
+    sprintf(reqImage->type,"jpg");
+
+
+    char buff[MAXLINE];
+    char path[100];
+    sprintf(path,PATH"%s.%s", reqImage->name, reqImage->type);
+
+    if ((image=fopen("/home/laura_trive/Scrivania/ServerFiles/mare.jpg", "rb"))==NULL) {
+        perror("error in fopen\n");
+        exit(1);
+    }
+
+    reqImage->file_length = getLength(image);
+
+    for(;;) {
+        if ((read = readline(sockfd, buff, MAXLINE)) == 0) {
+            printf("Client quit connection\n");
+            return;
+        }
+
+        /*
+        char *httpOK = "HTTP/1.1 200 OK\n";
+        char *content = "Content-length: 52917\n";
+        char *type = "Content-Type: image/jpeg\n\n";
+
+        write(sockfd, httpOK, strlen(httpOK));
+        write(sockfd, content, strlen(content));
+        write(sockfd, type, strlen(type));
+        */
+
+        char *reply = composeResponse("ok",reqImage);
+
+        write(sockfd,reply,strlen(reply));
+
+        while (1) {
+
+            n = fread(buff, 1, MAXLINE, image);
+            printf("Bytes read %d \n", (int) n);
+
+            if (n > 0) {
+                printf("Sending \n");
+                write(sockfd, buff, n);
+
+            }
+
+            if (n < MAXLINE) {
+                if (feof(image)) {
+                    printf("End of file \n ");
+                }
+                if (ferror(image)) {
+                    printf("Error Reading \n");
+                }
+                break;
+            }
+
+        }
+    }
+}
+
+

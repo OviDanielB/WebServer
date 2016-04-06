@@ -5,19 +5,19 @@
 */
 
 /*  path of images' directory    */
-#define PATH           "/home/laura_trive/Scrivania/ServerFiles/"
+#define PATH                "/home/laura_trive/Scrivania/ServerFiles/"
 /*  path of cached images' directory    */
-#define CACHE_PATH     "/home/laura_trive/Scrivania/ServerFiles/Cache/"
+#define CACHE_PATH          "/home/laura_trive/Scrivania/ServerFiles/Cache/"
 /*  path of log file    */
-#define LOG_PATH       "/home/laura_trive/Scrivania/ServerFiles/Log/log.txt"
-/* size of a line   */
-#define MAX_LINE            1024
-/* default protocol port number */
-#define DEFAULT_PORT        5193
-/* size of request queue        */
-#define BACKLOG             10
-/*  number of child processes of server to manage requests  */
-#define CHILDREN_NUM        4
+#define LOG_PATH            "/home/laura_trive/Scrivania/ServerFiles/Log/log.txt"
+/*  line length */
+#define MAXLINE             1024
+/*  successfully HTTP request   */
+#define HTTP_OK             "HTTP/1.1 200 OK"
+/*  error in serving HTTP request */
+#define HTTP_BAD_REQUEST    "HTTP/1.1 400 Bad Request"
+/*  not found file requested    */
+#define HTTP_NOT_FOUND      "HTTP/1.1 404 Not Found"
 
 
 /*  logging file    */
@@ -25,10 +25,11 @@ FILE *log = fopen(LOG_PATH,"a");
 
 /*  Image struct    */
 typedef struct img {
-    char    *name;
+    char    name[50];
     float   quality;
     int     width;
     int     height;
-    char    *type;
-    struct tm last_modified;
+    char    type[4];
+    char    last_modified[50];
+    long    file_length;
 };
