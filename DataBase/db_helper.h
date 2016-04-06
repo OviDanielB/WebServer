@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include <string.h>
 
+
+/* initialized in db_get_image_by_name with char *name[50] and char *type[5] */
 typedef struct img {
     char   *name;
     float  quality;
@@ -26,5 +28,7 @@ typedef struct img {
 void db_open(sqlite3 * db);
 void db_close(sqlite3 * db);
 void db_insert_img(struct img *image);
+void db_get_image_by_name(char *name,struct img * image);
+void db_delete_image_by_name(char *name);
 
 #endif //WEBSERVER_DB_HELPER_H

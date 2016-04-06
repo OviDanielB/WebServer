@@ -6,7 +6,38 @@
 
 #define DB_PATH "/home/ovi/ClionProjects/WebServer/DataBase/serverContent.db"
 
-static int callback(void *image, int argc, char **argv, char **azColName){
+int fill_img_struct(void *data, int argc, char **argv, char **azColName){
+
+    int i;
+    struct img *image;
+
+    image = (struct img *) data;
+
+    for(i = 0; i < argc; i++){
+        if(strcmp(azColName[i],"Name") == 0){
+            image->name = malloc(50);
+            if(image->name == NULL){
+                perror("Struct img malloc error.\n");
+                return 1;
+            }
+            sscanf(argv[i], "%s",image->name);
+        } else if(strcmp(azColName[i],"Type") == 0){
+            image->type = malloc(5);
+            if(image->type == NULL){
+                perror("Struct img malloc error");
+                return 1;
+            }
+            sscanf(argv[i], "%s",image->type);
+        } else if(strcmp(azColName[i],"Width") == 0){
+            image->width = (size_t) atoll(argv[i]);
+        } else if(strcmp(azColName[i],"Height") == 0){
+            image->height = (size_t) atoll(argv[i]);
+        } else if(strcmp(azColName[i],"Length") == 0) {
+            image->length = (size_t) atoll(argv[i]);
+        }
+
+        printf("%s = %s\n", azColName[i], argv[i]);
+    }
 
 
     return 0;
@@ -38,7 +69,7 @@ void db_execute_statement(sqlite3 *db, const char *sql, struct img *image){
     int rc;
     char * zErrorMsg;
 
-    rc = sqlite3_exec(db, sql, callback, (void *) image, &zErrorMsg);
+    rc = sqlite3_exec(db, sql, 0, (void *) image, &zErrorMsg);
     if( rc!=SQLITE_OK ) {
         fprintf(stderr, "SQL error: %s\n", zErrorMsg);
         sqlite3_free(zErrorMsg);
@@ -63,15 +94,13 @@ void db_insert_img(struct img *image){
 
     statement = malloc(2048 * sizeof(char));
 
-    char * sql = "CREATE TABLE IMAGE(Name TEXT);";
-
     sprintf(statement,"INSERT INTO IMAGES(Name,Type,Length,Width,Height) " \
             "VALUES('%s','%s',%ld,%ld,%ld);", image->name, image->type, image->length, image->width,image->height);
 
      write(STDOUT_FILENO, statement, strlen(statement));
 
 
-    rc = sqlite3_exec(datab,sql,callback, 0, &errorMsg);
+    rc = sqlite3_exec(datab,statement,0, 0, &errorMsg);
     if(rc != SQLITE_OK){
         fprintf(stderr,"SQL insert error: %s\n", errorMsg);
         sqlite3_free(errorMsg);
@@ -79,5 +108,73 @@ void db_insert_img(struct img *image){
     }
 
     db_close(datab);
+
+}
+
+void db_get_image_by_name(char *name,struct img *image){
+
+    sqlite3 *db;
+    char *statement, *errorMsg = 0;
+    int rc;
+
+
+    rc = sqlite3_open(DB_PATH,&db);
+    if( rc ){
+        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+        return;
+    }else{
+        fprintf(stderr, "Opened database successfully\n");
+    }
+
+    statement = malloc(2048 * sizeof(char));
+    if(statement == NULL){
+        perror("Malloc error. \n");
+        return;
+    }
+
+    sprintf(statement,"SELECT * FROM IMAGES WHERE Name='%s';", name);
+    printf(statement);
+
+    rc = sqlite3_exec(db,statement,fill_img_struct, image, &errorMsg);
+    if(rc != SQLITE_OK){
+        fprintf(stderr, "SQLITE SELECT error: %s \n",errorMsg);
+        exit(EXIT_FAILURE);
+    }
+
+    db_close(db);
+
+}
+
+
+void db_delete_image_by_name(char *name){
+
+    sqlite3 *db;
+    int rc;
+    char *statement, *errorMsg;
+
+    rc = sqlite3_open(DB_PATH,&db);
+    if(rc){
+        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
+        return;
+    } else {
+        fprintf(stderr,"Database opened successfully\n");
+    }
+
+    statement = malloc(1024 * sizeof(char));
+    if(statement == NULL){
+        perror("delete image by name malloc error");
+        return;
+    }
+
+    sprintf(statement, "DELETE FROM IMAGES WHERE Name='%s';",name);
+
+    rc = sqlite3_exec(db,statement,0,0,&errorMsg);
+    if(rc != SQLITE_OK){
+        fprintf(stderr,"SQLITE DELETE ERROR: %s \n",errorMsg);
+        return;
+    }
+
+    db_close(db);
+
 
 }

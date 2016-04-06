@@ -173,8 +173,11 @@ int main(int argc, char **argv)
     // OPEN DATABASE; creates it if doesn't exist
     //db_open(db);
 
+
     struct img * image;
     image = malloc(sizeof(struct img));
+
+    /*
     image->name = "Foto";
     image->type = "jpeg";
     image->width = 800;
@@ -183,9 +186,14 @@ int main(int argc, char **argv)
 
     db_insert_img(image);
 
+     */
 
-   // db_close(db);
+   // db_get_image_by_name("Iubita", image);
+   // printf("CIAO %s\n", image->name);
+    
 
+
+    exit(EXIT_SUCCESS);
 
 
     // creates a listening socket
