@@ -14,16 +14,15 @@
 
 
 /* initialized in db_get_image_by_name with char *name[50] and char *type[5] */
-typedef struct img {
-    char   *name;
-    float  quality;
-    size_t width;
-    size_t height;
-    size_t length;
-    char   *type;
-    //TODO image Date
-    //struct tm last_modified;
-} img;
+/*typedef struct img {
+    char    *name;
+    float   quality;
+    int     width;
+    int     height;
+    int     length;
+    char    *type;
+    char    *last_modified;
+} img;*/
 
 void db_open(sqlite3 * db);
 void db_close(sqlite3 * db);

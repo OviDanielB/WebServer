@@ -4,7 +4,7 @@
 
 #include "db_helper.h"
 
-#define DB_PATH "/home/ovi/ClionProjects/WebServer/DataBase/serverContent.db"
+#define DB_PATH "/home/laura_trive/ClionProjects/WebServer/DataBase/serverContent.db"
 
 
 /* called by db_get_image_by_name to fill the img struct passed as (void *), later casted back */
@@ -99,7 +99,7 @@ void db_insert_img(struct img *image){
     sprintf(statement,"INSERT INTO IMAGES(Name,Type,Length,Width,Height) " \
             "VALUES('%s','%s',%ld,%ld,%ld);", image->name, image->type, image->length, image->width,image->height);
 
-     write(STDOUT_FILENO, statement, strlen(statement));
+    write(STDOUT_FILENO, statement, strlen(statement));
 
 
     rc = sqlite3_exec(datab,statement,0, 0, &errorMsg);
