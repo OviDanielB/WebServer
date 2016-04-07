@@ -8,11 +8,11 @@
 #define WEBSERVER_CONSTANTS_H
 
 /*  path of images' directory    */
-#define PATH
+char *PATH;
 /*  path of cached images' directory    */
-#define CACHE_PATH
+char *CACHE_PATH;
 /*  path of log file    */
-#define LOG_PATH
+char *LOG_PATH;
 /* size of a line   */
 #define MAXLINE
 /* default protocol port number */
@@ -20,13 +20,21 @@
 /* size of request queue        */
 #define BACKLOG
 /*  number of child processes of server to manage requests  */
-#define CHILDREN_NUM
+int CHILDREN_NUM;
 /*  successfully HTTP request   */
-#define HTTP_OK
+char *HTTP_OK;
 /*  error in serving HTTP request */
-#define HTTP_BAD_REQUEST
+char *HTTP_BAD_REQUEST;
 /*  not found file requested    */
-#define HTTP_NOT_FOUND
+char *HTTP_NOT_FOUND;
+/*  version HTTP protocol 1.1   */
+char *HTTP_1;
+/*  version HTTP protocol 1.0   */
+char *HTTP_0;
+/*  HTTP request User-Agent line    */
+char *USER_AGENT;
+/*  HTTP request Accept line    */
+char *ACCEPT;
 
 
 /*  Image struct    */
@@ -38,6 +46,22 @@ struct img {
     char    type[4];
     char    last_modified[50];
     long    file_length;
+};
+
+/*  Image adaptation    */
+typedef struct adapt {
+    int width;
+    int heigth;
+    int colors;
+};
+
+/*  HTTP request struct    */
+typedef struct req {
+    char    method[4];
+    char    url[100];
+    char    type[4];
+    float   quality;
+    char    userAgent[50];
 };
 
 #endif //WEBSERVER_CONSTANTS_H

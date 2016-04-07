@@ -10,12 +10,14 @@
 #ifndef WEBSERVER_RESPONSE_H
 #define WEBSERVER_RESPONSE_H
 
+#include <stdio.h>
+
 /*  Compose header of HTTP message to send to the client */
 char *composeHeader(char *result, struct img *image);
 
 /*  Send the HTTP response, composed by header and eventual data,
  * to the client.
  */
-void writeResponse(int connfd, char *result, struct img *image);
+void writeResponse(int connfd, char *result, struct img *image, FILE *imgfd);
 
 #endif //WEBSERVER_RESPONSE_H

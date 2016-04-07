@@ -14,6 +14,8 @@
 #include "constants.h"
 #include "helper/calendar.h"
 
+#define MAXLINE             1024
+
 
 /**
  *  This function executes a system command line.
@@ -37,7 +39,7 @@ int execCommand(const char *command)
  *
  * @param image = original image with modified field of quality for manipulation
  */
-struct img convertQuality(struct img *image)
+struct img *convertQuality(struct img *image)
 {
     size_t n = strlen(image->name);
     int i;
@@ -60,8 +62,8 @@ struct img convertQuality(struct img *image)
         return NULL;
     }
     while (execCommand(command)==1){}
-    image->name = newName;
-    image->date = getTodayString();
+    sprintf(image->name,newName);
+    sprintf(image->last_modified,getTodayToString());
     return image;
 }
 
@@ -81,8 +83,8 @@ struct img *convertType(struct img *image, const char *newType)
         return NULL;
     }
     while (execCommand(command)==1){}
-    image->type = newType;
-    image->date = getTodayString();
+    sprintf(image->type,newType);
+    sprintf(image->last_modified,getTodayToString());
     return image;
 }
 
@@ -91,28 +93,28 @@ struct img *convertType(struct img *image, const char *newType)
  *
  * @param image = original image with width and height fields modified with value fot resizing
  */
-struct img *resize(struct img *image)
+struct img *resize(struct img *image, int width, int height)
 {
     size_t  n = strlen(image->name);
     //command line
     char command[n+50];
     // copy image's path
     char newName[n+10];
-    if (sprintf(newName,"%s%dx%d",image->name,width,height,image->type)<0) {
+    if (sprintf(newName,"%s%dx%d",image->name,width,height)<0) {
         perror("error in sprintf");
         return NULL;
     }
 
     if (sprintf(command, "convert %s.%s -resize %dx%d %s%s.%s\n",
-                image->name,image->type,width,height,CACHE_PATH,newName,img->type)<0) {
+                image->name,image->type,width,height,CACHE_PATH,newName,image->type)<0) {
         perror("error in sprintf");
         return NULL;
     }
     while (execCommand(command)==1){}
-    image->name = newName;
+    sprintf(image->name,newName);
     image->width = width;
-    image->heigth = height;
-    image->date = getTodayString();
+    image->height = height;
+    sprintf(image->last_modified,getTodayToString());
     return image;
 }
 
@@ -128,7 +130,7 @@ struct img *resize(struct img *image)
 struct img *reduceColors(struct img *image, int colors)
 {
     //command line
-    char command[MAX_LINE];
+    char command[MAXLINE];
     // copy image's path
     size_t  n = strlen(image->name);
     char newName[n+10];
@@ -137,12 +139,25 @@ struct img *reduceColors(struct img *image, int colors)
         return NULL;
     }
 
-    if (sprintf(command, "convert %s -dither None -colors %d %s%s.%s\n",filename,colors,CACHE_PATH,newName,image->type)<0) {
+    if (sprintf(command, "convert %s%s.%s -dither None -colors %d %s%s.%s\n",
+                PATH,image->name,image->type,colors,CACHE_PATH,newName,image->type)<0) {
         perror("error in sprintf\n");
         return NULL;
     }
     while (execCommand(command)==1){}
-    image->name = newName;
-    image->date = getTodayString();
+    sprintf(image->name,newName);
+    sprintf(image->last_modified,getTodayToString());
     return image;
+}
+
+
+/*  This function adapts image's characteristics to client's device,
+ *  optimizing width, length, number of colors and quality.
+ *
+ *  @param image: image to adapt, containing info of requested quality and type
+ *  @param user_agent: line of HTTP request to get device's and requested file's info from
+ */
+struct img *adaptImageTo(struct img *req_image, char *user_agent)
+{
+    // read caratteristiche device dal file Wurfl e adatta in base a quelle
 }

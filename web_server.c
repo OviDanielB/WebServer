@@ -15,6 +15,9 @@
 
 #include "io_func.h"
 #include "DataBase/db_helper.h"
+#include "locking.h"
+#include "constants.h"
+#include "serveRequest.h"
 
 #define DEFAULT_PORT       5193            /* default protocol port number */
 #define BACKLOG           10            /* size of request queue        */
@@ -38,14 +41,6 @@ typedef void sigfunc(int);
 
 static int num_child;
 static pid_t *pids;
-
-static struct flock lock_it,unlock_it;
-
-void my_lock_init(char *pathname);
-
-void str_echo(int sockfd);
-
-static int lock_fd = -1;
 
 
 /* generic function for signal handling
@@ -138,7 +133,7 @@ void child_main(int index, int listenfd, int addrlen) {
         }
 */
 
-        str_echo(connfd);
+        serveRequest(connfd);
 
         close(connfd);
     }
@@ -266,10 +261,10 @@ pid_t child_make(int i, int listenfd, int addrlen){
 
 }
 
-
+/*
 void str_echo(int sockfd){
 
-    /* WORKING SEND HTML PAGE
+     WORKING SEND HTML PAGE
     ssize_t n;
     char line[MAXLINE];
 
@@ -288,7 +283,7 @@ void str_echo(int sockfd){
         write(sockfd,"<html><body><h1>Ciao Laura e Francesco.</h1></body></html>",58);
 
     }
-     */
+
 
     FILE * image;
     size_t n;
@@ -338,9 +333,4 @@ void str_echo(int sockfd){
 
 
 
-}
-
-
-
-
-
+}*/

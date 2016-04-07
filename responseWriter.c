@@ -6,6 +6,8 @@
  * Implementations of functions to send server HTTP responses.
  */
 
+#include "responseWriter.h"
+
 #include <stdio.h>
 #include <memory.h>
 #include <stdlib.h>
@@ -17,6 +19,7 @@
 char header[102400];
 long file_length = 0;
 char *reply;
+char buff[MAXLINE];
 
 /*  Compose response HTTP message to send to the client */
 char *composeHeader(char *result, struct img *image)
@@ -25,7 +28,7 @@ char *composeHeader(char *result, struct img *image)
 
     if (strcmp(result,"HTTP_OK")==0) {
         if (sprintf(header,
-                    HTTP_OK"\n"
+                            "%s\n"
                             "Date: %s\n"
                             "Server: WebServer/1.0.0\n"
                             //"Last-Modified: Wed, 18 Jun 2003 16:05:58 GMT\n"
@@ -33,7 +36,8 @@ char *composeHeader(char *result, struct img *image)
                             "Content-Type: image/%s\n"
                             "Content-Length: %ld\n"
                             //"Accept-Ranges: bytes\n"
-                            "Connection: keep-alive\n", date, image->type, image->file_length) < 0) {
+                            "Connection: keep-alive\n",
+                            HTTP_OK, date, image->type, image->file_length) < 0) {
             perror("error in sprintf\n");
             return "";
         }
@@ -43,10 +47,10 @@ char *composeHeader(char *result, struct img *image)
 
     if (strcmp(result,"HTTP_NOT_FOUND")==0) {
         if (sprintf(header,
-                    HTTP_NOT_FOUND"\n"
+                    "%s\n"
                     "Date: %s\n"
                     "Server: WebServer/1.0.0\n"
-                    "Connection: keep-alive\n", date) < 0) {
+                    "Connection: keep-alive\n", HTTP_NOT_FOUND, date) < 0) {
             perror("error in sprintf\n");
             return "";
         }
@@ -54,7 +58,7 @@ char *composeHeader(char *result, struct img *image)
 
     if (strcmp(result,"HTTP_BAD_REQUEST")==0) {
         if (sprintf(header,
-                    HTTP_BAD_REQUEST"\n"
+                    "%s\n"
                     "Date: %s\n"
                     "Server: WebServer/1.0.0\n"
                     //"Last-Modified: Wed, 18 Jun 2003 16:05:58 GMT\n"
@@ -62,7 +66,7 @@ char *composeHeader(char *result, struct img *image)
                     //"Content-Type: image/"+image->type+"\n"
                     //"Content-Length: %i\n"
                     //"Accept-Ranges: bytes\n"
-                    "Connection: keep-alive\n",date)<0){
+                    "Connection: keep-alive\n",HTTP_BAD_REQUEST, date)<0){
             perror("error in sprintf\n");
             return "";
         }
@@ -81,33 +85,34 @@ char *composeHeader(char *result, struct img *image)
     return reply;
 }
 
-void writeResponse(int connfd, char *result, struct img *image)
-{
-    char *header = composeHeader(result,image);
+void writeResponse(int connfd, char *result, struct img *image, FILE *imgfd) {
+    char *header = composeHeader(result, image);
+    size_t n;
 
-    write(connfd, header,strlen(header));
+    write(connfd, header, strlen(header));
 
-    if (strcmp(result,"HTTP_OK")==0){
+    if (strcmp(result, HTTP_OK) == 0) {
 
         while (1) {
 
-            n = fread(buff, 1, MAXLINE, image);
+            n = fread(buff, 1, MAXLINE, imgfd);
             printf("Bytes read %d \n", (int) n);
 
             if (n > 0) {
                 printf("Sending \n");
-                write(sockfd, buff, n);
+                write(connfd, buff, n);
 
             }
 
             if (n < MAXLINE) {
-                if (feof(image)) {
+                if (feof(imgfd)) {
                     printf("End of file \n ");
                 }
-                if (ferror(image)) {
+                if (ferror(imgfd)) {
                     printf("Error Reading \n");
                 }
                 break;
             }
+        }
     }
 }

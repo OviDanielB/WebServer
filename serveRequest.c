@@ -8,15 +8,17 @@
  * back to the client.
  */
 
+#include "serveRequest.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <zconf.h>
 #include <memory.h>
 
 #include "constants.h"
-// struct img
 #include "requestParser.h"
 #include "responseWriter.h"
+#include "adaptImage.h"
 #include "io_func.h"
 
 #define MAXLINE             1024
@@ -45,8 +47,11 @@ long getLength(FILE *image)
     return len;
 }
 
-/*  Read from connection socket the client request and
- *  write on it the response, adapted on client device.
+/*  This function implements server work for serving a client's request:
+ *  1)Parsing client request
+ *  2)Elaborating request (adaptation on client device)
+ *  3)Caching
+ *  4)Sending response
  *
  *  @param sockfd: file descriptor for connection socket
  */
@@ -57,8 +62,12 @@ void serveRequest(int sockfd)
     size_t n;
     int read;
 
+    //char *userAgent;
+    struct req *req = parseRequest(sockfd);
+    //userAgent = req->user_agent;
+    //userAgent = "";
     struct img *reqImage;
-    //struct img reqImage = parseRequest(sockfd);
+    //struct img *reqImage = req->req_image;
     // requested image: {name, quality, width, height, type, last modified, file_length}
     if ((reqImage = malloc(sizeof(struct img)))==NULL) {
             perror("error in malloc\n");
@@ -67,12 +76,14 @@ void serveRequest(int sockfd)
     sprintf(reqImage->name,"mare");
     reqImage->width = 960;
     reqImage->height = 600;
-    sprintf(reqImage->type,"jpg");
+    sprintf(reqImage->type,req->type);
 
 
     char buff[MAXLINE];
     char path[100];
-    sprintf(path,PATH"%s.%s", reqImage->name, reqImage->type);
+    sprintf(path,"%s%s.%s", PATH, reqImage->name, reqImage->type);
+
+    //da cercare image su db (cache o server)
 
     if ((image=fopen("/home/laura_trive/Scrivania/ServerFiles/mare.jpg", "rb"))==NULL) {
         perror("error in fopen\n");
@@ -80,6 +91,8 @@ void serveRequest(int sockfd)
     }
 
     reqImage->file_length = getLength(image);
+
+    struct img *adaptedImage = adaptImageTo(reqImage,req->userAgent);
 
     for(;;) {
         if ((read = readline(sockfd, buff, MAXLINE)) == 0) {
@@ -97,32 +110,10 @@ void serveRequest(int sockfd)
         write(sockfd, type, strlen(type));
         */
 
-        char *reply = composeResponse("ok",reqImage);
+        //struct img *adaptedImg = adaptTo(userAgent);
+        //da mettere l'imm adattata come parametro e switch per l'esito
+        writeResponse(sockfd, HTTP_OK, reqImage, image);
 
-        write(sockfd,reply,strlen(reply));
-
-        while (1) {
-
-            n = fread(buff, 1, MAXLINE, image);
-            printf("Bytes read %d \n", (int) n);
-
-            if (n > 0) {
-                printf("Sending \n");
-                write(sockfd, buff, n);
-
-            }
-
-            if (n < MAXLINE) {
-                if (feof(image)) {
-                    printf("End of file \n ");
-                }
-                if (ferror(image)) {
-                    printf("Error Reading \n");
-                }
-                break;
-            }
-
-        }
     }
 }
 
