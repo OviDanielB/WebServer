@@ -6,6 +6,8 @@
 
 #define DB_PATH "/home/ovi/ClionProjects/WebServer/DataBase/serverContent.db"
 
+
+/* called by db_get_image_by_name to fill the img struct passed as (void *), later casted back */
 int fill_img_struct(void *data, int argc, char **argv, char **azColName){
 
     int i;
@@ -110,7 +112,9 @@ void db_insert_img(struct img *image){
     db_close(datab);
 
 }
-
+/* returns an img struct (as defined in db_helper.h)
+ * you only need to pass it a struct img * initializated with malloc(sizeof(struct img)), the name and type char * arrays is done by itself
+*/
 void db_get_image_by_name(char *name,struct img *image){
 
     sqlite3 *db;

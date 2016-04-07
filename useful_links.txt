@@ -44,3 +44,7 @@ http://www.html.it/pag/18662/panoramica-generale/
 
 SQLITE3 C API
 http://www.tutorialspoint.com/sqlite/sqlite_c_cpp.htm
+
+
+IMAGEMAGICK API C
+http://members.shaw.ca/el.supremo/MagickWand/
