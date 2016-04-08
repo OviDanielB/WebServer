@@ -72,11 +72,12 @@ void serveRequest(int sockfd)
             perror("error in malloc\n");
             exit(1);
     }
-    sprintf(reqImage->name,"Big_Img");
+    sprintf(reqImage->name,"mare");
     reqImage->width = 960;
     reqImage->height = 600;
     sprintf(reqImage->type,"jpg");
    // sprintf(reqImage->type,req->type);
+    //fin qui tutto deve essere riempito nel parsing
 
 
     char buff[MAXLINE];
@@ -97,6 +98,7 @@ void serveRequest(int sockfd)
 
     //TODO adapting from WURFL info
     //struct img *adaptedImage = adaptImageTo(reqImage,req->userAgent);
+    //add adapted image to db
 
     for(;;) {
         if ((read = readline(sockfd, buff, MAXLINE)) == 0) {
@@ -114,10 +116,9 @@ void serveRequest(int sockfd)
         write(sockfd, type, strlen(type));
         */
 
-        //struct img *adaptedImg = adaptTo(userAgent);
-        //da mettere l'imm adattata come parametro e switch per l'esito
-        writeResponse(sockfd, result, reqImage, image);
 
+        //!!!!!!!!!!da mettere l'imm adattata come parametro e switch per l'esito
+        writeResponse(sockfd, result, reqImage, image);
     }
 }
 

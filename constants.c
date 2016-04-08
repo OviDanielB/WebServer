@@ -1,7 +1,7 @@
 /**
 * Created by laura_trive on 21/03/16.
 *
-* Implementation of system structs and definition of system constant.
+* Definition of system constant.
 */
 
 #include <wchar.h>
@@ -26,7 +26,7 @@ const char *HTTP_OK =          "HTTP/1.1 200 OK";
 /*  error in serving HTTP request */
 const char *HTTP_BAD_REQUEST = "HTTP/1.1 400 Bad Request";
 /*  not found file requested    */
-const char *HTTP_NOT_FOUND =   "HTTP/1.1 404 Not Found"
+const char *HTTP_NOT_FOUND =   "HTTP/1.1 404 Not Found";
 /*  HTML page to show not-found error    */
 const char *HTML_404 =   "<html><body><h1>Error 404: Page Not Found</h1></body></html>";
 /*  HTML page to show bad-request error    */

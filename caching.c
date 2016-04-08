@@ -26,11 +26,28 @@ int isModified(struct img *img, struct img *cacheImg)
     return 1; //true
 }
 
+/*  Checks if the image requested is present in cache.
+ *  If yes, the return value is the name of
+ *
+ * @param *img: pointer to struct img to search in cache directory
+ */
+char *isInCache(struct img *img) {
+
+    // select su db_cache per vedere se presente img->name con le caratteristiche
+    if (sqlite3_) {
+
+        return img->name;
+    } else
+        return NULL;
+}
+
 /*  Check if the image requested is present in cache
  *
  * @param *img: pointer to struct img to search in cache directory
  */
-FILE *isInCache(struct img *img)
+/*FILE *isInCache(struct img *img)
 {
     return fopen("%s%s.%s",CACHE_PATH,img->name,img->type,"r");
-}
+}*/
+
+

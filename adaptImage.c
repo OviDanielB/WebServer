@@ -159,5 +159,18 @@ struct img *reduceColors(struct img *image, int colors)
  */
 struct img *adaptImageTo(struct img *req_image, char *user_agent)
 {
-    // read caratteristiche device dal file Wurfl e adatta in base a quelle
+    struct img *image = req_image;
+    char *name;
+
+    // check if adapted image has been previously modified and it's in cache
+    if ((name = isInCache(req_image))!=NULL) {
+        sprintf(image->name, name);
+        return image;
+    }
+
+    // read caratteristiche device dal file Wurfl
+
+    // adatta image in base a quelle
+
+    // aggiunge alla cache db
 }

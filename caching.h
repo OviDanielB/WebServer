@@ -13,7 +13,8 @@
 int isModified(struct img *img);
 
 /*  Check if the image requested is present in cache    */
-FILE *isInCache(struct img *img);
+char *isInCache(struct img *img);
+//FILE *isInCache(struct img *img);
 
 
 #endif //WEBSERVER_CACHING_H

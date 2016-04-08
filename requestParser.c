@@ -2,6 +2,10 @@
 // Created by laura_trive on 23/03/16.
 //
 
+/*
+ * Functions implementation to parse lines of client's HTTP request.
+ */
+
 #include "requestParser.h"
 
 #include <stdio.h>
@@ -12,12 +16,13 @@
 
 #define MAXLINE             1024
 
-/*
-char *http = "HTTP/1.1";
-char *http0 = "HTTP/1.0";
-char *userAgent = "User-Agent:";
-char *accept = "Accept:";*/
 
+/* This function implement the HTTP request parser,
+ * reading information about method requested, client's device,
+ * type and quality of file requested.
+ *
+ * @param sockfd: file descriptor of connection socket
+ */
 struct req *parseRequest(int sockfd)
 {
     struct req *request;
@@ -37,8 +42,9 @@ struct req *parseRequest(int sockfd)
         }
 
         if (strncmp(line,HTTP_1,strlen(HTTP_1))==0) {
-            //read request method GET or HEAD
+            //read request method GET or HEAD and URL of file requested
             sscanf(line,"%s %s ",request->method,request->url);
+            //vedi se come da url nome immagine
         }
 
         if (strncmp(line,USER_AGENT,strlen(USER_AGENT))==0) {
