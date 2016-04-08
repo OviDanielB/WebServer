@@ -41,9 +41,10 @@ char *composeHeader(char *result, struct img *image)
                     "%s\n"
                     "Date: %s\n"
                     "Server: WebServer/1.0.0\n"
-                    "Connection: keep-alive\n"
                     "Content-Type: text/html\n"
-                    "<html><body><h1>404 Page Not Found.</h1></body></html>\n", HTTP_NOT_FOUND, date) < 0) {
+                    "Content-Length: %ld\n"
+                    "Connection: keep-alive\n\n"
+                    "<html><body><h1>404 Page Not Found. </h1></body></html>", HTTP_OK, date, strlen(HTTP_NOT_FOUND)+20) < 0) {
             perror("error in sprintf\n");
             return "";
         }
@@ -54,13 +55,11 @@ char *composeHeader(char *result, struct img *image)
                     "%s\n"
                     "Date: %s\n"
                     "Server: WebServer/1.0.0\n"
-                    //"Last-Modified: Wed, 18 Jun 2003 16:05:58 GMT\n"
-                    //"ETag: \"56d-9989200-1132c580\"\n"
-                    //"Content-Length: %i\n"
-                    //"Accept-Ranges: bytes\n"
-                    "Connection: keep-alive\n"
-                    "Content-Type: text/html\n\n",
-                    HTTP_BAD_REQUEST, date)<0){
+                    "Content-Type: text/html\n"
+                    "Content-Length: %ld\n"
+                    "Connection: keep-alive\n\n"
+                    "<html><body><h1>400 Bad Request. </h1></body></html>",
+                    HTTP_OK, date, strlen(HTTP_BAD_REQUEST)+20)<0){
             perror("error in sprintf\n");
             return "";
         }
@@ -79,6 +78,14 @@ char *composeHeader(char *result, struct img *image)
     return reply;
 }
 
+/**
+ * This function sends server response, based on result of the elaboration of request.
+ *
+ * @param: connfd = file descriptor of connection socket
+ * @param: result = result of the elaboration of client's request
+ * @param: image = image to send as data in the message
+ * @param: imgfd = file descriptor of image's file
+ */
 void writeResponse(int connfd, char *result, struct img *image, FILE *imgfd) {
 
     char *header = composeHeader(result, image);
