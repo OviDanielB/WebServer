@@ -155,20 +155,21 @@ struct img *adaptImageTo(struct img *req_image, char *user_agent)
     char *name;
 
     // check if adapted image has been previously modified and it's in cache
-    if ((name = isInCache(req_image))!=NULL) {
+    /*if ((name = isInCache(req_image))!=NULL) {
         sprintf(image->name, name);
         return image;
-    }
-
-    // read caratteristiche device dal file Wurfl
-
-    // adatta image in base a quelle
+    }*/
 
     /* if original image type isn't JPG, better to manipulate it in GIF to avoid
      * data looses due to JPEG format compression. */
     if (strcmp(image->type,"jpg")==0) {
         convertType(image,"gif");
     }
+
+
+    // read caratteristiche device dal file Wurfl
+    // ...
+    // adatta image in base a quelle
 
     /* at finished manipulation, reset original image's type */
     convertType(image,"jpg");

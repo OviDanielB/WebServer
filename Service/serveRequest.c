@@ -63,7 +63,7 @@ void serveRequest(int sockfd)
             perror("error in malloc\n");
             exit(1);
     }
-    sprintf(reqImage->name,"mare");
+    sprintf(reqImage->name,"aksjdha");
     reqImage->width = 960;
     reqImage->height = 600;
     sprintf(reqImage->type,"jpg");
@@ -79,8 +79,9 @@ void serveRequest(int sockfd)
 
     if ((image=fopen(path, "rb"))==NULL) {
         sprintf(result, (char *)HTTP_NOT_FOUND);
+        writeResponse(sockfd, result, reqImage, image);
         perror("error in fopen\n");
-        exit(1);
+        //exit(1);
     }
 
     sprintf(result, (char *)HTTP_OK);

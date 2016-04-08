@@ -45,21 +45,25 @@ const char *ACCEPT;
 
 
 /*  Image struct    */
-struct img {
-    char    name[50];
-    float   quality;
-    int     width;
-    int     height;
+typedef struct img {
+    char    name[256];
+    size_t  width;
+    size_t  height;
     char    type[4];
-    char    last_modified[50];
-    long    file_length;
+    size_t  file_length;
+    char    last_modified[50]; //da togliere
 };
 
 /*  Image adaptation    */
-typedef struct adapt {
-    int width;
-    int heigth;
-    int colors;
+typedef struct conv_img {
+    char   original_name[256];
+    char   name[256]; //nome dell'immagine modificata nella cartella con il nome originale
+    size_t width;
+    size_t heigth;
+    size_t colors;
+    float  quality;
+    char   type[4];
+    char   last_modified[50];
 };
 
 /*  HTTP request struct    */
