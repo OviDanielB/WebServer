@@ -10,10 +10,10 @@
 #define WEBSERVER_CACHING_H
 
 /*  Check if the image was modified  */
-boolean isModified(struct img *img);
+int isModified(struct img *img);
 
 /*  Check if the image requested is present in cache    */
-boolean isInCache(struct img *img);
+FILE *isInCache(struct img *img);
 
 
 #endif //WEBSERVER_CACHING_H
