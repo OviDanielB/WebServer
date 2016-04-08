@@ -59,9 +59,10 @@ void serveRequest(int sockfd)
     FILE * image;
     size_t n;
     int read;
+    char result[50];
 
     //char *userAgent;
-    struct req *req = parseRequest(sockfd);
+    //struct req *req = parseRequest(sockfd); looop
     //userAgent = req->user_agent;
     //userAgent = "";
     struct img *reqImage;
@@ -71,7 +72,7 @@ void serveRequest(int sockfd)
             perror("error in malloc\n");
             exit(1);
     }
-    sprintf(reqImage->name,"mare");
+    sprintf(reqImage->name,"Big_Img");
     reqImage->width = 960;
     reqImage->height = 600;
     sprintf(reqImage->type,"jpg");
@@ -85,14 +86,17 @@ void serveRequest(int sockfd)
     //da cercare image su db (cache o server)
 
     if ((image=fopen(path, "rb"))==NULL) {
+        sprintf(result, (char *)HTTP_NOT_FOUND);
         perror("error in fopen\n");
         exit(1);
     }
 
+    sprintf(result, (char *)HTTP_OK);
+
     reqImage->file_length = getLength(image);
 
     //TODO adapting from WURFL info
-    struct img *adaptedImage = adaptImageTo(reqImage,req->userAgent);
+    //struct img *adaptedImage = adaptImageTo(reqImage,req->userAgent);
 
     for(;;) {
         if ((read = readline(sockfd, buff, MAXLINE)) == 0) {
@@ -112,7 +116,7 @@ void serveRequest(int sockfd)
 
         //struct img *adaptedImg = adaptTo(userAgent);
         //da mettere l'imm adattata come parametro e switch per l'esito
-        writeResponse(sockfd, (char *)HTTP_OK, reqImage, image);
+        writeResponse(sockfd, result, reqImage, image);
 
     }
 }

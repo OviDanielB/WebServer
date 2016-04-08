@@ -49,7 +49,9 @@ char *composeHeader(char *result, struct img *image)
                     "%s\n"
                     "Date: %s\n"
                     "Server: WebServer/1.0.0\n"
-                    "Connection: keep-alive\n\n", HTTP_NOT_FOUND, date) < 0) {
+                    "Connection: keep-alive\n"
+                    "Content-Type: text/html\n"
+                    "<html><body><h1>404 Page Not Found.</h1></body></html>\n", HTTP_NOT_FOUND, date) < 0) {
             perror("error in sprintf\n");
             return "";
         }
@@ -62,10 +64,11 @@ char *composeHeader(char *result, struct img *image)
                     "Server: WebServer/1.0.0\n"
                     //"Last-Modified: Wed, 18 Jun 2003 16:05:58 GMT\n"
                     //"ETag: \"56d-9989200-1132c580\"\n"
-                    //"Content-Type: image/"+image->type+"\n"
                     //"Content-Length: %i\n"
                     //"Accept-Ranges: bytes\n"
-                    "Connection: keep-alive\n\n",HTTP_BAD_REQUEST, date)<0){
+                    "Connection: keep-alive\n"
+                    "Content-Type: text/html\n\n"
+                    "<html><body><h1>404 Page Not Found.</h1></body></html>\n",HTTP_BAD_REQUEST, date)<0){
             perror("error in sprintf\n");
             return "";
         }
