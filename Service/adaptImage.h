@@ -8,7 +8,7 @@ Interface to function to images adaption.
 #ifndef WEBSERVER_MANAGE_IMG_H
 #define WEBSERVER_MANAGE_IMG_H
 
-#include "constants.h"
+#include "../constants.h"
 
 /*  Function prototypes  */
 

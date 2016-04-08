@@ -11,8 +11,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "constants.h"
-#include "io_func.h"
+#include "../constants.h"
+#include "../helper/io_func.h"
 
 #define MAXLINE             1024
 

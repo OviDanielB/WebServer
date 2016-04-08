@@ -13,11 +13,11 @@
 #include <signal.h>
 
 
-#include "io_func.h"
+#include "helper/io_func.h"
 #include "DataBase/db_helper.h"
-#include "locking.h"
+#include "helper/locking.h"
 #include "constants.h"
-#include "serveRequest.h"
+#include "Service/serveRequest.h"
 
 // define sigfunc to simplify signal sys call
 typedef void sigfunc(int);

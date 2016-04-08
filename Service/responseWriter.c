@@ -13,8 +13,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "constants.h"
-#include "helper/calendar.h"
+#include "../constants.h"
+#include "../helper/calendar.h"
 
 
 /*  Compose response HTTP message to send to the client */

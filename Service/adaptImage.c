@@ -9,10 +9,10 @@
 #include <string.h>
 
 #include "adaptImage.h"
-#include "helper/helper.h"
-#include "caching.h"
-#include "constants.h"
-#include "helper/calendar.h"
+#include "../helper/helper.h"
+#include "../caching.h"
+#include "../constants.h"
+#include "../helper/calendar.h"
 
 #define MAXLINE             1024
 
