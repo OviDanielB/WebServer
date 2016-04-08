@@ -30,6 +30,10 @@ const char *HTTP_OK;
 const char *HTTP_BAD_REQUEST;
 /*  not found file requested    */
 const char *HTTP_NOT_FOUND;
+/*  HTML page to show not-found error    */
+const char *HTML_404;
+/*  HTML page to show bad-request error    */
+const char *HTML_400;
 /*  version HTTP protocol 1.1   */
 const char *HTTP_1;
 /*  version HTTP protocol 1.0   */

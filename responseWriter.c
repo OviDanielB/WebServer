@@ -67,8 +67,8 @@ char *composeHeader(char *result, struct img *image)
                     //"Content-Length: %i\n"
                     //"Accept-Ranges: bytes\n"
                     "Connection: keep-alive\n"
-                    "Content-Type: text/html\n\n"
-                    "<html><body><h1>404 Page Not Found.</h1></body></html>\n",HTTP_BAD_REQUEST, date)<0){
+                    "Content-Type: text/html\n\n",
+                    HTTP_BAD_REQUEST, date)<0){
             perror("error in sprintf\n");
             return "";
         }
@@ -118,5 +118,9 @@ void writeResponse(int connfd, char *result, struct img *image, FILE *imgfd) {
                 break;
             }
         }
+    } else if (strcmp(result, HTTP_NOT_FOUND) == 0) {
+        write(connfd, HTML_404, strlen(HTML_404));
+    } else if (strcmp(result, HTTP_BAD_REQUEST) == 0) {
+        write(connfd, HTML_400, strlen(HTML_400));
     }
 }
