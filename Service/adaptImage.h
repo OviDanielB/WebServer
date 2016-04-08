@@ -8,7 +8,15 @@ Interface to function to images adaption.
 #ifndef WEBSERVER_MANAGE_IMG_H
 #define WEBSERVER_MANAGE_IMG_H
 
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "../helper/helper.h"
+#include "../caching.h"
 #include "../constants.h"
+#include "../helper/calendar.h"
 
 /*  Function prototypes  */
 

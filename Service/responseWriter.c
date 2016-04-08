@@ -8,14 +8,6 @@
 
 #include "responseWriter.h"
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-
-#include "../constants.h"
-#include "../helper/calendar.h"
-
 
 /*  Compose response HTTP message to send to the client */
 char *composeHeader(char *result, struct img *image)

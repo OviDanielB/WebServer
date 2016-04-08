@@ -11,6 +11,15 @@
 #ifndef WEBSERVER_SERVEREQUEST_H
 #define WEBSERVER_SERVEREQUEST_H
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "../constants.h"
+#include "requestParser.h"
+#include "responseWriter.h"
+#include "adaptImage.h"
+#include "../helper/io_func.h"
+
 /*  Read from connection socket the client request and
  *  write on it the response, adapted on client device. */
 void serveRequest(int sockfd);

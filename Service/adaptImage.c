@@ -4,15 +4,7 @@
  Implementations of functions to images adaptation
 */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "adaptImage.h"
-#include "../helper/helper.h"
-#include "../caching.h"
-#include "../constants.h"
-#include "../helper/calendar.h"
 
 #define MAXLINE             1024
 
