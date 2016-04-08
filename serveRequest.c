@@ -12,8 +12,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <zconf.h>
-#include <memory.h>
 
 #include "constants.h"
 #include "requestParser.h"
@@ -76,7 +74,8 @@ void serveRequest(int sockfd)
     sprintf(reqImage->name,"mare");
     reqImage->width = 960;
     reqImage->height = 600;
-    sprintf(reqImage->type,req->type);
+    sprintf(reqImage->type,"jpg");
+   // sprintf(reqImage->type,req->type);
 
 
     char buff[MAXLINE];
@@ -85,13 +84,14 @@ void serveRequest(int sockfd)
 
     //da cercare image su db (cache o server)
 
-    if ((image=fopen("/home/laura_trive/Scrivania/ServerFiles/mare.jpg", "rb"))==NULL) {
+    if ((image=fopen(path, "rb"))==NULL) {
         perror("error in fopen\n");
         exit(1);
     }
 
     reqImage->file_length = getLength(image);
 
+    //TODO adapting from WURFL info
     struct img *adaptedImage = adaptImageTo(reqImage,req->userAgent);
 
     for(;;) {
@@ -112,7 +112,7 @@ void serveRequest(int sockfd)
 
         //struct img *adaptedImg = adaptTo(userAgent);
         //da mettere l'imm adattata come parametro e switch per l'esito
-        writeResponse(sockfd, HTTP_OK, reqImage, image);
+        writeResponse(sockfd, (char *)HTTP_OK, reqImage, image);
 
     }
 }

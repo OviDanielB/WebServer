@@ -35,7 +35,7 @@ char *composeHeader(char *result, struct img *image)
                             "Content-Type: image/%s\n"
                             "Content-Length: %ld\n"
                             //"Accept-Ranges: bytes\n"
-                            "Connection: keep-alive\n",
+                            "Connection: keep-alive\n\n",
                             HTTP_OK, date, image->type, image->file_length) < 0) {
             perror("error in sprintf\n");
             return "";
@@ -49,7 +49,7 @@ char *composeHeader(char *result, struct img *image)
                     "%s\n"
                     "Date: %s\n"
                     "Server: WebServer/1.0.0\n"
-                    "Connection: keep-alive\n", HTTP_NOT_FOUND, date) < 0) {
+                    "Connection: keep-alive\n\n", HTTP_NOT_FOUND, date) < 0) {
             perror("error in sprintf\n");
             return "";
         }
@@ -65,7 +65,7 @@ char *composeHeader(char *result, struct img *image)
                     //"Content-Type: image/"+image->type+"\n"
                     //"Content-Length: %i\n"
                     //"Accept-Ranges: bytes\n"
-                    "Connection: keep-alive\n",HTTP_BAD_REQUEST, date)<0){
+                    "Connection: keep-alive\n\n",HTTP_BAD_REQUEST, date)<0){
             perror("error in sprintf\n");
             return "";
         }
