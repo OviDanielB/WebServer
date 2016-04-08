@@ -8,8 +8,11 @@ set(CMAKE_C_FLAGS " -pthread")
 set(SOURCE_FILES web_server.c client.c)
 
 link_libraries("dl")
+link_libraries("Magick")
+link_libraries("Wand")
+link_libraries("GraphicsMagickWand")
+
 
 add_executable(server web_server.c helper/io_func.c helper/io_func.h sqlite3.c helper/locking.c helper/locking.h
-        Service/serveRequest.c Service/serveRequest.h Service/requestParser.c Service/requestParser.h Service/responseWriter.c
-        Service/responseWriter.h helper/calendar.c helper/calendar.h constants.c constants.h Service/adaptImage.c Service/adaptImage.h)
+        constants.c constants.h  DataBase/db_cache.c DataBase/db_cache.h)
 add_executable(client client.c helper/io_func.c helper/io_func.h)

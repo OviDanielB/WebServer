@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "../constants.h"
+
 
 /* initialized in db_get_image_by_name with char *name[50] and char *type[5] */
 /*typedef struct img {

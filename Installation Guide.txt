@@ -6,3 +6,9 @@
     c) run "make install"
 
     d) sudo apt-get install sqlitebrowser    // for brosing db
+
+2) ImageMagick with MagickWand C Api
+    a) sudo apt-get install imagemagick
+    b) sudo apt-get install libmagickwand
+    c) sudo apt-get install libmagickwand-dev
+    d) sudo apt-get install graphicsmagick-libmagick-dev-compat

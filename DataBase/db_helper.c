@@ -4,7 +4,7 @@
 
 #include "db_helper.h"
 
-#define DB_PATH "/home/laura_trive/ClionProjects/WebServer/DataBase/serverContent.db"
+#define DB_PATH "/home/ovi/ClionProjects/WebServer/DataBase/serverContent.db"
 
 
 /* called by db_get_image_by_name to fill the img struct passed as (void *), later casted back */
