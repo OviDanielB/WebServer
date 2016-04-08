@@ -172,5 +172,16 @@ struct img *adaptImageTo(struct img *req_image, char *user_agent)
 
     // adatta image in base a quelle
 
+    /* if original image type isn't JPG, better to manipulate it in GIF to avoid
+     * data looses due to JPEG format compression. */
+    if (strcmp(image->type,"jpg")==0) {
+        convertType(image,"gif");
+    }
+
+    /* at finished manipulation, reset original image's type */
+    convertType(image,"jpg");
+
     // aggiunge alla cache db
+
+    return image;
 }
