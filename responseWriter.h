@@ -10,6 +10,7 @@
 #ifndef WEBSERVER_RESPONSE_H
 #define WEBSERVER_RESPONSE_H
 
+#include "constants.h"
 #include <stdio.h>
 
 /*  Compose header of HTTP message to send to the client */

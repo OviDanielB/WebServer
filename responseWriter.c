@@ -9,24 +9,23 @@
 #include "responseWriter.h"
 
 #include <stdio.h>
-#include <memory.h>
+#include <string.h>
 #include <stdlib.h>
-#include <zconf.h>
+#include <unistd.h>
 
 #include "constants.h"
 #include "helper/calendar.h"
 
-char header[102400];
-long file_length = 0;
-char *reply;
-char buff[MAXLINE];
 
 /*  Compose response HTTP message to send to the client */
 char *composeHeader(char *result, struct img *image)
 {
+    char *reply;
+    char header[102400];
+    long file_length = 0;
     char *date = getTodayToString();
 
-    if (strcmp(result,"HTTP_OK")==0) {
+    if (strcmp(result,HTTP_OK)==0) {
         if (sprintf(header,
                             "%s\n"
                             "Date: %s\n"
@@ -45,7 +44,7 @@ char *composeHeader(char *result, struct img *image)
         file_length = image->file_length;
     }
 
-    if (strcmp(result,"HTTP_NOT_FOUND")==0) {
+    if (strcmp(result,HTTP_NOT_FOUND)==0) {
         if (sprintf(header,
                     "%s\n"
                     "Date: %s\n"
@@ -56,7 +55,7 @@ char *composeHeader(char *result, struct img *image)
         }
     }
 
-    if (strcmp(result,"HTTP_BAD_REQUEST")==0) {
+    if (strcmp(result,HTTP_BAD_REQUEST)==0) {
         if (sprintf(header,
                     "%s\n"
                     "Date: %s\n"
@@ -86,7 +85,9 @@ char *composeHeader(char *result, struct img *image)
 }
 
 void writeResponse(int connfd, char *result, struct img *image, FILE *imgfd) {
+
     char *header = composeHeader(result, image);
+    char buff[MAXLINE];
     size_t n;
 
     write(connfd, header, strlen(header));

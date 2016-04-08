@@ -4,30 +4,37 @@
 * Implementation of system structs and definition of system constant.
 */
 
-#include "constants.h"
+#include <wchar.h>
+#include <netinet/in.h>
 
 /*  path of images' directory    */
-char *PATH =               "/home/laura_trive/Scrivania/ServerFiles/";
+const char *PATH =               "/home/laura_trive/Scrivania/ServerFiles/";
 /*  path of cached images' directory    */
-char *CACHE_PATH =         "/home/laura_trive/Scrivania/ServerFiles/Cache/";
+const char *CACHE_PATH =         "/home/laura_trive/Scrivania/ServerFiles/Cache/";
 /*  path of log file    */
-char *LOG_PATH =           "/home/laura_trive/Scrivania/ServerFiles/Log/log.txt";
+const char *LOG_PATH =           "/home/laura_trive/Scrivania/ServerFiles/Log/log.txt";
+/* default protocol port number */
+const in_port_t DEFAULT_PORT =          5193;
+/* size of request queue        */
+const int BACKLOG =               10;
 /*  line length */
-#define MAXLINE             1024
+const size_t MAXLINE =            1024;
+/*  number of child processes of server to manage requests  */
+const int CHILDREN_NUM =          2;
 /*  successfully HTTP request   */
-char *HTTP_OK =          "HTTP/1.1 200 OK";
+const char *HTTP_OK =          "HTTP/1.1 200 OK";
 /*  error in serving HTTP request */
-char *HTTP_BAD_REQUEST = "HTTP/1.1 400 Bad Request";
+const char *HTTP_BAD_REQUEST = "HTTP/1.1 400 Bad Request";
 /*  not found file requested    */
-char *HTTP_NOT_FOUND =   "HTTP/1.1 404 Not Found";
+const char *HTTP_NOT_FOUND =   "HTTP/1.1 404 Not Found";
 /*  version HTTP protocol 1.1   */
-char *HTTP_1 =           "HTTP/1.1";
+const char *HTTP_1 =           "HTTP/1.1";
 /*  version HTTP protocol 1.0   */
-char *HTTP_0 =           "HTTP/1.0";
+const char *HTTP_0 =           "HTTP/1.0";
 /*  HTTP request User-Agent line    */
-char *USER_AGENT =       "User-Agent:";
+const char *USER_AGENT =       "User-Agent:";
 /*  HTTP request Accept line    */
-char *ACCEPT =           "Accept:";
+const char *ACCEPT =           "Accept:";
 
 /*  logging file    */
 //FILE *log = fopen(LOG_PATH,"a");

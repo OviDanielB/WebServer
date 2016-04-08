@@ -19,10 +19,6 @@
 #include "constants.h"
 #include "serveRequest.h"
 
-#define DEFAULT_PORT       5193            /* default protocol port number */
-#define BACKLOG           10            /* size of request queue        */
-#define MAXLINE             1024
-
 // define sigfunc to simplify signal sys call
 typedef void sigfunc(int);
 
@@ -36,12 +32,10 @@ typedef void sigfunc(int);
  * Syntax:    server [ port ]
  *               port  - protocol port number to use
  * Note:      The port argument is optional.  If no port is specified,
- *            the server uses the default given by PROTOPORT.
+ *            the server uses the default given by DEFAULT_PORT.
  *------------------------------------------------------------------------ */
 
-static int num_child;
 static pid_t *pids;
-
 
 /* generic function for signal handling
  * define behavior in case: SIGNALNUMBER for specific signal
@@ -84,7 +78,7 @@ void child_main(int index, int listenfd, int addrlen) {
     char * clientIPAddr;
     struct sockaddr_in * addr;
 
-    memset(buff,'0',MAXLINE);
+    memset(buff,'0', MAXLINE);
     cliaddr = malloc((size_t)addrlen);
     clilen = sizeof(cliaddr);
 
@@ -214,20 +208,20 @@ int main(int argc, char **argv)
 
     // marks the socket as a passive socket and it is ready to accept connections
     // BACKLOG max number of allowerd connections. if max reached the user will get an error
-    if(listen(listensd,BACKLOG) < 0){
+    if(listen(listensd, BACKLOG) < 0){
         perror("Error in listen");
         exit(EXIT_FAILURE);
     }
 
     // creates memory for pids
-    pids = calloc( (size_t) num_child,sizeof(pid_t));
+    pids = calloc( (size_t) CHILDREN_NUM,sizeof(pid_t));
 
     // initialize lock on template filename for child processes
     lock_init("/tmp/lock.XXXXXX");
 
-    num_child = 2;
+    //num_child = 2;
     // create pids array with children pids
-    for(i = 0; i < num_child; i++ ){
+    for(i = 0; i < CHILDREN_NUM; i++ ){
         pids[i] = child_make(i, listensd, addrlen);
     }
 
