@@ -72,6 +72,7 @@ void images_in_dir(char *path,struct img **images){
             complete_path[0]=0;
 
 
+
         }
         closedir (dir);
     } else {
