@@ -4,8 +4,7 @@
 * Definition of system constant.
 */
 
-#include <wchar.h>
-#include <netinet/in.h>
+#include "constants.h"
 
 /*  path of images' directory    */
 const char *PATH =               "/home/laura_trive/Scrivania/ServerFiles/";
@@ -18,7 +17,7 @@ const in_port_t DEFAULT_PORT =          5193;
 /* size of request queue        */
 const int BACKLOG =               10;
 /*  line length */
-const size_t MAXLINE =            1024;
+const int MAXLINE =            1024;
 /*  number of child processes of server to manage requests  */
 const int CHILDREN_NUM =          2;
 /*  successfully HTTP request   */
@@ -39,6 +38,15 @@ const char *HTTP_0 =           "HTTP/1.0";
 const char *USER_AGENT =       "User-Agent:";
 /*  HTTP request Accept line    */
 const char *ACCEPT =           "Accept:";
+
+/*  Check jpg type    */
+static int jpg(char *ext)
+{
+    if ((strcmp(ext,"jpg")==0) || (strcmp(ext,"JPG")==0) || (strcmp(ext,"JPEG")==0) || (strcmp(ext,"jpeg")==0)) {
+        return 1; // true
+    }
+    return 0; // false
+}
 
 /*  logging file    */
 //FILE *log = fopen(LOG_PATH,"a");

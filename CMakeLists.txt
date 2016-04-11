@@ -13,6 +13,6 @@ link_libraries("Wand")
 link_libraries("GraphicsMagickWand")
 
 
-add_executable(server web_server.c helper/io_func.c helper/io_func.h sqlite3.c helper/locking.c helper/locking.h
-        constants.c constants.h  DataBase/db_cache.c DataBase/db_cache.h)
+add_executable(server web_server.c sqlite3.c constants.c constants.h DataBase/db_cache.c DataBase/db_cache.h
+                Service helper)
 add_executable(client client.c helper/io_func.c helper/io_func.h)

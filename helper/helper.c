@@ -6,8 +6,7 @@
  *  Implementation of helper functions.
  */
 
-#include <stdio.h>
-#include <string.h>
+#include "helper.h"
 
 /*  Get extension of a filename.    */
 char *readExtension(const char *filename)

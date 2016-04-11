@@ -7,6 +7,9 @@
 #ifndef WEBSERVER_HELPER_H
 #define WEBSERVER_HELPER_H
 
+#include <stdio.h>
+#include <string.h>
+
 /*  Get extension of a filename.    */
 char *readExtension(const char *filename);
 

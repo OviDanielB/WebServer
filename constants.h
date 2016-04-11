@@ -9,6 +9,9 @@
 
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <string.h>
+#include <wchar.h>
+#include <netinet/in.h>
 
 /*  path of images' directory    */
 const char *PATH;
@@ -17,7 +20,7 @@ const char *CACHE_PATH;
 /*  path of log file    */
 const char *LOG_PATH;
 /* size of a line   */
-const size_t MAXLINE;
+const int MAXLINE;
 /* default protocol port number */
 const in_port_t DEFAULT_PORT;
 /* size of request queue        */
@@ -43,6 +46,17 @@ const char *USER_AGENT;
 /*  HTTP request Accept line    */
 const char *ACCEPT;
 
+/*  Check jpg type    */
+static int jpg(char *ext);
+
+/*  Check png type  */
+//static int png(char *ext);
+
+/*  Check mpeg type */
+//static int mpeg(char *ext);
+
+/*  Check gif type  */
+//static int gif(char *ext);
 
 /*  Image struct    */
 typedef struct img {
@@ -50,26 +64,32 @@ typedef struct img {
     size_t  width;
     size_t  height;
     char    type[4];
-    size_t  file_length;
-    char    last_modified[50]; //da togliere
+    size_t  length;
+    //char    last_modified[50]; //da togliere
 };
 
 /*  Image adaptation    */
 typedef struct conv_img {
     char   original_name[256];
-    char   name[256]; //nome dell'immagine modificata nella cartella con il nome originale
-    size_t width;
-    size_t heigth;
-    size_t colors;
-    float  quality;
-    char   type[4];
-    char   last_modified[50];
+    // char   name[256]; //nome dell'immagine modificata nella cartella con il nome originale,
+
+    // hash sulla stringa formata da: <nomeoriginale><width><height><q><type><c> per indicare univocamente l'immagine modificata
+    unsigned long    name_code;
+    size_t           width;
+    size_t           height;
+    size_t           colors;
+    float            quality;
+    char             type[4];
+    size_t           length;
+    char             last_modified[50];
+    //char   eTag[16]; //per identificare versione del file come chiave della cache
 };
 
 /*  HTTP request struct    */
 typedef struct req {
     char    method[4];
-    char    url[100];
+    char    uri[100];
+    char    resource[256]; //name of resource read from URI
     char    type[4];
     float   quality;
     char    userAgent[50];

@@ -20,20 +20,16 @@ Interface to function to images adaption.
 
 /*  Function prototypes  */
 
+/*  Execution of command from terminal  */
 int execCommand(const char *command);
 
-struct img *convertQuality(struct img *image);
-
-struct img *convertType(struct img *image, const char *newType);
-
-struct img *resize(struct img *image, int width, int height);
-
-struct img *reduceColors(struct img *image, int colors);
+/*  Composition of the command to execute for manipulating image, based on characteristics in input. */
+unsigned long adapt(struct img *req_image, struct conv_img *adaptImg);
 
 
 /*  This function adapts image's characteristics to client's device,
  *  optimizing width, length, number of colors and quality.
  */
-struct img *adaptImageTo(struct img *req_image, char *user_agent);
+struct conv_img *adaptImageTo(struct img *req_image, float q, char *type, char *user_agent);
 
 #endif //WEBSERVER_MANAGE_IMG_H

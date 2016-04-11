@@ -10,7 +10,7 @@
 
 
 /*  Compose response HTTP message to send to the client */
-char *composeHeader(char *result, struct img *image)
+char *composeHeader(char *result, struct conv_img *image)
 {
     char *reply;
     char header[102400];
@@ -28,12 +28,12 @@ char *composeHeader(char *result, struct img *image)
                             "Content-Length: %ld\n"
                             //"Accept-Ranges: bytes\n"
                             "Connection: keep-alive\n\n",
-                            HTTP_OK, date, image->type, image->file_length) < 0) {
+                            HTTP_OK, date, image->type, image->length) < 0) {
             perror("error in sprintf\n");
             return "";
         }
 
-        file_length = image->file_length;
+        file_length = image->length;
     }
 
     if (strcmp(result,HTTP_NOT_FOUND)==0) {
@@ -44,7 +44,8 @@ char *composeHeader(char *result, struct img *image)
                     "Content-Type: text/html\n"
                     "Content-Length: %ld\n"
                     "Connection: keep-alive\n\n"
-                    "<html><body><h1>404 Page Not Found. </h1></body></html>", HTTP_OK, date, strlen(HTTP_NOT_FOUND)+20) < 0) {
+                    "<html><body><h1>404 Page Not Found. </h1></body></html>",
+                    HTTP_OK, date, strlen(HTTP_NOT_FOUND)+20) < 0) {
             perror("error in sprintf\n");
             return "";
         }
@@ -86,7 +87,7 @@ char *composeHeader(char *result, struct img *image)
  * @param: image = image to send as data in the message
  * @param: imgfd = file descriptor of image's file
  */
-void writeResponse(int connfd, char *result, struct img *image, FILE *imgfd) {
+void writeResponse(int connfd, char *result, struct conv_img *image, FILE *imgfd) {
 
     char *header = composeHeader(result, image);
     char buff[MAXLINE];
@@ -98,7 +99,7 @@ void writeResponse(int connfd, char *result, struct img *image, FILE *imgfd) {
 
         while (1) {
 
-            n = fread(buff, 1, MAXLINE, imgfd);
+            n = fread(buff, 1, (size_t) MAXLINE, imgfd);
             printf("Bytes read %d \n", (int) n);
 
             if (n > 0) {

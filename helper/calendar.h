@@ -8,8 +8,13 @@
 #ifndef WEBSERVER_CALENDAR_H
 #define WEBSERVER_CALENDAR_H
 
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
 /* Today date */
-struct date getToday();
+struct tm *getToday();
 
 /* Convert date from string to struct tm */
 struct tm *fromStringToTm(char *date);

@@ -6,9 +6,6 @@
 
 #include "adaptImage.h"
 
-#define MAXLINE             1024
-
-
 /**
  *  This function executes a system command line.
  *
@@ -24,124 +21,133 @@ int execCommand(const char *command)
     return 0;
 }
 
+/* Hash function to calculate an (almost) unique identifier for every manipulated image
+ * from the resource name, where are indicated the adapted values or the original ones.
+ *
+ * @param: name = string formatted as <originalname><width><height><qualityfactor><type><colorsnum>
+ */
+unsigned long getHashCode(unsigned char *name)
+{
+    unsigned long hash = 5381;
+    int c;
+
+    while ((c = *name++))
+        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+    return hash;
+}
+
+
+/*  This function get width of the image
+ *
+ * @param: filename = image's path to get info from
+ */
+size_t getWidth(char *filename)
+{
+    char cmd[MAXLINE];
+    size_t width;
+    sprintf(cmd,"identify -format ""%%[fx:w]"" %s", filename);
+    while (execCommand(cmd)==1){}
+    sscanf(stdout,"%ld",&width);
+    return width;
+}
+
+/*  This function get height of the image
+ *
+ * @param: filename = image's path to get info from
+ */
+size_t getHeight(char *filename)
+{
+    char cmd[MAXLINE];
+    size_t height;
+    sprintf(cmd,"identify -format ""%%[fx:h]"" %s", filename);
+    while (execCommand(cmd)==1){}
+    sscanf(stdout,"%ld",&height);
+    return height;
+}
+
+/* Count of number of colors in the image
+ *
+ * @param: filename = image's path to get colors' number from
+ */
+size_t getColors(char *filename)
+{
+    size_t col = 0;
+    char cmd[50];
+    sprintf(cmd, "identify -format '%%k' %s",filename);
+    while (execCommand(cmd)==1) {}
+    sscanf(stdout,"%ld",&col);
+    return col;
+}
+
 /*
- * For the JPEG and MPEG image formats, quality is
- * 1 (lowest image quality and highest compression)
- * to 100 (best quality but least effective compression)
+ * This function composes the command to execute for manipulating image, based on characteristics in input.
  *
- * @param image = original image with modified field of quality for manipulation
+ * @param: req_image = requested image;
+ * @param: adaptImg = image adapted on device characteristics
  */
-struct img *convertQuality(struct img *image)
+unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
 {
-    size_t n = strlen(image->name);
-    int i;
-    // converted image's path
-    char newName[n+4];
-    // command line
-    char command[2*n+50];
-    // percent quality factor
-    int factor = (int) (image->quality * 100);
+    char cmd[MAXLINE];
+    char filename[50];
+    sprintf(filename,"%s%s.%s", PATH, req_image->name, req_image->type);
+    size_t c = getColors(filename);
+    size_t w = req_image->height = getHeight(filename);
+    size_t h = req_image->height = getWidth(filename);
+    char *format = req_image->type;
+    char nameToHash[256];
+    unsigned long hashcode;
+    // hash sulla stringa formata da: <nomeoriginale><width><height><q><type><c> per indicare univocamente l'immagine modificata
+    // caratteristica origianel o  0 se elemento non modificato
+    char destination[MAXLINE];
 
-    // converted image's path
-    if (sprintf(newName,"%s%d",image->name,factor)<0) {
-        perror("error in sprintf");
-        return NULL;
+    if (strcmp(adaptImg->type,"")!=0) {
+        char conversion[50];
+        sprintf(conversion,"convert %s%s.%s %s%s.png ; ", PATH,req_image->name,req_image->type,PATH,req_image->name);
+        while (execCommand(conversion)==1);
+        format = "png";
     }
 
-    if (sprintf(command, "convert %s.%s -quality %d%% %s%s.%s\n",
-                image->name,image->type,factor,CACHE_PATH,newName,image->type)<0) {
-        perror("error in sprintf");
-        return NULL;
+    sprintf(cmd,"convert %s%s.%s", PATH,req_image->name,format);
+
+    /* resize of the original image */
+    if (adaptImg->width!=-1) {
+        char resize[50];
+        sprintf(resize,"-resize %ldx%ld ", adaptImg->width,adaptImg->height);
+        strcat(cmd,resize);
+        w = adaptImg->width;
+        h = adaptImg->height;
     }
-    while (execCommand(command)==1){}
-    sprintf(image->name,newName);
-    sprintf(image->last_modified,getTodayToString());
-    return image;
+
+    /* For the JPEG and MPEG image formats, quality is
+    * 1 (lowest image quality and highest compression)
+    * to 100 (best quality but least effective compression)
+    */
+    char quality[50];
+    sprintf(quality,"-quality %f%% ", adaptImg->quality);
+    strcat(cmd,quality);
+
+    /* Reduction of the number of colors in the original image.
+    * The color reduction also can happen automatically when saving images
+    * to color-limited image file formats, such as GIF, and PNG8.*/
+    if (adaptImg->colors!=-1) {
+        char reduce[50];
+        sprintf(reduce,"-dither None -colors %ld ", adaptImg->colors);
+        strcat(cmd,reduce);
+        c = adaptImg->colors;
+    }
+
+    // string <nomeoriginale><width><height><q><type><c> to hash
+    sprintf(nameToHash, "%s%ld%ld%f%s%ld",req_image->name, w,h,adaptImg->quality,adaptImg->type,c);
+
+    hashcode = getHashCode(nameToHash);
+    sprintf(destination,"%s%ld.%s",CACHE_PATH,hashcode,req_image->type);
+    strcat(cmd,destination);
+
+    while (execCommand(cmd)==1);
+
+    return hashcode;
 }
-
-/**
- *  This function convert type of the image, creating a copy.
- *
- *  @param image = original image
- *  @param newType = string with new type of image for conversion
- */
-struct img *convertType(struct img *image, const char *newType)
-{
-    size_t n = strlen(image->name);
-    char command[2*n+20];
-
-    if (sprintf(command, "convert %s.%s %s%s.%s",image->name,image->type,CACHE_PATH,image->name,newType)<0) {
-        perror("error in sprintf");
-        return NULL;
-    }
-    while (execCommand(command)==1){}
-    sprintf(image->type,newType);
-    sprintf(image->last_modified,getTodayToString());
-    return image;
-}
-
-/**
- * This function create a copy resize of the original image.
- *
- * @param image = original image with width and height fields modified with value fot resizing
- */
-struct img *resize(struct img *image, int width, int height)
-{
-    size_t  n = strlen(image->name);
-    //command line
-    char command[n+50];
-    // copy image's path
-    char newName[n+10];
-    if (sprintf(newName,"%s%dx%d",image->name,width,height)<0) {
-        perror("error in sprintf");
-        return NULL;
-    }
-
-    if (sprintf(command, "convert %s.%s -resize %dx%d %s%s.%s\n",
-                image->name,image->type,width,height,CACHE_PATH,newName,image->type)<0) {
-        perror("error in sprintf");
-        return NULL;
-    }
-    while (execCommand(command)==1){}
-    sprintf(image->name,newName);
-    image->width = width;
-    image->height = height;
-    sprintf(image->last_modified,getTodayToString());
-    return image;
-}
-
-/**
- * This function creates a copy of the original image with a reduction of
- * the number of colors in.
- * The color reduction also can happen automatically when saving images
- * to color-limited image file formats, such as GIF, and PNG8.
- *
- * @param image = original image
- * @param colors = number of image's colors
- */
-struct img *reduceColors(struct img *image, int colors)
-{
-    //command line
-    char command[MAXLINE];
-    // copy image's path
-    size_t  n = strlen(image->name);
-    char newName[n+10];
-    if (sprintf(newName,"%s_no%d",image->name,colors)<0) {
-        perror("error in sprintf\n");
-        return NULL;
-    }
-
-    if (sprintf(command, "convert %s%s.%s -dither None -colors %d %s%s.%s\n",
-                PATH,image->name,image->type,colors,CACHE_PATH,newName,image->type)<0) {
-        perror("error in sprintf\n");
-        return NULL;
-    }
-    while (execCommand(command)==1){}
-    sprintf(image->name,newName);
-    sprintf(image->last_modified,getTodayToString());
-    return image;
-}
-
 
 /*  This function adapts image's characteristics to client's device,
  *  optimizing width, length, number of colors and quality.
@@ -149,10 +155,13 @@ struct img *reduceColors(struct img *image, int colors)
  *  @param image: image to adapt, containing info of requested quality and type
  *  @param user_agent: line of HTTP request to get device's and requested file's info from
  */
-struct img *adaptImageTo(struct img *req_image, char *user_agent)
+struct conv_img *adaptImageTo(struct img *req_image, float quality, char *type, char *user_agent)
 {
-    struct img *image = req_image;
-    char *name;
+    struct conv_img *adaptedImg;
+    if ((adaptedImg=malloc(sizeof(struct conv_img)))==NULL) {
+        perror("error in malloc");
+        return NULL;
+    }
 
     // check if adapted image has been previously modified and it's in cache
     /*if ((name = isInCache(req_image))!=NULL) {
@@ -160,21 +169,37 @@ struct img *adaptImageTo(struct img *req_image, char *user_agent)
         return image;
     }*/
 
-    /* if original image type isn't JPG, better to manipulate it in GIF to avoid
-     * data looses due to JPEG format compression. */
-    if (strcmp(image->type,"jpg")==0) {
-        convertType(image,"gif");
+    adaptedImg->quality = quality;
+    sprintf(adaptedImg->type,type);
+    // TODO da ottenere con WURFL usando useragent
+    adaptedImg->width = 200;
+    adaptedImg->height = 200;
+    adaptedImg->colors = (size_t) -1;
+
+    // check if resize is necessary
+    if (req_image->width==adaptedImg->width && req_image->height==adaptedImg->height) {
+        adaptedImg->width = (size_t) -1;
+        adaptedImg->height = (size_t) -1;
     }
 
+    // check if is requested JPG format to convert before manipulating, avoiding data loss due to compression.
+    if (!jpg(adaptedImg->type)){
+        sprintf(adaptedImg->type,"");
+    }
 
-    // read caratteristiche device dal file Wurfl
-    // ...
-    // adatta image in base a quelle
+    // check if reducing number of colors is necessary
+    char filename[50];
+    sprintf(filename,"%s%s.%s", PATH, req_image->name, req_image->type);
+    if (getColors(filename)==adaptedImg->colors) {
+        adaptedImg->colors = (size_t) -1;
+    }
 
-    /* at finished manipulation, reset original image's type */
-    convertType(image,"jpg");
+    // composes command to do necessary content adaptation
+    adaptedImg->name_code = adapt(req_image, adaptedImg);
+
+    sprintf(adaptedImg->last_modified,getTodayToString());
 
     // aggiunge alla cache db
 
-    return image;
+    return adaptedImg;
 }

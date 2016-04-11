@@ -19,10 +19,9 @@
 #include "../helper/calendar.h"
 
 /*  Compose header of HTTP message to send to the client, based on result of request's elaboration */
-char *composeHeader(char *result, struct img *image);
+char *composeHeader(char *result, struct conv_img *image);
 
-/**
- * This function sends server response, based on result of the request's elaboration */
-void writeResponse(int connfd, char *result, struct img *image, FILE *imgfd);
+/*  This function sends server response, based on result of the request's elaboration */
+void writeResponse(int connfd, char *result, struct conv_img *image, FILE *imgfd);
 
 #endif //WEBSERVER_RESPONSE_H
