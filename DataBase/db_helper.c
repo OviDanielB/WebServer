@@ -4,31 +4,23 @@
 
 #include "db_helper.h"
 
-#define DB_PATH "/home/ovi/ClionProjects/WebServer/DataBase/serverContent.db"
 
 
 /* called by db_get_image_by_name to fill the img struct passed as (void *), later casted back */
 int fill_img_struct(void *data, int argc, char **argv, char **azColName){
 
     int i;
-    struct img *image;
+    struct img *image = (struct img *) data;
 
-    image = (struct img *) data;
+    if ((image=malloc(sizeof(struct img)))==NULL) {
+        perror("Struct img malloc error.\n");
+        return 1;
+    }
 
     for(i = 0; i < argc; i++){
-        if(strcmp(azColName[i],"Name") == 0){
-            image->name = malloc(50);
-            if(image->name == NULL){
-                perror("Struct img malloc error.\n");
-                return 1;
-            }
+        if (strcmp(azColName[i],"Name") == 0) {
             sscanf(argv[i], "%s",image->name);
         } else if(strcmp(azColName[i],"Type") == 0){
-            image->type = malloc(5);
-            if(image->type == NULL){
-                perror("Struct img malloc error");
-                return 1;
-            }
             sscanf(argv[i], "%s",image->type);
         } else if(strcmp(azColName[i],"Width") == 0){
             image->width = (size_t) atoll(argv[i]);

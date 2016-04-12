@@ -116,7 +116,6 @@ void serveRequest(int sockfd)
     //sprintf(reqImage->type,"jpg");
     sprintf(reqImage->type,request->type);
 
-
     char buff[MAXLINE];
 /*    char path[MAXLINE];
     sprintf(path,"%s%s.%s", PATH, reqImage->name, reqImage->type);

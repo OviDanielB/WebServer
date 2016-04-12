@@ -16,10 +16,10 @@ void images_in_dir(char *path,struct img **images){
     int fileCount = 0;
     char complete_path[1024];
 
-    MagickWand *m_wand = NULL;
+    //MagickWand *m_wand = NULL;
     size_t width,height;
 
-    m_wand = NewMagickWand();
+    //m_wand = NewMagickWand();
 
     //
     images = malloc(30 * sizeof(struct img *));

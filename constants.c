@@ -10,6 +10,8 @@
 const char *PATH =               "/home/laura_trive/Scrivania/ServerFiles/";
 /*  path of cached images' directory    */
 const char *CACHE_PATH =         "/home/laura_trive/Scrivania/ServerFiles/Cache/";
+/*  path of server's database of images */
+const char *DB_PATH =            "/home/ovi/ClionProjects/WebServer/DataBase/serverContent.db";
 /*  path of log file    */
 const char *LOG_PATH =           "/home/laura_trive/Scrivania/ServerFiles/Log/log.txt";
 /* default protocol port number */
@@ -38,15 +40,6 @@ const char *HTTP_0 =           "HTTP/1.0";
 const char *USER_AGENT =       "User-Agent:";
 /*  HTTP request Accept line    */
 const char *ACCEPT =           "Accept:";
-
-/*  Check jpg type    */
-static int jpg(char *ext)
-{
-    if ((strcmp(ext,"jpg")==0) || (strcmp(ext,"JPG")==0) || (strcmp(ext,"JPEG")==0) || (strcmp(ext,"jpeg")==0)) {
-        return 1; // true
-    }
-    return 0; // false
-}
 
 /*  logging file    */
 //FILE *log = fopen(LOG_PATH,"a");

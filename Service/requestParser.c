@@ -47,8 +47,9 @@ struct req *parseRequest(int sockfd)
             sscanf(line,"%s %s ",request->method,request->uri);
             //read resource name from URI in the request-line
             char *name;
-            int i=0;
+            int i=0, j=0;
             char resource[256];
+            char type[4];
             if ((name = strrchr(request->uri,'/'))!=NULL) {
                 name++;
                 while (*name!='.') {
@@ -57,6 +58,13 @@ struct req *parseRequest(int sockfd)
                     i++;
                 }
                 sprintf(request->resource,resource);
+                // read resource file read from uri
+                while (*name!=' ') {
+                    type[i] = *name;
+                    name++;
+                    j++;
+                }
+                sprintf(request->type,type);
             }
             n+=1;
             continue;
@@ -70,8 +78,34 @@ struct req *parseRequest(int sockfd)
         }
 
         if (strncmp(line,ACCEPT,strlen(ACCEPT))==0) {
-            //read request method GET or HEAD
-            sscanf(line," image/%s; q=%f ",request->type,&request->quality);
+            //read resource type from Accept line
+            char *t;
+            int i=0;
+            char type[4];
+            if ((t = strstr(line,"image/"))!=NULL) {
+                t+=6;
+                while (*t!=' ') {
+                    type[i] = *t;
+                    t++;
+                    i++;
+                }
+                sprintf(request->type,type);
+            }
+            //read resource quality from Accept line
+            char *q;
+            float factor;
+            int j=0;
+            char quality[3];
+            if ((q = strstr(line,"q="))!=NULL) {
+                q+=2;
+                while (*q!=' ' || *q!=',' || *q!=';') {
+                    quality[j] = *q;
+                    q++;
+                    j++;
+                }
+                sscanf(quality,"%f",&factor);
+                request->quality = factor;
+            }
             n+=1;
         }
     }

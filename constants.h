@@ -19,6 +19,8 @@ const char *PATH;
 const char *CACHE_PATH;
 /*  path of log file    */
 const char *LOG_PATH;
+/*  path of server's database of images */
+const char *DB_PATH;
 /* size of a line   */
 const int MAXLINE;
 /* default protocol port number */
@@ -45,9 +47,6 @@ const char *HTTP_0;
 const char *USER_AGENT;
 /*  HTTP request Accept line    */
 const char *ACCEPT;
-
-/*  Check jpg type    */
-static int jpg(char *ext);
 
 /*  Check png type  */
 //static int png(char *ext);
