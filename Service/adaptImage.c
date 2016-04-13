@@ -97,12 +97,12 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
     char *format = req_image->type;
     unsigned char nameToHash[256];
     unsigned long hashcode;
+    char conversion[MAXLINE];
     // hash sulla stringa formata da: <nomeoriginale><width><height><q><type><c> per indicare univocamente l'immagine modificata
     // caratteristica origianel o  0 se elemento non modificato
     char destination[MAXLINE];
 
     if (strcmp(adaptImg->type,"")!=0) {
-        char conversion[MAXLINE];
         sprintf(conversion,"convert %s%s.%s %s%s.png ; ", PATH,req_image->name,req_image->type,PATH,req_image->name);
         while (execCommand(conversion)==1);
         format = "png";
@@ -143,6 +143,13 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
     hashcode = getHashCode(nameToHash);
     sprintf(destination,"%s%ld.%s",CACHE_PATH,hashcode,req_image->type);
     strcat(cmd,destination);
+
+    // NON SO SE SERVE
+    // reset type request which was modified from JPG (if it was) to PNG to avoid data looses
+    /*if (strlen(conversion)!=0) {
+        sprintf(conversion,"; convert %s %s%ld.%s ; ", destination,CACHE_PATH,hashcode,req_image->type);
+        strcat(cmd,conversion);
+    }*/
 
     while (execCommand(cmd)==1);
 
