@@ -110,7 +110,7 @@ void serveRequest(int sockfd)
             exit(1);
     }
     sprintf(reqImage->name,request->resource);
-    //sprintf(reqImage->name,"mare");
+    //sprintf(reqImage->name,"borsa");
     //reqImage->width = 960; //aggiunto dopo
     //reqImage->height = 600; //aggiunto dopo
     //sprintf(reqImage->type,"jpg");

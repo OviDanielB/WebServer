@@ -11,8 +11,7 @@
 #include <string.h>
 
 #include "../constants.h"
-//#include <ImageMagick-6/wand/magick_wand.h>
-//#include "ImageMagick-6/wand/magick-wand.h"
+#include "wand/magick_wand.h"
 //#include "../Service/adaptImage.h"
 
 

@@ -16,10 +16,10 @@ void images_in_dir(char *path,struct img **images){
     int fileCount = 0;
     char complete_path[1024];
 
-    //MagickWand *m_wand = NULL;
+    MagickWand *m_wand = NULL;
     size_t width,height;
 
-    //m_wand = NewMagickWand();
+    m_wand = NewMagickWand();
 
     //
     images = malloc(30 * sizeof(struct img *));
@@ -37,16 +37,16 @@ void images_in_dir(char *path,struct img **images){
             strcat(complete_path,"/");
             strcat(complete_path,ent->d_name);
             printf("%s\n",complete_path);
-            /*
+
             if(MagickReadImage(m_wand,strcat(path,ent->d_name)) == MagickFalse){
                 perror("MagickReadImage error");
                 exit(EXIT_FAILURE);
             }
 
-             */
 
-            //width = MagickGetImageWidth(m_wand);
-            //height =MagickGetImageHeight(m_wand);
+
+            width = MagickGetImageWidth(m_wand);
+            height =MagickGetImageHeight(m_wand);
 
             images[fileCount] = malloc(sizeof(struct img));
             if(images[fileCount] == NULL){

@@ -73,7 +73,7 @@ size_t getHeight(char *filename)
 size_t getColors(char *filename)
 {
     size_t col = 0;
-    char cmd[50];
+    char cmd[MAXLINE];
     sprintf(cmd, "identify -format '%%k' %s",filename);
     while (execCommand(cmd)==1) {}
     sscanf(stdout,"%ld",&col);
@@ -89,30 +89,30 @@ size_t getColors(char *filename)
 unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
 {
     char cmd[MAXLINE];
-    char filename[50];
+    char filename[MAXLINE];
     sprintf(filename,"%s%s.%s", PATH, req_image->name, req_image->type);
     size_t c = getColors(filename);
     size_t w = req_image->height = getHeight(filename);
     size_t h = req_image->height = getWidth(filename);
     char *format = req_image->type;
-    char nameToHash[256];
+    unsigned char nameToHash[256];
     unsigned long hashcode;
     // hash sulla stringa formata da: <nomeoriginale><width><height><q><type><c> per indicare univocamente l'immagine modificata
     // caratteristica origianel o  0 se elemento non modificato
     char destination[MAXLINE];
 
     if (strcmp(adaptImg->type,"")!=0) {
-        char conversion[50];
+        char conversion[MAXLINE];
         sprintf(conversion,"convert %s%s.%s %s%s.png ; ", PATH,req_image->name,req_image->type,PATH,req_image->name);
         while (execCommand(conversion)==1);
         format = "png";
     }
 
-    sprintf(cmd,"convert %s%s.%s", PATH,req_image->name,format);
+    sprintf(cmd,"convert %s%s.%s ", PATH,req_image->name,format);
 
     /* resize of the original image */
     if (adaptImg->width!=-1) {
-        char resize[50];
+        char resize[MAXLINE];
         sprintf(resize,"-resize %ldx%ld ", adaptImg->width,adaptImg->height);
         strcat(cmd,resize);
         w = adaptImg->width;
@@ -123,7 +123,7 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
     * 1 (lowest image quality and highest compression)
     * to 100 (best quality but least effective compression)
     */
-    char quality[50];
+    char quality[MAXLINE];
     sprintf(quality,"-quality %f%% ", adaptImg->quality);
     strcat(cmd,quality);
 
@@ -131,14 +131,14 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
     * The color reduction also can happen automatically when saving images
     * to color-limited image file formats, such as GIF, and PNG8.*/
     if (adaptImg->colors!=-1) {
-        char reduce[50];
+        char reduce[MAXLINE];
         sprintf(reduce,"-dither None -colors %ld ", adaptImg->colors);
         strcat(cmd,reduce);
         c = adaptImg->colors;
     }
 
     // string <nomeoriginale><width><height><q><type><c> to hash
-    sprintf(nameToHash, "%s%ld%ld%f%s%ld",req_image->name, w,h,adaptImg->quality,adaptImg->type,c);
+    sprintf((char *)nameToHash, "%s%ld%ld%f%s%ld",req_image->name, w,h,adaptImg->quality,adaptImg->type,c);
 
     hashcode = getHashCode(nameToHash);
     sprintf(destination,"%s%ld.%s",CACHE_PATH,hashcode,req_image->type);
@@ -188,7 +188,7 @@ struct conv_img *adaptImageTo(struct img *req_image, float quality, char *type, 
     }
 
     // check if reducing number of colors is necessary
-    char filename[50];
+    char filename[MAXLINE];
     sprintf(filename,"%s%s.%s", PATH, req_image->name, req_image->type);
     if (getColors(filename)==adaptedImg->colors) {
         adaptedImg->colors = (size_t) -1;

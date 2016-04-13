@@ -59,8 +59,9 @@ struct req *parseRequest(int sockfd)
                 }
                 sprintf(request->resource,resource);
                 // read resource file read from uri
+                name++;
                 while (*name!=' ') {
-                    type[i] = *name;
+                    type[j] = *name;
                     name++;
                     j++;
                 }
@@ -77,12 +78,17 @@ struct req *parseRequest(int sockfd)
             continue;
         }
 
+        // NON PARSA q PER TEST METTO COSTANTE
+        request->quality = 0.5;
+        n++;
+        // fine test
+
         if (strncmp(line,ACCEPT,strlen(ACCEPT))==0) {
             //read resource type from Accept line
             char *t;
             int i=0;
             char type[4];
-            if ((t = strstr(line,"image/"))!=NULL) {
+            /*if ((t = strstr(line,"image/"))!=NULL) {
                 t+=6;
                 while (*t!=' ') {
                     type[i] = *t;
@@ -90,12 +96,15 @@ struct req *parseRequest(int sockfd)
                     i++;
                 }
                 sprintf(request->type,type);
-            }
+                printf("q: %s\n",type);
+
+            }*/
             //read resource quality from Accept line
             char *q;
             float factor;
             int j=0;
             char quality[3];
+
             if ((q = strstr(line,"q="))!=NULL) {
                 q+=2;
                 while (*q!=' ' || *q!=',' || *q!=';') {
@@ -105,6 +114,8 @@ struct req *parseRequest(int sockfd)
                 }
                 sscanf(quality,"%f",&factor);
                 request->quality = factor;
+
+                printf("q: %f\n",factor);
             }
             n+=1;
         }
