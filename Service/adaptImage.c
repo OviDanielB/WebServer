@@ -85,8 +85,6 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
         format = "png";
     }
 
-    printf("check type\n");
-
     sprintf(cmd,"convert %s%s.%s ", PATH,req_image->name,format);
 
     /* resize of the original image */
@@ -98,8 +96,6 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
         h = adaptImg->height;
     }
 
-    printf("resized \n");
-
     /* For the JPEG and MPEG image formats, quality is
     * 1 (lowest image quality and highest compression)
     * to 100 (best quality but least effective compression)
@@ -107,8 +103,6 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
     char quality[MAXLINE];
     sprintf(quality,"-quality %f%% ", adaptImg->quality);
     strcat(cmd,quality);
-
-    printf("quality adapted\n");
 
     /* Reduction of the number of colors in the original image.
     * The color reduction also can happen automatically when saving images
@@ -119,8 +113,6 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
         strcat(cmd,reduce);
         c = adaptImg->colors;
     }
-
-    printf("color adapting\n");
 
     // string <nomeoriginale><width><height><q><type><c> to hash
     sprintf((char *)nameToHash, "%s%ld%ld%f%s%ld",req_image->name, w,h,adaptImg->quality,adaptImg->type,c);
@@ -137,8 +129,6 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
     }*/
 
     while (execCommand(cmd)==1);
-
-    printf("comando eseguito\n");
 
     return hashcode;
 }
@@ -187,8 +177,6 @@ struct conv_img *adaptImageTo(struct img *req_image, float quality, char *type, 
     if (getColors(filename)==adaptedImg->colors) {
         adaptedImg->colors = (size_t) -1;
     }
-
-    printf("riempita adaptimg\n");
 
     // composes command to do necessary content adaptation
     adaptedImg->name_code = adapt(req_image, adaptedImg);
