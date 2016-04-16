@@ -6,38 +6,6 @@
 
 #include "adaptImage.h"
 
-/**
- *  This function executes a system command line.
- *
- *  @param command: command string to execute on terminal
- */
-int execCommand(const char *command)
-{
-    // execution of command if system is available
-    if (system(NULL)==0 || system(command)==-1) {
-        perror("error in system\n");
-        return 1;
-    }
-    return 0;
-}
-
-/* Hash function to calculate an (almost) unique identifier for every manipulated image
- * from the resource name, where are indicated the adapted values or the original ones.
- *
- * @param: name = string formatted as <originalname><width><height><qualityfactor><type><colorsnum>
- */
-unsigned long getHashCode(unsigned char *name)
-{
-    unsigned long hash = 5381;
-    int c;
-
-    while ((c = *name++))
-        hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-
-    return hash;
-}
-
-
 /*  This function get width of the image
  *
  * @param: filename = image's path to get info from
@@ -47,8 +15,11 @@ size_t getWidth(char *filename)
     char cmd[MAXLINE];
     size_t width;
     sprintf(cmd,"identify -format ""%%[fx:w]"" %s", filename);
-    while (execCommand(cmd)==1){}
-    sscanf(stdout,"%ld",&width);
+
+    char buf[MAXLINE];
+    buf = readResultLine(cmd);
+    sscanf(buf,"%ld",&width);
+
     return width;
 }
 
@@ -61,8 +32,11 @@ size_t getHeight(char *filename)
     char cmd[MAXLINE];
     size_t height;
     sprintf(cmd,"identify -format ""%%[fx:h]"" %s", filename);
-    while (execCommand(cmd)==1){}
-    sscanf(stdout,"%ld",&height);
+
+    char buf[MAXLINE];
+    buf = readResultLine(cmd);
+    sscanf(buf,"%ld",&height);
+
     return height;
 }
 
@@ -75,8 +49,11 @@ size_t getColors(char *filename)
     size_t col = 0;
     char cmd[MAXLINE];
     sprintf(cmd, "identify -format '%%k' %s",filename);
-    while (execCommand(cmd)==1) {}
-    sscanf(stdout,"%ld",&col);
+
+    char buf[MAXLINE];
+    buf = readResultLine(cmd);
+    sscanf(buf,"%ld",&col);
+
     return col;
 }
 
@@ -108,6 +85,8 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
         format = "png";
     }
 
+    printf("check type\n");
+
     sprintf(cmd,"convert %s%s.%s ", PATH,req_image->name,format);
 
     /* resize of the original image */
@@ -119,6 +98,8 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
         h = adaptImg->height;
     }
 
+    printf("resized \n");
+
     /* For the JPEG and MPEG image formats, quality is
     * 1 (lowest image quality and highest compression)
     * to 100 (best quality but least effective compression)
@@ -126,6 +107,8 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
     char quality[MAXLINE];
     sprintf(quality,"-quality %f%% ", adaptImg->quality);
     strcat(cmd,quality);
+
+    printf("quality adapted\n");
 
     /* Reduction of the number of colors in the original image.
     * The color reduction also can happen automatically when saving images
@@ -136,6 +119,8 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
         strcat(cmd,reduce);
         c = adaptImg->colors;
     }
+
+    printf("color adapting\n");
 
     // string <nomeoriginale><width><height><q><type><c> to hash
     sprintf((char *)nameToHash, "%s%ld%ld%f%s%ld",req_image->name, w,h,adaptImg->quality,adaptImg->type,c);
@@ -152,6 +137,8 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
     }*/
 
     while (execCommand(cmd)==1);
+
+    printf("comando eseguito\n");
 
     return hashcode;
 }
@@ -200,6 +187,8 @@ struct conv_img *adaptImageTo(struct img *req_image, float quality, char *type, 
     if (getColors(filename)==adaptedImg->colors) {
         adaptedImg->colors = (size_t) -1;
     }
+
+    printf("riempita adaptimg\n");
 
     // composes command to do necessary content adaptation
     adaptedImg->name_code = adapt(req_image, adaptedImg);

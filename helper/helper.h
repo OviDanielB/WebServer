@@ -9,6 +9,13 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <zconf.h>
+
+#include "../constants.h"
+
 
 /*  Check jpg type    */
 static int jpg(char *ext)
@@ -19,10 +26,14 @@ static int jpg(char *ext)
     return 0; // false
 }
 
-/*  Get extension of a filename.    */
-char *readExtension(const char *filename);
+/*  Executes a system command line  */
+int execCommand(const char *command);
 
-/*  Get filename without extension.     */
-char *cutFilename(const char *filename);
+/*  Read result line from STDOUT after the execution of a command. */
+char *readResultLine(char *cmd);
+
+/* Hash function to calculate an (almost) unique identifier for every manipulated image
+ * from the resource name, where are indicated the adapted values or the original ones.  */
+unsigned long getHashCode(unsigned char *name);
 
 #endif //WEBSERVER_HELPER_H

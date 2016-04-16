@@ -20,9 +20,6 @@ Interface to function to images adaption.
 
 /*  Function prototypes  */
 
-/*  Execution of command from terminal  */
-int execCommand(const char *command);
-
 /*  Composition of the command to execute for manipulating image, based on characteristics in input. */
 unsigned long adapt(struct img *req_image, struct conv_img *adaptImg);
 
