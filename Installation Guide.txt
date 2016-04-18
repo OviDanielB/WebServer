@@ -12,3 +12,7 @@
     b) sudo apt-get install libmagickwand
     c) sudo apt-get install libmagickwand-dev
     d) sudo apt-get install graphicsmagick-libmagick-dev-compat
+
+
+
+MAYBE 3) PHP + "sudo apt-get install php-sqlite"
