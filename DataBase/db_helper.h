@@ -14,22 +14,15 @@
 
 #include "../constants.h"
 
-
-/* initialized in db_get_image_by_name with char *name[50] and char *type[5] */
-/*typedef struct img {
-    char    *name;
-    float   quality;
-    int     width;
-    int     height;
-    int     length;
-    char    *type;
-    char    *last_modified;
-} img;*/
-
+/*  Creating database if not exists and opening it  */
 void db_open(sqlite3 * db);
+/*  Closing database    */
 void db_close(sqlite3 * db);
-void db_insert_img(struct img *image);
+/*  Insert new image into database in table IMAGES or CONV_IMG (cache)  */
+void db_insert_img(struct img *originalImg, struct conv_img *convImg);
+/*  Select from database an image from table IMAGES or CONV_IMG (cache) */
 void db_get_image_by_name(char *name,struct img * image);
+/*  Deleting image from database    */
 void db_delete_image_by_name(char *name);
 
 #endif //WEBSERVER_DB_HELPER_H
