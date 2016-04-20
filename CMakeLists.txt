@@ -5,7 +5,7 @@ set(CMAKE_C_COMPILER "/usr/bin/gcc")
 set(CMAKE_C_FLAGS " -pthread")
 
 
-set(SOURCE_FILES web_server.c client.c adaptImage.c)
+set(SOURCE_FILES web_server.c client.c)
 
 link_libraries(dl)
 link_libraries(Magick)

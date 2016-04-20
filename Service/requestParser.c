@@ -20,7 +20,7 @@ struct req *parseRequest(int sockfd)
     struct req *request;
     if ((request=malloc(sizeof(struct req)))==NULL) {
         perror("error in malloc\n");
-        exit(1);
+        return NULL;
     }
 
     char line[MAXLINE];
@@ -31,7 +31,7 @@ struct req *parseRequest(int sockfd)
 
     while (n<3) {
 
-        if ((read = readline(sockfd, line, MAXLINE)) == 0) {
+        if ((read = readline(sockfd, line, (int) MAXLINE)) == 0) {
             printf("Client quit connection\n");
             return NULL;
         }
@@ -113,7 +113,7 @@ struct req *parseRequest(int sockfd)
                     j++;
                 }
                 sscanf(quality,"%f",&factor);
-                request->quality = factor;
+                request->quality = (size_t) factor*100;
 
                 printf("q: %f\n",factor);
             }

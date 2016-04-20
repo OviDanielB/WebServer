@@ -16,6 +16,8 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#include <errno.h>
+
 static struct flock lock_it, unlock_it;
 
 static int lock_fd = -1;
@@ -31,8 +33,10 @@ void lock_init(char *pathname)
 
     strncpy(lock_file, pathname, sizeof(lock_file));
     /* generate unique temporary filename */
+    errno = 0;
     if ( (lock_fd = mkstemp(lock_file)) < 0) {
         fprintf(stderr, "error in mkstemp");
+        printf("%d",errno);
         exit(1);
     }
     /* delete a name from filesystem */

@@ -12,7 +12,7 @@
 
 #include "../constants.h"
 #include "wand/magick_wand.h"
-//#include "../Service/adaptImage.h"
+#include "../Service/adaptImage.h"
 
 
 void images_in_dir(char *,struct img **);

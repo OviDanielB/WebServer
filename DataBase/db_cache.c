@@ -3,7 +3,6 @@
 //
 
 #include "db_cache.h"
-
 /* returns a char** with the names of the files in the directory specified by path
  * the char ** in the call     char** files = files_in_dir(path) DOESN'T HAVE TO BE INITIALIZED
  * the names of the files are at maximum 256 as defined in dirent.h
@@ -74,6 +73,9 @@ void images_in_dir(char *path,struct img **images){
 
 
         }
+
+        DestroyMagickWand(m_wand);
+
         closedir (dir);
     } else {
         /* could not open directory */

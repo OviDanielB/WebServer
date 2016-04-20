@@ -8,15 +8,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <arpa/inet.h>
 #include <signal.h>
 
-
-#include "helper/io_func.h"
 #include "DataBase/db_helper.h"
 #include "helper/locking.h"
-#include "constants.h"
 #include "Service/serveRequest.h"
 
 // define sigfunc to simplify signal sys call
@@ -65,6 +61,7 @@ void sig_handler(int sig){
 
 }
 
+void child_main(int index, int listenfd, int addrlen);
 void child_main(int index, int listenfd, int addrlen) {
 
     int connfd, imagefd,pictfd;
@@ -93,7 +90,6 @@ void child_main(int index, int listenfd, int addrlen) {
         // file unlock
         lock_release();
 
-
         // convert sockaddr to sockaddr_in
         addr = (struct sockaddr_in *) cliaddr;
         // use ntoa to convert client address from binary form to readable string
@@ -101,36 +97,24 @@ void child_main(int index, int listenfd, int addrlen) {
 
         printf("server process %ld accepted request from client %s\n",(long) getpid(), clientIPAddr);
 
-       // pict = fopen("/home/ovi/Desktop/3806.jpg","rb");
-
-/*        while(1){
-
-            size_t nread = fread(buff, 1, MAXLINE, pict);
-            printf("Bytes read %d \n", nread);
-
-            if(nread > 0){
-                printf("Sending \n");
-                write(connfd,buff,nread);
-
-            }
-
-            if(nread < MAXLINE){
-                if(feof(pict)){
-                    printf("End of file \n ");
-                }
-                if(ferror(pict)){
-                    printf("Error Reading \n");
-                }
-                break;
-            }
-
-        }
-*/
-
         serveRequest(connfd);
 
         close(connfd);
     }
+}
+
+pid_t child_make(int i, int listenfd, int addrlen);
+pid_t child_make(int i, int listenfd, int addrlen)
+{
+    pid_t pid;
+
+    // if it's father return pid
+    if((pid = fork()) > 0){
+        return pid;
+    }
+
+    child_main(i,listenfd,addrlen);
+
 }
 
 int main(int argc, char **argv)
@@ -161,29 +145,11 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    // OPEN DATABASE; creates it if doesn't exist
-    //db_open(db);
-
-
-    struct img * image;
-    image = malloc(sizeof(struct img));
-
-    /*
-    image->name = "Foto";
-    image->type = "jpeg";
-    image->width = 800;
-    image->height = 600;
-    image->length = 800*600;
-
-    db_insert_img(image);
-
-     */
-
-   // db_get_image_by_name("Iubita", image);
-   // printf("CIAO %s\n", image->name);
-
-
-
+    /* OPEN DATABASE; creates it if doesn't exist
+    db_open(db);
+     FILL DATABASE;
+    db_insert_img_from_dr();
+    */
 
     // creates a listening socket
     if((listensd=socket(AF_INET,SOCK_STREAM,0)) < 0){
@@ -207,7 +173,7 @@ int main(int argc, char **argv)
     }
 
     // marks the socket as a passive socket and it is ready to accept connections
-    // BACKLOG max number of allowerd connections. if max reached the user will get an error
+    // BACKLOG max number of allowed connections. if max reached the user will get an error
     if(listen(listensd, BACKLOG) < 0){
         perror("Error in listen");
         exit(EXIT_FAILURE);
@@ -219,7 +185,6 @@ int main(int argc, char **argv)
     // initialize lock on template filename for child processes
     lock_init("/tmp/lock.XXXXXX");
 
-    //num_child = 2;
     // create pids array with children pids
     for(i = 0; i < CHILDREN_NUM; i++ ){
         pids[i] = child_make(i, listensd, addrlen);
@@ -242,89 +207,3 @@ int main(int argc, char **argv)
     close(listensd);
 
 }
-
-pid_t child_make(int i, int listenfd, int addrlen){
-    pid_t pid;
-
-    // if it's father return pid
-    if((pid = fork()) > 0){
-        return pid;
-    }
-
-    child_main(i,listenfd,addrlen);
-
-}
-
-/*
-void str_echo(int sockfd){
-
-     WORKING SEND HTML PAGE
-    ssize_t n;
-    char line[MAXLINE];
-
-    for(;;){
-        if(( n = readline(sockfd,line,MAXLINE)) == 0){
-            printf("Client quit connection\n");
-            return;
-        }
-
-        printf("server process %ld received %s\n", (long) getpid() ,line);
-
-        //writen(sockfd,line,(size_t) n);
-        write(sockfd,"HTTP/1.1 200 OK\n",16);
-        write(sockfd,"Content-length: 58\n",19);
-        write(sockfd,"Content-Type: text/html\n\n",25);
-        write(sockfd,"<html><body><h1>Ciao Laura e Francesco.</h1></body></html>",58);
-
-    }
-
-
-    FILE * image;
-    size_t n;
-    int read;
-    char buff[MAXLINE];
-
-    image = fopen("/home/ovi/Desktop/firefox.jpg", "rb");
-
-    for(;;) {
-        if ((read = readline(sockfd, buff, MAXLINE)) == 0) {
-            printf("Client quit connection\n");
-            return;
-        }
-
-        char *httpOK = "HTTP/1.1 200 OK\n";
-        char *content = "Content-length: 52917\n";
-        char *type = "Content-Type: image/jpeg\n\n";
-
-
-        write(sockfd, httpOK, strlen(httpOK));
-        write(sockfd, content, strlen(content));
-        write(sockfd, type, strlen(type));
-
-        while (1) {
-
-            n = fread(buff, 1, MAXLINE, image);
-            printf("Bytes read %d \n", (int) n);
-
-            if (n > 0) {
-                printf("Sending \n");
-                write(sockfd, buff, n);
-
-            }
-
-            if (n < MAXLINE) {
-                if (feof(image)) {
-                    printf("End of file \n ");
-                }
-                if (ferror(image)) {
-                    printf("Error Reading \n");
-                }
-                break;
-            }
-
-        }
-    }
-
-
-
-}*/

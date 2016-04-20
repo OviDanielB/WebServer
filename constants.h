@@ -22,7 +22,7 @@ const char *LOG_PATH;
 /*  path of server's database of images */
 const char *DB_PATH;
 /* size of a line   */
-const int MAXLINE;
+const size_t MAXLINE;
 /* default protocol port number */
 const in_port_t DEFAULT_PORT;
 /* size of request queue        */
@@ -64,24 +64,19 @@ typedef struct img {
     size_t  height;
     char    type[4];
     size_t  length;
-    //char    last_modified[50]; //da togliere
 };
 
 /*  Image adaptation    */
 typedef struct conv_img {
-    char   original_name[256];
-    // char   name[256]; //nome dell'immagine modificata nella cartella con il nome originale,
-
-    // hash sulla stringa formata da: <nomeoriginale><width><height><q><type><c> per indicare univocamente l'immagine modificata
+    char             original_name[256];
+    // hash sulla stringa formata da: <nomeoriginale><width><height><q><type> per indicare univocamente l'immagine modificata
     unsigned long    name_code;
     size_t           width;
     size_t           height;
-    size_t           colors;
-    float            quality;
+    size_t           quality; // quality factor * 100
     char             type[4];
-    size_t           length;
+    size_t           length;    // si può anche togliere
     char             last_modified[50];
-    //char   eTag[16]; //per identificare versione del file come chiave della cache
 };
 
 /*  HTTP request struct    */

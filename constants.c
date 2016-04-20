@@ -19,7 +19,7 @@ const in_port_t DEFAULT_PORT =          5193;
 /* size of request queue        */
 const int BACKLOG =               10;
 /*  line length */
-const int MAXLINE =            1024;
+const size_t MAXLINE =            2048;
 /*  number of child processes of server to manage requests  */
 const int CHILDREN_NUM =          2;
 /*  successfully HTTP request   */

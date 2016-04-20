@@ -49,6 +49,9 @@ FILE *openImage(struct conv_img *image)
         return imgfd;
     }
     sprintf(path,"%s%s.%s", PATH, image->original_name, image->type);
+
+    printf("filename cercato: %s\n",path);
+
     if ((imgfd=fopen(path, "rb"))==NULL) {
         perror("error in fopen\n");
         return NULL;
@@ -56,30 +59,6 @@ FILE *openImage(struct conv_img *image)
     } else {
         return imgfd;
     }
-}
-
-
-/*  Get image file length   */
-long getLength(FILE *image)
-{
-    long seek, len;
-    if ((seek = ftell(image))==-1){
-        perror("Error in ftell\n");
-        exit(1);
-    }
-    if (fseek(image,0L,SEEK_END)==-1) {
-        perror("Error in fseek\n");
-        exit(1);
-    }
-    if ((len = ftell(image))==-1) {
-        perror("Error in ftell\n");
-        exit(1);
-    }
-    if (fseek(image,seek,SEEK_SET)==-1) {
-        perror("Error in fseek\n");
-        exit(1);
-    }
-    return len;
 }
 
 /*  This function implements server work for serving a client's request:
@@ -100,6 +79,9 @@ void serveRequest(int sockfd)
 
     //char *userAgent;
     struct req *request = parseRequest(sockfd);
+    if (request==NULL) {
+        sprintf(result,HTTP_BAD_REQUEST);
+    }
     //userAgent = req->user_agent;
     //userAgent = "";
     struct img *reqImage;
@@ -109,12 +91,12 @@ void serveRequest(int sockfd)
             perror("error in malloc\n");
             exit(1);
     }
-    sprintf(reqImage->name,request->resource);
-    //sprintf(reqImage->name,"borsa");
+    //sprintf(reqImage->name,request->resource);
+    sprintf(reqImage->name,"img");
     //reqImage->width = 960; //aggiunto dopo
     //reqImage->height = 600; //aggiunto dopo
-    //sprintf(reqImage->type,"jpg");
-    sprintf(reqImage->type,request->type);
+    sprintf(reqImage->type,"jpg");
+    //sprintf(reqImage->type,request->type);
 
     char buff[MAXLINE];
 /*    char path[MAXLINE];
@@ -137,17 +119,20 @@ void serveRequest(int sockfd)
     //reqImage->length = getLength(image);
 
     //TODO adapting from WURFL info
-    struct conv_img *adaptedImage = adaptImageTo(reqImage,request->quality,request->type,request->userAgent);
+    struct conv_img *adaptedImage = adaptImageTo(reqImage,request);
 
     if (adaptedImage==NULL) {
         sprintf(result,HTTP_BAD_REQUEST);
     } else {
-        sprintf(result,HTTP_OK);
+        sprintf(result, HTTP_OK);
     }
+    sprintf(adaptedImage->original_name,reqImage->name);
+
     //add adapted image to db
+    //do_insert_
 
     for(;;) {
-        if ((read = readline(sockfd, buff, MAXLINE)) == 0) {
+        if ((read = readline(sockfd, buff, (int) MAXLINE)) == 0) {
             printf("Client quit connection\n");
             return;
         }
@@ -169,6 +154,8 @@ void serveRequest(int sockfd)
             sprintf(result, (char *) HTTP_OK);
 
         //!!!!!!!!!!da mettere l'imm adattata come parametro e switch per l'esito
+        printf("sending response...\n");
+
         writeResponse(sockfd, result, adaptedImage, imgfd);
         //writeResponse(sockfd, result, reqImage, image);
     }
