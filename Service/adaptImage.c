@@ -102,7 +102,7 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
     /* For the JPEG and MPEG image formats, quality is
     * 1 (lowest image quality and highest compression)
     * to 100 (best quality but least effective compression) */
-    status = MagickSetCompressionQuality(magickWand, (size_t) adaptImg->quality*100);
+    status = MagickSetCompressionQuality(magickWand, (size_t) adaptImg->quality);
     if (status == MagickFalse) {
         perror("error in compressing image quality\n");
         return 400; // ERROR
@@ -141,9 +141,9 @@ struct conv_img *adaptImageTo(struct img *req_image, struct req *request)
         return image;
     }*/
 
-    adaptedImg->quality = 80;
+    adaptedImg->quality = (size_t) request->quality*100;
+    //adaptedImg->quality = 80;
     sprintf(adaptedImg->type,"jpg");
-    //adaptedImg->quality = (size_t) request->quality*100;
     //sprintf(adaptedImg->type,request->type);
     // TODO da ottenere con WURFL usando useragent
     adaptedImg->width = 200;

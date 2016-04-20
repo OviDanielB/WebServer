@@ -48,15 +48,6 @@ const char *USER_AGENT;
 /*  HTTP request Accept line    */
 const char *ACCEPT;
 
-/*  Check png type  */
-//static int png(char *ext);
-
-/*  Check mpeg type */
-//static int mpeg(char *ext);
-
-/*  Check gif type  */
-//static int gif(char *ext);
-
 /*  Image struct    */
 typedef struct img {
     char    name[256];

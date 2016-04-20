@@ -14,7 +14,6 @@ Interface to function to images adaption.
 #include <string.h>
 
 #include "../helper/helper.h"
-#include "../caching.h"
 #include "../constants.h"
 #include "../helper/calendar.h"
 

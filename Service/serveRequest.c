@@ -42,8 +42,6 @@ void serveRequest(int sockfd)
             exit(1);
     }
     sprintf(reqImage->name,request->resource);
-    //sprintf(reqImage->name,"img");
-    //sprintf(reqImage->type,"jpg");
     sprintf(reqImage->type,request->type);
 
     char buff[MAXLINE];
@@ -57,9 +55,11 @@ void serveRequest(int sockfd)
 
         case 404 :
             sprintf(result, HTTP_NOT_FOUND);
+        break;
 
         default :
             sprintf(result, HTTP_OK);
+        break;
     }
 
     sprintf(adaptedImage->original_name,reqImage->name);
