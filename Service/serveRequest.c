@@ -25,47 +25,48 @@ void serveRequest(int sockfd)
     FILE * image;
     size_t n;
     int read;
+    char buff[MAXLINE];
     char result[50];
+    struct conv_img *adaptedImage;
 
     //char *userAgent;
     struct req *request = parseRequest(sockfd);
     if (request==NULL) {
         sprintf(result,HTTP_BAD_REQUEST);
-    }
-    //userAgent = req->user_agent;
-    //userAgent = "";
-    struct img *reqImage;
-    //struct img *reqImage = req->req_image;
-    // requested image: {name, quality, width, height, type, last modified, file_length}
-    if ((reqImage = malloc(sizeof(struct img)))==NULL) {
+    } else {
+        //userAgent = req->user_agent;
+        //userAgent = "";
+        struct img *reqImage;
+        //struct img *reqImage = req->req_image;
+        // requested image: {name, quality, width, height, type, last modified, file_length}
+        if ((reqImage = malloc(sizeof(struct img))) == NULL) {
             perror("error in malloc\n");
             exit(1);
+        }
+        sprintf(reqImage->name, request->resource);
+        sprintf(reqImage->type, request->type);
+
+        adaptedImage = adaptImageTo(reqImage, request);
+
+        switch (adaptedImage->name_code) {
+            case 400 :
+                sprintf(result, HTTP_BAD_REQUEST);
+                break;
+
+            case 404 :
+                sprintf(result, HTTP_NOT_FOUND);
+                break;
+
+            default :
+                sprintf(result, HTTP_OK);
+                break;
+        }
+
+        sprintf(adaptedImage->original_name, reqImage->name);
+
+        //add adapted image to db
+        //do_insert_
     }
-    sprintf(reqImage->name,request->resource);
-    sprintf(reqImage->type,request->type);
-
-    char buff[MAXLINE];
-
-    struct conv_img *adaptedImage = adaptImageTo(reqImage,request);
-
-    switch (adaptedImage->name_code) {
-        case 400 :
-            sprintf(result,HTTP_BAD_REQUEST);
-        break;
-
-        case 404 :
-            sprintf(result, HTTP_NOT_FOUND);
-        break;
-
-        default :
-            sprintf(result, HTTP_OK);
-        break;
-    }
-
-    sprintf(adaptedImage->original_name,reqImage->name);
-
-    //add adapted image to db
-    //do_insert_
 
     for(;;) {
         if ((read = readline(sockfd, buff, (int) MAXLINE)) == 0) {
