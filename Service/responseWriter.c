@@ -45,7 +45,7 @@ char *composeHeader(char *result, struct conv_img *image)
                     "Content-Length: %ld\n"
                     "Connection: keep-alive\n\n"
                     "<html><body><h1>404 Page Not Found. </h1></body></html>",
-                    HTTP_OK, date, strlen(HTTP_NOT_FOUND)+20) < 0) {
+                    HTTP_OK, date, strlen(HTTP_NOT_FOUND)+50) < 0) {
             perror("error in sprintf\n");
             return "";
         }
@@ -60,7 +60,7 @@ char *composeHeader(char *result, struct conv_img *image)
                     "Content-Length: %ld\n"
                     "Connection: keep-alive\n\n"
                     "<html><body><h1>400 Bad Request. </h1></body></html>",
-                    HTTP_OK, date, strlen(HTTP_BAD_REQUEST)+20)<0){
+                    HTTP_OK, date, strlen(HTTP_BAD_REQUEST)+50)<0){
             perror("error in sprintf\n");
             return "";
         }
@@ -87,8 +87,8 @@ char *composeHeader(char *result, struct conv_img *image)
  * @param: image = image to send as data in the message
  * @param: imgfd = file descriptor of image's file
  */
-void writeResponse(int connfd, char *result, struct conv_img *image, FILE *imgfd) {
-
+void writeResponse(int connfd, char *result, struct conv_img *image, FILE *imgfd)
+{
     char *header = composeHeader(result, image);
     char buff[MAXLINE];
     size_t n;

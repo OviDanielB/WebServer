@@ -148,6 +148,7 @@ struct conv_img *adaptImageTo(struct img *req_image, struct req *request)
     // TODO da ottenere con WURFL usando useragent
     adaptedImg->width = 200;
     adaptedImg->height = 200;
+    adaptedImg->length = adaptedImg->width*adaptedImg->height;
 
     printf("adapting begins...\n");
     /* necessary content adaptation get an hash function, depending on original name and
