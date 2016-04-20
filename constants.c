@@ -40,33 +40,3 @@ const char *HTTP_0 =           "HTTP/1.0";
 const char *USER_AGENT =       "User-Agent:";
 /*  HTTP request Accept line    */
 const char *ACCEPT =           "Accept:";
-
-/*  logging file    */
-//FILE *log = fopen(LOG_PATH,"a");
-
-/*  Image struct    */
-/*typedef struct img {
-    char    name[50];
-    float   quality;
-    int     width;
-    int     height;
-    char    type[4];
-    char    last_modified[50];
-    long    file_length;
-};
-
-/*  Image adaptation    */
-/*typedef struct adapt {
-    int width;
-    int heigth;
-    int colors;
-};*/
-
-/*  HTTP request struct    */
-/*typedef struct req {
-    char    method[4];
-    char    url[100];
-    char    userAgent[50];
-    char    type[4];
-    float   quality;
-};*/

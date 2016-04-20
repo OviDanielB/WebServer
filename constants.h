@@ -69,21 +69,20 @@ typedef struct img {
 /*  Image adaptation    */
 typedef struct conv_img {
     char             original_name[256];
-    // hash sulla stringa formata da: <nomeoriginale><width><height><q><type> per indicare univocamente l'immagine modificata
-    unsigned long    name_code;
+    unsigned long    name_code; // result hash function
     size_t           width;
     size_t           height;
     size_t           quality; // quality factor * 100
     char             type[4];
-    size_t           length;    // si può anche togliere
+    size_t           length;
     char             last_modified[50];
 };
 
 /*  HTTP request struct    */
 typedef struct req {
-    char    method[4];
+    char    method[4];  // GET or HEAD
     char    uri[100];
-    char    resource[256]; //name of resource read from URI
+    char    resource[256]; // name of resource read from URI
     char    type[4];
     float   quality;
     char    userAgent[50];

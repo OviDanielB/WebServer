@@ -8,6 +8,47 @@
 
 #include "responseWriter.h"
 
+char result[50];
+
+/*  This function opens the image file if it was previously adapted and saved in cache;
+ *  if that exists, it returns the file descriptor, else 0.
+ *
+ * @param img: adapted image
+ */
+FILE *openCachedImage(struct conv_img *image)
+{
+    char path[MAXLINE];
+    FILE *cachedImg;
+    sprintf(path,"%s%ld.%s", CACHE_PATH, image->name_code, image->type);
+    if ((cachedImg=fopen(path, "rb"))==NULL) {
+        return NULL;
+    } else {
+        sprintf(result, (char *)HTTP_OK);
+        return cachedImg;
+    }
+}
+
+/* Opening original image file and if that exists, it returns the file descriptor.
+ *
+ * @param img: original image
+ */
+FILE *openImage(struct conv_img *image)
+{
+    char path[MAXLINE];
+    FILE *imgfd;
+    // check if adapted image just manipulated before
+    if ((imgfd=openCachedImage(image))!=NULL) {
+        return imgfd;
+    }
+    sprintf(path,"%s%s.%s", PATH, image->original_name, image->type);
+
+    if ((imgfd=fopen(path, "rb"))==NULL) {
+        perror("error in fopen\n");
+        return NULL;
+    } else {
+        return imgfd;
+    }
+}
 
 /*  Compose response HTTP message to send to the client */
 char *composeHeader(char *result, struct conv_img *image)
@@ -22,11 +63,8 @@ char *composeHeader(char *result, struct conv_img *image)
                             "%s\n"
                             "Date: %s\n"
                             "Server: WebServer/1.0.0\n"
-                            //"Last-Modified: Wed, 18 Jun 2003 16:05:58 GMT\n"
-                            //"ETag: \"56d-9989200-1132c580\"\n"
                             "Content-Type: image/%s\n"
                             "Content-Length: %ld\n"
-                            //"Accept-Ranges: bytes\n"
                             "Connection: keep-alive\n\n",
                             HTTP_OK, date, image->type, image->length) < 0) {
             perror("error in sprintf\n");
@@ -79,16 +117,18 @@ char *composeHeader(char *result, struct conv_img *image)
     return reply;
 }
 
-/**
- * This function sends server response, based on result of the elaboration of request.
+/* Sending server response, based on result of the elaboration of request.
  *
  * @param: connfd = file descriptor of connection socket
  * @param: result = result of the elaboration of client's request
  * @param: image = image to send as data in the message
- * @param: imgfd = file descriptor of image's file
  */
-void writeResponse(int connfd, char *result, struct conv_img *image, FILE *imgfd)
+void writeResponse(int connfd, char *result, struct conv_img *image)
 {
+    FILE *imgfd = openImage(image);
+    if (imgfd==NULL) {
+        strcpy(result,HTTP_BAD_REQUEST);
+    }
     char *header = composeHeader(result, image);
     char buff[MAXLINE];
     size_t n;

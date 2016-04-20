@@ -26,12 +26,6 @@ static int jpg(char *ext)
     return 0; // false
 }
 
-/*  Executes a system command line  */
-int execCommand(const char *command);
-
-/*  Read result line from STDOUT after the execution of a command. */
-char *readResultLine(char *cmd);
-
 /* Hash function to calculate an (almost) unique identifier for every manipulated image
  * from the resource name, where are indicated the adapted values or the original ones.  */
 unsigned long getHashCode(unsigned char *name);

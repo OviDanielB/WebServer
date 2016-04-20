@@ -49,7 +49,7 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
     status = MagickReadImage(magickWand, filename);
     if (status == MagickFalse) {
         perror("error in reading image");
-        exit(1);
+        return 404; // NOT FOUND
     }
 
     size_t h = req_image->height = MagickGetImageHeight(magickWand);
@@ -70,20 +70,20 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
         status = MagickWriteImage(magickWand,tmpFilename);
         if (status == MagickFalse) {
             perror("error in writing image\n");
-            return 0;
+            return 400; // ERROR
         }
 
         status = MagickRemoveImage(magickWand);
         if (status == MagickFalse) {
             perror("error in removing image\n");
-            return 0;
+            return 400; // ERROR
         }
 
         MagickResetIterator(magickWand);
         status = MagickReadImage(magickWand,tmpFilename);
         if (status == MagickFalse) {
             perror("error in reading image\n");
-            return 0;
+            return 400; // ERROR
         }
     }
 
@@ -93,7 +93,7 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
         status = MagickScaleImage(magickWand,dim[0],dim[1]);
         if (status == MagickFalse) {
             perror("error in scaling image\n");
-            return 0;
+            return 400; // ERROR
         }
         w = adaptImg->width;
         h = adaptImg->height;
@@ -105,7 +105,7 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
     status = MagickSetCompressionQuality(magickWand, (size_t) adaptImg->quality*100);
     if (status == MagickFalse) {
         perror("error in compressing image quality\n");
-        return NULL;
+        return 400; // ERROR
     }
 
     // string <nomeoriginale><width><height><q100><type> to hash
@@ -154,9 +154,6 @@ struct conv_img *adaptImageTo(struct img *req_image, struct req *request)
     /* necessary content adaptation get an hash function, depending on original name and
        changes done */
     adaptedImg->name_code = adapt(req_image, adaptedImg);
-    if (adaptedImg->name_code==0) {
-        return NULL;
-    }
 
     printf("end adaptation...\n");
 
