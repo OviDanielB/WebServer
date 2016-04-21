@@ -7,29 +7,6 @@
 #include <wand/MagickWand.h>
 #include "adaptImage.h"
 
-size_t dim[2];
-/*  Calculation of image's dimensions, maintaining the aspect ratio  */
-size_t *proportionalSize(size_t original_w, size_t original_h, size_t adapted_w, size_t adapted_h)
-{
-    double orw = (double) original_w;
-    double orh = (double) original_h;
-    double adw = (double) adapted_w;
-    double adh = (double) adapted_h;
-    double r = orw/orh;
-
-    if (adw/adh == r) {
-        dim[0] = adapted_w , dim[1] = adapted_h;
-        return dim;
-    } else if (original_w>=original_h){
-        dim[0] = adapted_w;
-        dim[1] = (size_t) adw/r;
-        return dim;
-    }
-    dim[0] = (size_t) adh*r;
-    dim[1] = adapted_h;
-    return dim;
-}
-
 /*  Manipulation of original image, based on characteristics specified in input.
  *
  * @param: req_image = requested image;
@@ -52,11 +29,9 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
         return 404; // NOT FOUND
     }
 
-    size_t h = req_image->height = MagickGetImageHeight(magickWand);
-    size_t w = req_image->width = MagickGetImageWidth(magickWand);
+    req_image->height = MagickGetImageHeight(magickWand);
+    req_image->width = MagickGetImageWidth(magickWand);
 
-    unsigned char nameToHash[256];
-    unsigned long hashcode;
     char tmpFilename[MAXLINE];
     // hash sulla stringa formata da: <nomeoriginale><width><height><q><type><c> per indicare univocamente l'immagine modificata
     // caratteristica origianel o  0 se elemento non modificato
@@ -83,20 +58,18 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
         status = MagickReadImage(magickWand,tmpFilename);
         if (status == MagickFalse) {
             perror("error in reading image\n");
-            return 400; // ERROR
+            return 404; // NOT FOUND
         }
     }
 
     /*  resizing original image if it's necessary    */
     if (req_image->width!=adaptImg->width || req_image->height!=adaptImg->height) {
-        proportionalSize(req_image->width,req_image->height,adaptImg->width,adaptImg->height);
+        size_t *dim = proportionalSize(req_image->width,req_image->height,adaptImg->width,adaptImg->height);
         status = MagickScaleImage(magickWand,dim[0],dim[1]);
         if (status == MagickFalse) {
             perror("error in scaling image\n");
             return 400; // ERROR
         }
-        w = adaptImg->width;
-        h = adaptImg->height;
     }
 
     /* For the JPEG and MPEG image formats, quality is
@@ -108,17 +81,13 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
         return 400; // ERROR
     }
 
-    // string <nomeoriginale><width><height><q100><type> to hash
-    sprintf((char *)nameToHash, "%s%ld%ld%ld%s",req_image->name, w,h,adaptImg->quality,adaptImg->type);
-
-    hashcode = getHashCode(nameToHash);
-    sprintf(destination,"%s%ld.%s",CACHE_PATH,hashcode,req_image->type);
+    sprintf(destination,"%s%ld.%s",CACHE_PATH,adaptImg->name_code,req_image->type);
 
     MagickWriteImage(magickWand,destination);
 
     DestroyMagickWand(magickWand);
 
-    return hashcode;
+    return 200; // OK
 }
 
 /*  This function adapts image's characteristics to client's device,
@@ -134,6 +103,8 @@ struct conv_img *adaptImageTo(struct img *req_image, struct req *request)
         perror("error in malloc");
         return NULL;
     }
+    unsigned char nameToHash[256];
+    unsigned long hashcode;
 
     // check if adapted image has been previously modified and it's in cache
     /*if ((name = isInCache(req_image))!=NULL) {
@@ -150,10 +121,15 @@ struct conv_img *adaptImageTo(struct img *req_image, struct req *request)
     adaptedImg->height = 200;
     adaptedImg->length = adaptedImg->width*adaptedImg->height;
 
-    printf("adapting begins...\n");
-    /* necessary content adaptation get an hash function, depending on original name and
-       changes done */
-    adaptedImg->name_code = adapt(req_image, adaptedImg);
+    // string <nomeoriginale><width><height><q100><type> to hash
+    sprintf((char *)nameToHash, "%s%ld%ld%ld%s",
+            req_image->name, adaptedImg->width,adaptedImg->height,adaptedImg->quality,adaptedImg->type);
+
+    adaptedImg->name_code = getHashCode(nameToHash);
+
+    if (!isInCache(req_image,adaptedImg)) {
+        adapt(req_image, adaptedImg);
+    }
 
     printf("end adaptation...\n");
 

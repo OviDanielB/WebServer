@@ -24,3 +24,32 @@ unsigned long getHashCode(unsigned char *name)
     return hash;
 }
 
+size_t dim[2];
+/*  Calculation of image's dimensions, maintaining the aspect ratio
+ *
+ * @param original_w: original image width
+ * @param original_h: original image height
+ * @param adapted_w: image width requested
+ * @param adapted_h: image height requested
+ */
+size_t *proportionalSize(size_t original_w, size_t original_h, size_t adapted_w, size_t adapted_h)
+{
+    double orw = (double) original_w;
+    double orh = (double) original_h;
+    double adw = (double) adapted_w;
+    double adh = (double) adapted_h;
+    double r = orw/orh;
+
+    if (adw/adh == r) {
+        dim[0] = adapted_w , dim[1] = adapted_h;
+        return dim;
+    } else if (original_w>=original_h){
+        dim[0] = adapted_w;
+        dim[1] = (size_t) adw/r;
+        return dim;
+    }
+    dim[0] = (size_t) adh*r;
+    dim[1] = adapted_h;
+    return dim;
+}
+

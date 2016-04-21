@@ -16,6 +16,7 @@ Interface to function to images adaption.
 #include "../helper/helper.h"
 #include "../constants.h"
 #include "../helper/calendar.h"
+#include "../DataBase/db_helper.h"
 
 /*  Function prototypes  */
 
