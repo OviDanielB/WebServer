@@ -50,10 +50,10 @@ int isInCache(unsigned long hashcode)
     int rc;
 
     sqlite3 *db;
-    if ((db=malloc(sizeof(sqlite3)))==NULL) {
+    /*if ((db=malloc(sizeof(sqlite3)))==NULL) {
         perror("error in malloc db\n");
         exit(EXIT_FAILURE);
-    }
+    }*/
     db_open(db);
 
     statement = malloc(MAXLINE * sizeof(char));
@@ -108,4 +108,40 @@ int isFull(sqlite3 *db)
     }
 
     return 1;   // true
+}
+
+/*  Delete from CONV_IMG table the older image inserted (with greater lifetime)   */
+void deleteByAge()
+{
+
+}
+
+/*  Delete from CONV_IMG table all the image where lifetime is greater than LIFETIME value  */
+void deleteByTimeout()
+{
+    int rc;
+    char *statement, *errorMsg;
+
+    sqlite3 *db;
+    /*if ((db=malloc(sizeof(sqlite3)))==NULL) {
+        perror("error in malloc db\n");
+        exit(EXIT_FAILURE);
+    }*/
+    db_open(db);
+
+    statement = malloc(MAXLINE * sizeof(char));
+    if(statement == NULL){
+        perror("delete image by name malloc error");
+        return;
+    }
+// TODO
+    sprintf(statement, "DELETE FROM CONV_IMG WHERE Last_Modified='';");
+
+    rc = sqlite3_exec(db,statement,0,0,&errorMsg);
+    if(rc != SQLITE_OK){
+        fprintf(stderr,"SQLITE DELETE ERROR: %s \n",errorMsg);
+        return;
+    }
+
+    db_close(db);
 }

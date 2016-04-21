@@ -127,7 +127,7 @@ struct conv_img *adaptImageTo(struct img *req_image, struct req *request)
 
     adaptedImg->name_code = getHashCode(nameToHash);
 
-    if (!isInCache(req_image,adaptedImg)) {
+    if (!isInCache(adaptedImg->name_code)) {
         adapt(req_image, adaptedImg);
     }
 

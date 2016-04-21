@@ -50,10 +50,9 @@ void db_execute_statement(sqlite3 *db, const char *sql, struct img *image)
 }
 
 // number of accesses after what image is deleted from cache (timeout)
-#define lifetime 1000
+#define LIFETIME 1000
 
-/*  TODO
- * Update server cache checking for saturation of memory dedicated
+/* Update server cache checking for saturation of memory dedicated
  * or after timeout of cached image lifetime.
  *
  * @param db = SQLite database where server cache is
@@ -62,12 +61,11 @@ void db_update_cache(sqlite3 *db)
 {
     // check if cache memory is full
     if (isFull(db)) {
-        // delete by time of insertion (older saved elements)
-
-    } else {
-        // delete by timeout if there are expired ones
-
+        // delete by time of insertion (older saved element)
+        deleteByAge();
     }
+    // delete by timeout if there are expired ones
+    deleteByTimeout();
 
     db_close(db);
 }
@@ -82,10 +80,10 @@ void db_insert_img(struct img *originalImg, struct conv_img *convImg) {
     int rc;
 
     sqlite3 *db;
-    if ((db = malloc(sizeof(sqlite3))) == NULL) {
+    /*if ((db = malloc(sizeof(sqlite3))) == NULL) {
         perror("error in malloc db\n");
         exit(EXIT_FAILURE);
-    }
+    }*/
     db_open(db);
 
     statement = malloc(MAXLINE * sizeof(char));
@@ -95,7 +93,7 @@ void db_insert_img(struct img *originalImg, struct conv_img *convImg) {
             "VALUES('%s','%s',%ld,%ld,%ld);",
                 originalImg->name, originalImg->type, originalImg->length, originalImg->width, originalImg->height);
     } else if (convImg != NULL) {
-        sprintf(statement, "INSERT INTO CONV_IMG(Original_Name,Name,Type,Length,Width,Height) " \
+        sprintf(statement, "INSERT INTO CONV_IMG(Original_Name,Name,Type,Last_Modified,Width,Height,Length,Quality) " \
             "VALUES('%s',%ld,'%s','%s',%ld,%ld,%ld,%ld);",
                 convImg->original_name, convImg->name_code, convImg->type, convImg->last_modified,
                 convImg->width, convImg->height, convImg->length, convImg->quality);
@@ -157,10 +155,10 @@ void db_get_image_by_name(char *name,struct img *image)
     int rc;
 
     sqlite3 *db;
-    if ((db=malloc(sizeof(sqlite3)))==NULL) {
+/*    if ((db=malloc(sizeof(sqlite3)))==NULL) {
         perror("error in malloc db\n");
         exit(EXIT_FAILURE);
-    }
+    }*/
     db_open(db);
 
     statement = malloc(MAXLINE * sizeof(char));
@@ -191,10 +189,10 @@ void db_delete_image_by_name(char *name)
     char *statement, *errorMsg;
 
     sqlite3 *db;
-    if ((db=malloc(sizeof(sqlite3)))==NULL) {
+/*    if ((db=malloc(sizeof(sqlite3)))==NULL) {
         perror("error in malloc db\n");
         exit(EXIT_FAILURE);
-    }
+    }*/
     db_open(db);
 
     statement = malloc(MAXLINE * sizeof(char));
