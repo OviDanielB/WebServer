@@ -3,86 +3,109 @@
 //
 
 #include "db_cache.h"
-/* returns a char** with the names of the files in the directory specified by path
- * the char ** in the call     char** files = files_in_dir(path) DOESN'T HAVE TO BE INITIALIZED
- * the names of the files are at maximum 256 as defined in dirent.h
-*/
-void images_in_dir(char *path,struct img **images){
-
-    DIR *dir;
-    struct dirent *ent;
-
-    int fileCount = 0;
-    char complete_path[1024];
-
-    MagickWand *m_wand = NULL;
-    size_t width,height;
-
-    m_wand = NewMagickWand();
-
-    //
-    images = malloc(30 * sizeof(struct img *));
-    if ((dir = opendir (path)) != NULL) {
-        /* print all the files and directories within directory */
-
-        while ((ent = readdir (dir)) != NULL) {
-
-            /* doesn't put the . and .. directory*/
-            if(strcmp(ent->d_name,".") == 0 || strcmp(ent->d_name,"..") == 0){
-                continue;
-            }
-
-            strcat(complete_path,path);
-            strcat(complete_path,"/");
-            strcat(complete_path,ent->d_name);
-            printf("%s\n",complete_path);
-
-            if(MagickReadImage(m_wand,strcat(path,ent->d_name)) == MagickFalse){
-                perror("MagickReadImage error");
-                exit(EXIT_FAILURE);
-            }
 
 
+/*  Callback by isFull to verify TABLE STATUS result saved in size_T *rows passed as void *, later casted back */
+int cache_check_status(void *data, int argc, char **argv, char **azColName)
+{
+    int i;
+    size_t rows = (size_t) data;
 
-            width = MagickGetImageWidth(m_wand);
-            height =MagickGetImageHeight(m_wand);
-
-            images[fileCount] = malloc(sizeof(struct img));
-            if(images[fileCount] == NULL){
-                perror("Malloc error.");
-                exit(EXIT_FAILURE);
-            }
-
-            strcpy((images[fileCount])->name,ent->d_name);
-            images[fileCount]->width =(size_t) 500;  // width;
-            images[fileCount]->height =(size_t) 600 ; //height
-            printf("name = %s, width = %ld, height = %ld\n",images[fileCount]->name,images[fileCount]->width,images[fileCount]->height);
-
-            if(fileCount>10){
-                images = realloc(images,(fileCount + 1) * sizeof(char));
-                if(images == NULL){
-                    perror("Calloc error.");
-                    exit(EXIT_FAILURE);
-                }
-            }
-            printf("%d\n",fileCount);
-            fileCount++;
-
-            complete_path[0]=0;
-
-
-
+    /*  SHOW TABLE STATUS output has the following column "Row" to describe actual number of rows of db table */
+    for(i = 0; i < argc; i++) {
+        if (strcmp(azColName[i], "Rows") == 0) {
+            sscanf(argv[i], "%ld", &rows);
         }
-
-        DestroyMagickWand(m_wand);
-
-        closedir (dir);
-    } else {
-        /* could not open directory */
-        perror ("Could not open directory for images search.");
-        return;
     }
 
-    return;
+    return 0;
+}
 
+/*  Callback by isInCache to verify SELECT result saved in char *result passed as void *, later casted back */
+int cache_check_result(void *data, int argc, char **argv, char **azColName)
+{
+    char *result = (char *) data;
+
+    if (argc > 1) {
+        sprintf(result,"%d",200); // SELECT returns a tuple, so image is in cache
+        printf("Searched image %s = %s\n", azColName[1], argv[0]);
+        return 0;
+    }
+
+    sprintf(result,"%d",404); // SELECT doesn't return a tuple, so image is not in cache
+    printf("Searched image %ld is not in cache \n", atol(argv[1]));
+
+    return 0;
+}
+
+
+/*  Check if searched manipulated image has been just inserted in server cache.
+ *
+ * @param hashcode: index of adapted image eventually cached, as hash function of original image name and adaptations done.
+ */
+int isInCache(unsigned long hashcode)
+{
+    char *statement, *errorMsg = 0;
+    char result[3];
+    int rc;
+
+    sqlite3 *db;
+    if ((db=malloc(sizeof(sqlite3)))==NULL) {
+        perror("error in malloc db\n");
+        exit(EXIT_FAILURE);
+    }
+    db_open(db);
+
+    statement = malloc(MAXLINE * sizeof(char));
+    if(statement == NULL){
+        perror("Malloc error. \n");
+        return 0; // false
+    }
+
+    sprintf(statement,"SELECT * FROM CONV_IMG WHERE Name=%ld;", hashcode);
+    printf(statement);
+
+    rc = sqlite3_exec(db, statement, cache_check_result, result, &errorMsg);
+    if(rc != SQLITE_OK){
+        fprintf(stderr, "SQLITE SELECT error: %s \n",errorMsg);
+        exit(EXIT_FAILURE);
+    }
+
+    db_close(db);
+
+    if (strcmp(result,"404")==0) { // not found in cache table
+        return 0; // false
+    }
+
+    return 1; // true
+}
+
+
+/*  Check if server cache is full (CONV_IMG has reached max number of rows) */
+int isFull(sqlite3 *db)
+{
+    char *statement, *errorMsg = 0;
+    size_t rows = 0;
+    int rc;
+
+    statement = malloc(MAXLINE * sizeof(char));
+    if(statement == NULL){
+        perror("Malloc error. \n");
+        return 0; // false
+    }
+
+    sprintf(statement,"SHOW TABLE STATUS '%s' LIKE CONV_IMG", DB_NAME);
+    printf(statement);
+
+    rc = sqlite3_exec(db, statement, cache_check_status, &rows, &errorMsg);
+    if(rc != SQLITE_OK){
+        fprintf(stderr, "SQLITE SELECT error: %s \n",errorMsg);
+        exit(EXIT_FAILURE);
+    }
+
+    if (rows != MAX_CACHE_ROWS_NUM) {
+        return 0; // false
+    }
+
+    return 1;   // true
 }

@@ -15,5 +15,9 @@
 #include "../Service/adaptImage.h"
 
 
-void images_in_dir(char *,struct img **);
+/*  Check if server cache is full (CONV_IMG has reached max number of rows) */
+int isFull(sqlite3 *db);
+/*  Check if searched manipulated image has been just inserted in server cache. */
+int isInCache(unsigned long hashcode);
+
 #endif //WEBSERVER_DB_CACHE_H

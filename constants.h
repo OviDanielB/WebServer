@@ -21,8 +21,12 @@ const char *CACHE_PATH;
 const char *LOG_PATH;
 /*  path of server's database of images */
 const char *DB_PATH;
+/*  name of server's database of images */
+const char *DB_NAME;
 /* size of a line   */
 const size_t MAXLINE;
+/* size of database cache table (CONV_IMG) as number of rows   */
+const size_t MAX_CACHE_ROWS_NUM;
 /* default protocol port number */
 const in_port_t DEFAULT_PORT;
 /* size of request queue        */

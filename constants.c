@@ -12,6 +12,8 @@ const char *PATH =               "/home/laura_trive/Scrivania/ServerFiles/";
 const char *CACHE_PATH =         "/home/laura_trive/Scrivania/ServerFiles/Cache/";
 /*  path of server's database of images */
 const char *DB_PATH =            "/home/ovi/ClionProjects/WebServer/DataBase/serverContent.db";
+/*  name of server's database of images */
+const char *DB_NAME =            "serverContent";
 /*  path of log file    */
 const char *LOG_PATH =           "/home/laura_trive/Scrivania/ServerFiles/Log/log.txt";
 /* default protocol port number */
@@ -20,6 +22,8 @@ const in_port_t DEFAULT_PORT =          5193;
 const int BACKLOG =               10;
 /*  line length */
 const size_t MAXLINE =            2048;
+/* size of database cache table (CONV_IMG) as number of rows   */
+const size_t MAX_CACHE_ROWS_NUM = 5000000;
 /*  number of child processes of server to manage requests  */
 const int CHILDREN_NUM =          2;
 /*  successfully HTTP request   */
