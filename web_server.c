@@ -1,3 +1,16 @@
+/*------------------------------------------------------------------------
+ * Program:   web_server
+ * Purpose:   allocate a socket and then repeatedly execute the following:
+ *              (1) wait for the next connection from a client
+ *              (2) send the response to the client's request
+ *              (3) close the connection
+ *              (4) go back to step (1)
+ * Syntax:    server [ port ]
+ *               port  - protocol port number to use
+ * Note:      The port argument is optional.  If no port is specified,
+ *            the server uses the default given by DEFAULT_PORT.
+ *------------------------------------------------------------------------ */
+
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -15,19 +28,6 @@
 
 // define sigfunc to simplify signal sys call
 typedef void sigfunc(int);
-
-/*------------------------------------------------------------------------
- * Program:   web_server
- * Purpose:   allocate a socket and then repeatedly execute the following:
- *              (1) wait for the next connection from a client
- *              (2) send the response to the client's request
- *              (3) close the connection
- *              (4) go back to step (1)
- * Syntax:    server [ port ]
- *               port  - protocol port number to use
- * Note:      The port argument is optional.  If no port is specified,
- *            the server uses the default given by DEFAULT_PORT.
- *------------------------------------------------------------------------ */
 
 static pid_t *pids;
 
