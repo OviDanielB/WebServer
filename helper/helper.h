@@ -33,4 +33,7 @@ unsigned long getHashCode(unsigned char *name);
 /*  Calculation of image's dimensions, maintaining the aspect ratio  */
 size_t *proportionalSize(size_t original_w, size_t original_h, size_t adapted_w, size_t adapted_h);
 
+/*  Read name and extension of a file   */
+void readNameAndType(char *s, char *name, char *ext);
+
 #endif //WEBSERVER_HELPER_H

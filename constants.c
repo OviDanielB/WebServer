@@ -11,7 +11,7 @@ const char *PATH =               "/home/laura_trive/Scrivania/ServerFiles/";
 /*  path of cached images' directory    */
 const char *CACHE_PATH =         "/home/laura_trive/Scrivania/ServerFiles/Cache/";
 /*  path of server's database of images */
-const char *DB_PATH =            "/home/ovi/ClionProjects/WebServer/DataBase/serverContent.db";
+const char *DB_PATH =            "/home/laura_trive/ClionProjects/WebServer/DataBase/serverContent.db";
 /*  name of server's database of images */
 const char *DB_NAME =            "serverContent";
 /*  path of log file    */

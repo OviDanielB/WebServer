@@ -54,7 +54,11 @@ FILE *openImage(struct conv_img *image)
 char *composeHeader(char *result, struct conv_img *image)
 {
     char *reply;
-    char header[102400];
+    char *header;
+    if ((header=malloc(image->length+MAXLINE))==NULL) {
+        perror("error in malloc\n");
+        exit(EXIT_FAILURE);
+    }
     long file_length = 0;
     char *date = getTodayToHTTPLine();
 
@@ -121,9 +125,10 @@ char *composeHeader(char *result, struct conv_img *image)
  *
  * @param: connfd = file descriptor of connection socket
  * @param: result = result of the elaboration of client's request
+ * @param: method = HTTP request method (GET or HEAD)
  * @param: image = image to send as data in the message
  */
-void writeResponse(int connfd, char *result, struct conv_img *image)
+void writeResponse(int connfd, char *result, char *method, struct conv_img *image)
 {
     FILE *imgfd = openImage(image);
     if (imgfd==NULL) {
@@ -136,26 +141,29 @@ void writeResponse(int connfd, char *result, struct conv_img *image)
     write(connfd, header, strlen(header));
 
     if (strcmp(result, HTTP_OK) == 0) {
+        /* response to GET method is header + image;
+         * response to HEAD method is only header, composed like that one for GET   */
+        if (strcmp(method,"GET")==0) {
+            while (1) {
 
-        while (1) {
+                n = fread(buff, 1, (size_t) MAXLINE, imgfd);
+                printf("Bytes read %d \n", (int) n);
 
-            n = fread(buff, 1, (size_t) MAXLINE, imgfd);
-            printf("Bytes read %d \n", (int) n);
+                if (n > 0) {
+                    printf("Sending \n");
+                    write(connfd, buff, n);
 
-            if (n > 0) {
-                printf("Sending \n");
-                write(connfd, buff, n);
-
-            }
-
-            if (n < MAXLINE) {
-                if (feof(imgfd)) {
-                    printf("End of file \n ");
                 }
-                if (ferror(imgfd)) {
-                    printf("Error Reading \n");
+
+                if (n < MAXLINE) {
+                    if (feof(imgfd)) {
+                        printf("End of file \n ");
+                    }
+                    if (ferror(imgfd)) {
+                        printf("Error Reading \n");
+                    }
+                    break;
                 }
-                break;
             }
         }
     } else if (strcmp(result, HTTP_NOT_FOUND) == 0) {

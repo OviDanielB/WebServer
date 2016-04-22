@@ -21,7 +21,6 @@
  */
 void serveRequest(int sockfd)
 {
-
     FILE * image;
     size_t n;
     int read;
@@ -43,8 +42,6 @@ void serveRequest(int sockfd)
             perror("error in malloc\n");
             exit(1);
         }
-        sprintf(reqImage->name, request->resource);
-        sprintf(reqImage->type, request->type);
 
         adaptedImage = adaptImageTo(reqImage, request);
 
@@ -63,9 +60,6 @@ void serveRequest(int sockfd)
         }
 
         sprintf(adaptedImage->original_name, reqImage->name);
-
-        //add adapted image to db
-        //do_insert_
     }
 
     for(;;) {
@@ -76,7 +70,7 @@ void serveRequest(int sockfd)
 
         printf("sending response...\n");
 
-        writeResponse(sockfd, result, adaptedImage);
+        writeResponse(sockfd, result, request->method, adaptedImage);
     }
 }
 

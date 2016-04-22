@@ -106,7 +106,7 @@ int isFull(sqlite3 *db)
 
     free(statement);
 
-    if (rows != MAX_CACHE_ROWS_NUM) {
+    if (rows <= MAX_CACHE_ROWS_NUM) {
         return 0; // false
     }
 

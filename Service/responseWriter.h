@@ -22,6 +22,6 @@
 char *composeHeader(char *result, struct conv_img *image);
 
 /*  This function sends server response, based on result of the request's elaboration */
-void writeResponse(int connfd, char *result, struct conv_img *image);
+void writeResponse(int connfd, char *result, char *method, struct conv_img *image);
 
 #endif //WEBSERVER_RESPONSE_H

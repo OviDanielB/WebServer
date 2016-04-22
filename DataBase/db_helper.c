@@ -72,7 +72,8 @@ void db_update_cache(sqlite3 *db)
  * @param: originalImg = image to add to server files (= NULL if it's a cache update)
  * @param: convImg = manipulated image to add to server cache (= NULL if it's a server images' update
  */
-void db_insert_img(struct img *originalImg, struct conv_img *convImg) {
+void db_insert_img(struct img *originalImg, struct conv_img *convImg)
+{
     char *statement, *errorMsg = 0;
     int rc;
 
@@ -120,11 +121,6 @@ int fill_img_struct(void *data, int argc, char **argv, char **azColName)
     int i;
     struct img *image = (struct img *) data;
 
-    if ((image=malloc(sizeof(struct img)))==NULL) {
-        perror("Struct img malloc error.\n");
-        return 1;
-    }
-
     for(i = 0; i < argc; i++){
         if (strcmp(azColName[i],"Name") == 0) {
             sscanf(argv[i], "%s",image->name);
@@ -142,7 +138,6 @@ int fill_img_struct(void *data, int argc, char **argv, char **azColName)
     }
     return 0;
 }
-
 
 /* Fill an img struct fro database info.
  *
@@ -225,15 +220,16 @@ void images_in_dir(char *path,struct img **images){
     struct dirent *ent;
 
     int fileCount = 0;
-    char complete_path[1024];
+    char complete_path[MAXLINE];
+    char type[4];
+    char name[256];
 
+    printf("0");
     MagickWand *m_wand = NULL;
     size_t width,height;
 
     m_wand = NewMagickWand();
 
-    //
-    images = malloc(30 * sizeof(struct img *));
     if ((dir = opendir (path)) != NULL) {
         /* print all the files and directories within directory */
 
@@ -254,8 +250,6 @@ void images_in_dir(char *path,struct img **images){
                 exit(EXIT_FAILURE);
             }
 
-
-
             width = MagickGetImageWidth(m_wand);
             height =MagickGetImageHeight(m_wand);
 
@@ -265,10 +259,14 @@ void images_in_dir(char *path,struct img **images){
                 exit(EXIT_FAILURE);
             }
 
-            strcpy((images[fileCount])->name,ent->d_name);
-            images[fileCount]->width =(size_t) 500;  // width;
-            images[fileCount]->height =(size_t) 600 ; //height
-            printf("name = %s, width = %ld, height = %ld\n",images[fileCount]->name,images[fileCount]->width,images[fileCount]->height);
+            readNameAndType(ent->d_name,name,type);
+            strcpy((images[fileCount])->name,name);
+            images[fileCount]->width = width;
+            images[fileCount]->height = height;
+            strcpy(images[fileCount]->type,type);
+            images[fileCount]->length = width*height;
+            printf("name = %s, type = %s, width = %ld, height = %ld\n",
+                   images[fileCount]->name,images[fileCount]->type,images[fileCount]->width,images[fileCount]->height);
 
             if(fileCount>10){
                 images = realloc(images,(fileCount + 1) * sizeof(char));
@@ -282,8 +280,6 @@ void images_in_dir(char *path,struct img **images){
 
             complete_path[0]=0;
 
-
-
         }
 
         DestroyMagickWand(m_wand);
@@ -294,7 +290,21 @@ void images_in_dir(char *path,struct img **images){
         perror ("Could not open directory for images search.");
         return;
     }
-
     return;
+}
 
+int main() {
+    struct img **images;
+
+    images = malloc(30 * sizeof(struct img *));
+    if (images==NULL) {
+        perror("Malloc error\n");
+        exit(EXIT_FAILURE);
+    }
+    char * path;
+    path="/home/laura_trive/ClionProjects/WebServer/Images/";
+    printf("inizio...\n");
+    images_in_dir(path,images);
+    printf("fine.\n");
+    return 0;
 }

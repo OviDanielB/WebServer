@@ -53,3 +53,23 @@ size_t *proportionalSize(size_t original_w, size_t original_h, size_t adapted_w,
     return dim;
 }
 
+/*  Read name and extension of a file   */
+void readNameAndType(char *s, char *name, char *ext)
+{
+    char *p;
+    p = strrchr(s,'.');
+
+    int i=0;
+    while (s!=p) {
+        name[i] = *s;
+        i++;
+        s++;
+    }
+    s++;
+    i=0;
+    while (*s!='\0') {
+        ext[i] = *s;
+        i++;
+        s++;
+    }
+}

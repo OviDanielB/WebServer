@@ -26,11 +26,8 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
     status = MagickReadImage(magickWand, filename);
     if (status == MagickFalse) {
         perror("error in reading image");
-        return 404; // NOT FOUND
+        return 400; // ERROR
     }
-
-    req_image->height = MagickGetImageHeight(magickWand);
-    req_image->width = MagickGetImageWidth(magickWand);
 
     char tmpFilename[MAXLINE];
     // hash sulla stringa formata da: <nomeoriginale><width><height><q><type><c> per indicare univocamente l'immagine modificata
@@ -106,16 +103,18 @@ struct conv_img *adaptImageTo(struct img *req_image, struct req *request)
     unsigned char nameToHash[256];
     unsigned long hashcode;
 
-    // check if adapted image has been previously modified and it's in cache
-    /*if ((name = isInCache(req_image))!=NULL) {
-        sprintf(image->name, name);
-        return image;
-    }*/
+    /*  Load information about image from database   */
+    db_get_image_by_name(request->resource,req_image);
+    /*  Check if image is in database else return NOT FOUND */
+    if (strcmp(request->resource,req_image->name)!=0) {
+        adaptedImg->name_code = 404; // NOT FOUND
+        return adaptedImg;
+    }
 
     adaptedImg->quality = (size_t) request->quality*100;
     //adaptedImg->quality = 80;
-    sprintf(adaptedImg->type,"jpg");
-    //sprintf(adaptedImg->type,request->type);
+    //sprintf(adaptedImg->type,"jpg");
+    sprintf(adaptedImg->type,request->type);
     // TODO da ottenere con WURFL usando useragent
     adaptedImg->width = 200;
     adaptedImg->height = 200;
