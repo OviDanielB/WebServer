@@ -127,7 +127,7 @@ struct conv_img *adaptImageTo(struct img *req_image, struct req *request)
 
     adaptedImg->name_code = getHashCode(nameToHash);
 
-    char *date = getTodayToString();
+    char *date = getTodayToSQL();
     sprintf(adaptedImg->last_modified,date);
 
     if (!isInCache(adaptedImg->name_code)) {

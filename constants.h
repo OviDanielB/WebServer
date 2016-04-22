@@ -31,6 +31,8 @@ const size_t MAX_CACHE_ROWS_NUM;
 const in_port_t DEFAULT_PORT;
 /* size of request queue        */
 const int BACKLOG;
+/*  number of days after which an image will be deleted from server cache  */
+const int TIMEOUT;
 /*  number of child processes of server to manage requests  */
 const int CHILDREN_NUM;
 /*  successfully HTTP request   */
@@ -70,7 +72,7 @@ typedef struct conv_img {
     size_t           quality; // quality factor * 100
     char             type[4];
     size_t           length;
-    char             last_modified[50];
+    char             last_modified[20]; // date in SQL format
 };
 
 /*  HTTP request struct    */

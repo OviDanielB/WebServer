@@ -56,7 +56,7 @@ char *composeHeader(char *result, struct conv_img *image)
     char *reply;
     char header[102400];
     long file_length = 0;
-    char *date = getTodayToString();
+    char *date = getTodayToHTTPLine();
 
     if (strcmp(result,HTTP_OK)==0) {
         if (sprintf(header,

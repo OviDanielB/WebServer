@@ -20,10 +20,10 @@ struct tm *getToday()
 
 
 /**
- * Compose a string indicating date of today in the format:
+ * Compose a string indicating date of today in the format of date in the HTTP line:
  * "Thu, 19 Feb 2009 12:27:04 GMT"
  */
-char *getTodayToString()
+char *getTodayToHTTPLine()
 {
     struct tm *today = getToday();
     char weekDay[3];
@@ -99,6 +99,20 @@ char *getTodayToString()
             weekDay,today->tm_mday,month,today->tm_year,today->tm_hour,today->tm_min,today->tm_sec);
     return date;
 }
+
+/**
+ * Compose a string indicating date of today in the format of SQL date:
+ * "2009-02-19"
+ */
+char *getTodayToSQL()
+{
+    struct tm *today = getToday();
+    char date[20];
+    sprintf(date,"%d-%d-%d",today->tm_year,today->tm_mon,today->tm_mday);
+
+    return date;
+}
+
 
 /**
  * Convert date from string to struct tm.

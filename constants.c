@@ -24,6 +24,8 @@ const int BACKLOG =               10;
 const size_t MAXLINE =            2048;
 /* size of database cache table (CONV_IMG) as number of rows   */
 const size_t MAX_CACHE_ROWS_NUM = 5000000;
+/*  number of days after which an image will be deleted from server cache  */
+const int TIMEOUT =               15;
 /*  number of child processes of server to manage requests  */
 const int CHILDREN_NUM =          2;
 /*  successfully HTTP request   */

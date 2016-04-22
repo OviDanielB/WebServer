@@ -49,9 +49,6 @@ void db_execute_statement(sqlite3 *db, const char *sql, struct img *image)
     }
 }
 
-// number of accesses after what image is deleted from cache (timeout)
-#define LIFETIME 1000
-
 /* Update server cache checking for saturation of memory dedicated
  * or after timeout of cached image lifetime.
  *
@@ -86,7 +83,10 @@ void db_insert_img(struct img *originalImg, struct conv_img *convImg) {
     }*/
     db_open(db);
 
-    statement = malloc(MAXLINE * sizeof(char));
+    if ((statement = malloc(MAXLINE * sizeof(char)))==NULL) {
+        perror("error in malloc \n");
+        exit(EXIT_FAILURE);
+    }
 
     if (originalImg != NULL) {
         sprintf(statement, "INSERT INTO IMAGES(Name,Type,Length,Width,Height) " \
@@ -110,6 +110,7 @@ void db_insert_img(struct img *originalImg, struct conv_img *convImg) {
         exit(EXIT_FAILURE);
     }
 
+    free(statement);
     db_close(db);
 }
 
@@ -164,7 +165,7 @@ void db_get_image_by_name(char *name,struct img *image)
     statement = malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
         perror("Malloc error. \n");
-        return;
+        exit(EXIT_FAILURE);
     }
 
     sprintf(statement,"SELECT * FROM IMAGES WHERE Name='%s';", name);
@@ -176,6 +177,7 @@ void db_get_image_by_name(char *name,struct img *image)
         exit(EXIT_FAILURE);
     }
 
+    free(statement);
     db_close(db);
 }
 
@@ -209,6 +211,7 @@ void db_delete_image_by_name(char *name)
         return;
     }
 
+    free(statement);
     db_close(db);
 }
 

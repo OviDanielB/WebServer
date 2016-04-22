@@ -71,6 +71,7 @@ int isInCache(unsigned long hashcode)
         exit(EXIT_FAILURE);
     }
 
+    free(statement);
     db_close(db);
 
     if (strcmp(result,"404")==0) { // not found in cache table
@@ -103,6 +104,8 @@ int isFull(sqlite3 *db)
         exit(EXIT_FAILURE);
     }
 
+    free(statement);
+
     if (rows != MAX_CACHE_ROWS_NUM) {
         return 0; // false
     }
@@ -113,7 +116,32 @@ int isFull(sqlite3 *db)
 /*  Delete from CONV_IMG table the older image inserted (with greater lifetime)   */
 void deleteByAge()
 {
+    int rc;
+    char *statement, *errorMsg;
 
+    sqlite3 *db;
+    /*if ((db=malloc(sizeof(sqlite3)))==NULL) {
+        perror("error in malloc db\n");
+        exit(EXIT_FAILURE);
+    }*/
+    db_open(db);
+
+    statement = malloc(MAXLINE * sizeof(char));
+    if(statement == NULL){
+        perror("delete image by name malloc error");
+        return;
+    }
+
+    sprintf(statement, "DELETE FROM CONV_IMG WHERE DATEDIFF(CURDATE(),Last_Modified)>=%d;",TIMEOUT);
+
+    rc = sqlite3_exec(db,statement,0,0,&errorMsg);
+    if(rc != SQLITE_OK){
+        fprintf(stderr,"SQLITE DELETE ERROR: %s \n",errorMsg);
+        return;
+    }
+
+    free(statement);
+    db_close(db);
 }
 
 /*  Delete from CONV_IMG table all the image where lifetime is greater than LIFETIME value  */
@@ -143,6 +171,7 @@ void deleteByTimeout()
         return;
     }
 
+    free(statement);
     db_close(db);
 }
 
@@ -169,7 +198,8 @@ void updateDate(struct conv_img *adaptedImg)
         return;
     }
 
-    sprintf(statement, "UPDATE FROM CONV_IMG SET Last_Modified='%s';",adaptedImg->last_modified);
+    sprintf(statement, "UPDATE CONV_IMG SET Last_Modified='%s' WHERE Name=%ld;",
+            adaptedImg->last_modified,adaptedImg->name_code);
 
     rc = sqlite3_exec(db,statement,0,0,&errorMsg);
     if(rc != SQLITE_OK){
@@ -177,5 +207,6 @@ void updateDate(struct conv_img *adaptedImg)
         return;
     }
 
+    free(statement);
     db_close(db);
 }
