@@ -127,14 +127,19 @@ struct conv_img *adaptImageTo(struct img *req_image, struct req *request)
 
     adaptedImg->name_code = getHashCode(nameToHash);
 
+    char *date = getTodayToString();
+    sprintf(adaptedImg->last_modified,date);
+
     if (!isInCache(adaptedImg->name_code)) {
         adapt(req_image, adaptedImg);
+        /*  add adapted img to server cache */
+        db_insert_img(NULL,adaptedImg);
+    } else {
+        /*  update last modified date at img in cache   */
+        updateDate(adaptedImg);
     }
 
     printf("end adaptation...\n");
-
-    char *date = getTodayToString();
-    sprintf(adaptedImg->last_modified,date);
 
     return adaptedImg;
 }

@@ -24,5 +24,7 @@ int isInCache(unsigned long hashcode);
 void deleteByAge();
 /*  Delete from CONV_IMG table all the image where lifetime is greater than LIFETIME value  */
 void deleteByTimeout();
+/*  Update date of the last access at that image in the server cache.   */
+void updateDate(struct conv_img *adaptedImg);
 
 #endif //WEBSERVER_DB_CACHE_H

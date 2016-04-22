@@ -145,3 +145,37 @@ void deleteByTimeout()
 
     db_close(db);
 }
+
+/*  Update date of the last access at that image in the server cache.
+ *
+ * @param adaptImg: struct conv_img * that describes row index of cache table to update (name_code)
+ *                  and date of end manipulation
+ */
+void updateDate(struct conv_img *adaptedImg)
+{
+    int rc;
+    char *statement, *errorMsg;
+
+    sqlite3 *db;
+    /*if ((db=malloc(sizeof(sqlite3)))==NULL) {
+        perror("error in malloc db\n");
+        exit(EXIT_FAILURE);
+    }*/
+    db_open(db);
+
+    statement = malloc(MAXLINE * sizeof(char));
+    if(statement == NULL){
+        perror("delete image by name malloc error");
+        return;
+    }
+
+    sprintf(statement, "UPDATE FROM CONV_IMG SET Last_Modified='%s';",adaptedImg->last_modified);
+
+    rc = sqlite3_exec(db,statement,0,0,&errorMsg);
+    if(rc != SQLITE_OK){
+        fprintf(stderr,"SQLITE UPDATE ERROR: %s \n",errorMsg);
+        return;
+    }
+
+    db_close(db);
+}
