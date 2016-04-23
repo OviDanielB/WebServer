@@ -252,7 +252,7 @@ void db_load_all_images(sqlite3 *db, char *path, struct img **images)
                 continue;
             }
 
-            sprintf(complete_path,"%s/%s",path,ent->d_name);
+            sprintf(complete_path,"%s%s",path,ent->d_name);
             printf("%d: %s\n",fileCount+1,complete_path);
 
             images[fileCount] = malloc(sizeof(struct img));
@@ -289,7 +289,7 @@ void db_load_all_images(sqlite3 *db, char *path, struct img **images)
     return;
 }
 
-int main() {
+/*int main() {
     struct img **images = NULL;
 
     char * path;
@@ -312,4 +312,4 @@ int main() {
     printf("fine con result: %d msg:%s.\n",rc,errmsg);
     db_close(db);
     return 0;
-}
+}*/

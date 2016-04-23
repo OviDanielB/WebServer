@@ -29,6 +29,8 @@
 // define sigfunc to simplify signal sys call
 typedef void sigfunc(int);
 
+sqlite3 * db;
+
 static pid_t *pids;
 
 /* generic function for signal handling
@@ -95,7 +97,7 @@ void child_main(int index, int listenfd, int addrlen) {
 
         printf("server process %ld accepted request from client %s\n",(long) getpid(), clientIPAddr);
 
-        serveRequest(connfd);
+        serveRequest(db, connfd);
 
         close(connfd);
     }
@@ -125,7 +127,6 @@ int main(int argc, char **argv)
     in_port_t port;
     time_t ticks;
 
-    sqlite3 * db;
     char * sqlStatement;
 
 

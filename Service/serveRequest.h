@@ -22,6 +22,6 @@
 
 /*  Read from connection socket the client request and
  *  write on it the response, adapted on client device. */
-void serveRequest(int sockfd);
+void serveRequest(sqlite3 *db, int sockfd);
 
 #endif //WEBSERVER_SERVEREQUEST_H

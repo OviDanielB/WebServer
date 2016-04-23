@@ -93,7 +93,7 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
  *  @param image: image to adapt, containing info of requested quality and type
  *  @param request: HTTP request to get device's and requested file's info (size and quality and format) from
  */
-struct conv_img *adaptImageTo(struct img *req_image, struct req *request)
+struct conv_img *adaptImageTo(sqlite3 *db, struct img *req_image, struct req *request)
 {
     struct conv_img *adaptedImg;
     if ((adaptedImg=malloc(sizeof(struct conv_img)))==NULL) {
@@ -129,13 +129,13 @@ struct conv_img *adaptImageTo(struct img *req_image, struct req *request)
     char *date = getTodayToSQL();
     sprintf(adaptedImg->last_modified,date);
 
-    if (!isInCache(adaptedImg->name_code)) {
+    if (!isInCache(db,adaptedImg->name_code)) {
         adapt(req_image, adaptedImg);
         /*  add adapted img to server cache */
-        db_insert_img(NULL,adaptedImg);
+        db_insert_img(db,NULL,adaptedImg);
     } else {
         /*  update last modified date at img in cache   */
-        updateDate(adaptedImg);
+        updateDate(db,adaptedImg);
     }
 
     printf("end adaptation...\n");

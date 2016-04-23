@@ -27,6 +27,6 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg);
 /*  This function adapts image's characteristics to client's device,
  *  optimizing width, length, number of colors and quality.
  */
-struct conv_img *adaptImageTo(struct img *req_image, struct req *request);
+struct conv_img *adaptImageTo(sqlite3 *db, struct img *req_image, struct req *request);
 
 #endif //WEBSERVER_MANAGE_IMG_H

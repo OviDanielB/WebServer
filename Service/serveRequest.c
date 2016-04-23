@@ -19,7 +19,7 @@
  *
  *  @param sockfd: file descriptor for connection socket
  */
-void serveRequest(int sockfd)
+void serveRequest(sqlite3 *db, int sockfd)
 {
     FILE * image;
     size_t n;
@@ -43,7 +43,7 @@ void serveRequest(int sockfd)
             exit(1);
         }
 
-        adaptedImage = adaptImageTo(reqImage, request);
+        adaptedImage = adaptImageTo(db, reqImage, request);
 
         switch (adaptedImage->name_code) {
             case 400 :
