@@ -43,18 +43,11 @@ int cache_check_result(void *data, int argc, char **argv, char **azColName)
  *
  * @param hashcode: index of adapted image eventually cached, as hash function of original image name and adaptations done.
  */
-int isInCache(unsigned long hashcode)
+int isInCache(sqlite3 *db, unsigned long hashcode)
 {
     char *statement, *errorMsg = 0;
     char result[3];
     int rc;
-
-    sqlite3 *db;
-    /*if ((db=malloc(sizeof(sqlite3)))==NULL) {
-        perror("error in malloc db\n");
-        exit(EXIT_FAILURE);
-    }*/
-    db_open(db);
 
     statement = malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
@@ -72,7 +65,6 @@ int isInCache(unsigned long hashcode)
     }
 
     free(statement);
-    db_close(db);
 
     if (strcmp(result,"404")==0) { // not found in cache table
         return 0; // false
@@ -114,17 +106,10 @@ int isFull(sqlite3 *db)
 }
 
 /*  Delete from CONV_IMG table the older image inserted (with greater lifetime)   */
-void deleteByAge()
+void deleteByAge(sqlite3 *db)
 {
     int rc;
     char *statement, *errorMsg;
-
-    sqlite3 *db;
-    /*if ((db=malloc(sizeof(sqlite3)))==NULL) {
-        perror("error in malloc db\n");
-        exit(EXIT_FAILURE);
-    }*/
-    db_open(db);
 
     statement = malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
@@ -132,7 +117,7 @@ void deleteByAge()
         return;
     }
 
-    sprintf(statement, "DELETE FROM CONV_IMG WHERE DATEDIFF(CURDATE(),Last_Modified)>=%d;",TIMEOUT);
+    sprintf(statement, "DELETE FROM CONV_IMG WHERE Last_Modified=( SELECT MIN(Last_Modified) FROM CONV_IMG);");
 
     rc = sqlite3_exec(db,statement,0,0,&errorMsg);
     if(rc != SQLITE_OK){
@@ -141,38 +126,25 @@ void deleteByAge()
     }
 
     free(statement);
-    db_close(db);
 }
 
-/*  Delete from CONV_IMG table all the image where lifetime is greater than LIFETIME value  */
-void deleteByTimeout()
+/*  Delete from CONV_IMG table all the image where number of days between today and last modify date
+ *  is greater than TIMEOUT value  */
+void deleteByTimeout(sqlite3 *db)
 {
     int rc;
     char *statement, *errorMsg;
-
-    sqlite3 *db;
-    /*if ((db=malloc(sizeof(sqlite3)))==NULL) {
-        perror("error in malloc db\n");
-        exit(EXIT_FAILURE);
-    }*/
-    db_open(db);
 
     statement = malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
         perror("delete image by name malloc error");
         return;
     }
-// TODO
-    sprintf(statement, "DELETE FROM CONV_IMG WHERE Last_Modified='';");
+    sprintf(statement, "DELETE FROM CONV_IMG WHERE DATEDIFF(CURDATE(),Last_Modified)>=%d;",TIMEOUT);
 
-    rc = sqlite3_exec(db,statement,0,0,&errorMsg);
-    if(rc != SQLITE_OK){
-        fprintf(stderr,"SQLITE DELETE ERROR: %s \n",errorMsg);
-        return;
-    }
+    db_execute_statement(db,statement);
 
     free(statement);
-    db_close(db);
 }
 
 /*  Update date of the last access at that image in the server cache.
@@ -180,17 +152,10 @@ void deleteByTimeout()
  * @param adaptImg: struct conv_img * that describes row index of cache table to update (name_code)
  *                  and date of end manipulation
  */
-void updateDate(struct conv_img *adaptedImg)
+void updateDate(sqlite3 *db, struct conv_img *adaptedImg)
 {
     int rc;
     char *statement, *errorMsg;
-
-    sqlite3 *db;
-    /*if ((db=malloc(sizeof(sqlite3)))==NULL) {
-        perror("error in malloc db\n");
-        exit(EXIT_FAILURE);
-    }*/
-    db_open(db);
 
     statement = malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
@@ -208,5 +173,4 @@ void updateDate(struct conv_img *adaptedImg)
     }
 
     free(statement);
-    db_close(db);
 }

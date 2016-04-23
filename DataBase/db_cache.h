@@ -19,12 +19,12 @@
 /*  Check if server cache is full (CONV_IMG has reached max number of rows) */
 int isFull(sqlite3 *db);
 /*  Check if searched manipulated image has been just inserted in server cache. */
-int isInCache(unsigned long hashcode);
+int isInCache(sqlite3 *db, unsigned long hashcode);
 /*  Delete from CONV_IMG table the older image inserted (with greater lifetime)   */
-void deleteByAge();
+void deleteByAge(sqlite3 *db);
 /*  Delete from CONV_IMG table all the image where lifetime is greater than LIFETIME value  */
-void deleteByTimeout();
+void deleteByTimeout(sqlite3 *db);
 /*  Update date of the last access at that image in the server cache.   */
-void updateDate(struct conv_img *adaptedImg);
+void updateDate(sqlite3 *db, struct conv_img *adaptedImg);
 
 #endif //WEBSERVER_DB_CACHE_H

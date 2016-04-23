@@ -19,14 +19,16 @@
 void db_open(sqlite3 * db);
 /*  Closing database    */
 void db_close(sqlite3 * db);
+/*  Executing an SQL statement on database  */
+void db_execute_statement(sqlite3 * db, const char *sql);
 /*  Insert new image into database in table IMAGES or CONV_IMG (cache)  */
-void db_insert_img(struct img *originalImg, struct conv_img *convImg);
+void db_insert_img(sqlite3 *db,struct img *originalImg, struct conv_img *convImg);
 /*  Select from database an image from table IMAGES */
 void db_get_image_by_name(char *name, struct img *image);
 /*  Deleting image from database    */
 void db_delete_image_by_name(char *name);
 
-void images_in_dir(char *,struct img **);
+void db_load_all_images(sqlite3 *db, char *path, struct img **);
 
 
 #endif //WEBSERVER_DB_HELPER_H

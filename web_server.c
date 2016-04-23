@@ -143,11 +143,12 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    /* OPEN DATABASE; creates it if doesn't exist
+    /* open server database or create it if doesn't exist */
     db_open(db);
-     FILL DATABASE;
-    db_insert_img_from_dr();
-    */
+    /* load all server images that are in a specified directory */
+    struct img **images;
+    db_load_all_images(db,(char *)PATH, images);
+
 
     // creates a listening socket
     if((listensd=socket(AF_INET,SOCK_STREAM,0)) < 0){
@@ -204,4 +205,5 @@ int main(int argc, char **argv)
 
     close(listensd);
 
+    db_close(db);
 }
