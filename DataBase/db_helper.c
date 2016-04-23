@@ -210,48 +210,48 @@ void db_delete_image_by_name(char *name)
     db_close(db);
 }
 
+void setImgInfo(struct img *img, char *complete_path, char *fullname)
+{
+    MagickWand *m_wand = NULL;
+    m_wand = NewMagickWand();
+
+    if(MagickReadImage(m_wand,complete_path) == MagickFalse){
+        perror("MagickReadImage error");
+        exit(EXIT_FAILURE);
+    }
+
+    readNameAndType(fullname,img->name,img->type);
+    img->width = MagickGetImageWidth(m_wand);
+    img->height = MagickGetImageHeight(m_wand);
+    img->length = img->width*img->height;
+
+    MagickRemoveImage(m_wand);
+    DestroyMagickWand(m_wand);
+}
+
 /* returns a char** with the names of the files in the directory specified by path
  * the char ** in the call     char** files = files_in_dir(path) DOESN'T HAVE TO BE INITIALIZED
  * the names of the files are at maximum 256 as defined in dirent.h
 */
-void images_in_dir(char *path,struct img **images){
-
+void images_in_dir(char *path,struct img **images)
+{
     DIR *dir;
     struct dirent *ent;
-
     int fileCount = 0;
-    char complete_path[MAXLINE];
-    char type[4];
-    char name[256];
+    char complete_path[1024];
+    complete_path[0] = 0;
 
-    printf("0");
-    MagickWand *m_wand = NULL;
-    size_t width,height;
-
-    m_wand = NewMagickWand();
-
+    images = malloc(30 *sizeof(struct img *));
     if ((dir = opendir (path)) != NULL) {
         /* print all the files and directories within directory */
-
         while ((ent = readdir (dir)) != NULL) {
-
             /* doesn't put the . and .. directory*/
             if(strcmp(ent->d_name,".") == 0 || strcmp(ent->d_name,"..") == 0){
                 continue;
             }
 
-            strcat(complete_path,path);
-            strcat(complete_path,"/");
-            strcat(complete_path,ent->d_name);
-            printf("%s\n",complete_path);
-
-            if(MagickReadImage(m_wand,strcat(path,ent->d_name)) == MagickFalse){
-                perror("MagickReadImage error");
-                exit(EXIT_FAILURE);
-            }
-
-            width = MagickGetImageWidth(m_wand);
-            height =MagickGetImageHeight(m_wand);
+            sprintf(complete_path,"%s/%s",path,ent->d_name);
+            printf("%d: %s\n",fileCount,complete_path);
 
             images[fileCount] = malloc(sizeof(struct img));
             if(images[fileCount] == NULL){
@@ -259,12 +259,11 @@ void images_in_dir(char *path,struct img **images){
                 exit(EXIT_FAILURE);
             }
 
-            readNameAndType(ent->d_name,name,type);
-            strcpy((images[fileCount])->name,name);
-            images[fileCount]->width = width;
-            images[fileCount]->height = height;
-            strcpy(images[fileCount]->type,type);
-            images[fileCount]->length = width*height;
+            /*  set name, type and size of image    */
+            setImgInfo(images[fileCount],complete_path,ent->d_name);
+
+            //db_insert_img(images[fileCount],NULL);
+
             printf("name = %s, type = %s, width = %ld, height = %ld\n",
                    images[fileCount]->name,images[fileCount]->type,images[fileCount]->width,images[fileCount]->height);
 
@@ -275,15 +274,10 @@ void images_in_dir(char *path,struct img **images){
                     exit(EXIT_FAILURE);
                 }
             }
-            printf("%d\n",fileCount);
             fileCount++;
 
-            complete_path[0]=0;
-
-        }
-
-        DestroyMagickWand(m_wand);
-
+            memset(complete_path,0,1024);
+	}
         closedir (dir);
     } else {
         /* could not open directory */
@@ -294,15 +288,11 @@ void images_in_dir(char *path,struct img **images){
 }
 
 int main() {
-    struct img **images;
+    struct img **images = NULL;
 
-    images = malloc(30 * sizeof(struct img *));
-    if (images==NULL) {
-        perror("Malloc error\n");
-        exit(EXIT_FAILURE);
-    }
     char * path;
-    path="/home/laura_trive/ClionProjects/WebServer/Images/";
+    path="/home/laura_trive/ClionProjects/WebServer/Images";
+
     printf("inizio...\n");
     images_in_dir(path,images);
     printf("fine.\n");

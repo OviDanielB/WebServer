@@ -56,20 +56,28 @@ size_t *proportionalSize(size_t original_w, size_t original_h, size_t adapted_w,
 /*  Read name and extension of a file   */
 void readNameAndType(char *s, char *name, char *ext)
 {
-    char *p;
-    p = strrchr(s,'.');
+    if (memset(name,'\0',256)==NULL) {
+        perror("memset error\n");
+        exit(EXIT_FAILURE);
+    }
+    if (memset(ext,'\0',4)==NULL) {
+        perror("memset error\n");
+        exit(EXIT_FAILURE);
+    }
+
+    char *p = s;
 
     int i=0;
-    while (s!=p) {
-        name[i] = *s;
+    while (*p!='.') {
+        name[i] = *p;
         i++;
-        s++;
+        p++;
     }
-    s++;
+    p++;
     i=0;
-    while (*s!='\0') {
-        ext[i] = *s;
+    while (*p!='\0') {
+        ext[i] = *p;
         i++;
-        s++;
+        p++;
     }
 }
