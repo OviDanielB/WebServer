@@ -29,7 +29,7 @@ struct req *parseRequest(int sockfd)
 
     //while ((read=readline(sockfd,line,MAXLINE))!=0) {
 
-    while (n<3) {
+    while (1) {
 
         if ((read = readline(sockfd, line, (int) MAXLINE)) == 0) {
             printf("Client quit connection\n");
@@ -67,20 +67,20 @@ struct req *parseRequest(int sockfd)
                 }
                 sprintf(request->type,type);
             }
-            n+=1;
+            //n+=1;
             continue;
         }
 
         if (strncmp(line,USER_AGENT,strlen(USER_AGENT))==0) {
             // read entity line with device's description
             sscanf(line," %s",request->userAgent);
-            n+=1;
+            //n+=1;
             continue;
         }
 
         // NON PARSA q PER TEST METTO COSTANTE
-        request->quality = 0.5;
-        n++;
+        //request->quality = 0.5;
+        //n++;
         // fine test
 
         if (strncmp(line,ACCEPT,strlen(ACCEPT))==0) {
@@ -88,7 +88,7 @@ struct req *parseRequest(int sockfd)
             char *t;
             int i=0;
             char type[4];
-            /*if ((t = strstr(line,"image/"))!=NULL) {
+            if ((t = strstr(line,"image/"))!=NULL) {
                 t+=6;
                 while (*t!=' ') {
                     type[i] = *t;
@@ -96,28 +96,31 @@ struct req *parseRequest(int sockfd)
                     i++;
                 }
                 sprintf(request->type,type);
-                printf("q: %s\n",type);
+                printf("image format: %s\n",type);
 
-            }*/
-            //read resource quality from Accept line
-            char *q;
+            }
+            /*  read resource quality from Accept line    */
             float factor;
             int j=0;
             char quality[3];
 
-            if ((q = strstr(line,"q="))!=NULL) {
-                q+=2;
-                while (*q!=' ' || *q!=',' || *q!=';') {
-                    quality[j] = *q;
-                    q++;
-                    j++;
-                }
-                sscanf(quality,"%f",&factor);
-                request->quality = (size_t) factor*100;
-
-                printf("q: %f\n",factor);
+            t+=3;
+            while (*t!=' ' && j<3) {
+                quality[j] = *t;
+                t++;
+                j++;
             }
-            n+=1;
+            sscanf(quality,"%f",&factor);
+            request->quality = factor;
+
+            printf("q: %f\n",factor);
+
+            //n+=1;
+        }
+
+        /* end while cycle when "\n\n" read as index of request's end   */
+        if (strstr(line,"\n\n")!=NULL) {
+            break;
         }
     }
 
