@@ -78,7 +78,6 @@ typedef struct conv_img {
 /*  HTTP request struct    */
 typedef struct req {
     char    method[4];  // GET or HEAD
-    char    uri[100];
     char    resource[256]; // name of resource read from URI
     char    type[4];
     float   quality;

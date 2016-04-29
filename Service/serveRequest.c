@@ -27,6 +27,7 @@ void serveRequest(sqlite3 *db, int sockfd)
     char buff[MAXLINE];
     char result[50];
     struct conv_img *adaptedImage;
+    adaptedImage = malloc(sizeof(struct conv_img));
 
     //char *userAgent;
     struct req *request = parseRequest(sockfd);
@@ -62,6 +63,7 @@ void serveRequest(sqlite3 *db, int sockfd)
         sprintf(adaptedImage->original_name, reqImage->name);
     }
 
+    /*
     for(;;) {
         if ((read = readline(sockfd, buff, (int) MAXLINE)) == 0) {
             printf("Client quit connection\n");
@@ -71,7 +73,17 @@ void serveRequest(sqlite3 *db, int sockfd)
         printf("sending response...\n");
 
         writeResponse(sockfd, result, request->method, adaptedImage);
+
+    }*/
+
+    if ((readline(sockfd, buff, (int) MAXLINE)) == 0) {
+        printf("Client quit connection\n");
+        return;
     }
+
+    printf("sending response...\n");
+    writeResponse(sockfd, result, request->method, adaptedImage);
+
 }
 
 

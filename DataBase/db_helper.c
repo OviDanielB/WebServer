@@ -49,14 +49,18 @@ static int callback(void *NotUsed, int argc, char **argv, char **azColName){
 void db_execute_statement(sqlite3 *db, const char *sql)
 {
     int rc;
-    char * zErrorMsg;
+    char *zErrorMsg;
+
+    printf("%s\n",sql);
 
     rc = sqlite3_exec(db, sql, 0, 0, &zErrorMsg);
     printf("\ninsert result:%d\n",rc);
     if( rc!=SQLITE_OK ) {
-        fprintf(stderr, "SQL error %d: %s\n", rc, zErrorMsg);
-        sqlite3_free(zErrorMsg);
+        fprintf(stderr, "SQL error %d: %s\n", rc, sqlite3_errmsg(db));
+        //sqlite3_free(zErrorMsg);
     }
+
+    memset((char *)sql,'\0',MAXLINE);
 }
 
 /* Update server cache checking for saturation of memory dedicated
@@ -104,11 +108,8 @@ void db_insert_img(sqlite3 *db, struct img *originalImg, struct conv_img *convIm
         db_update_cache(db);
     }
 
-    write(STDOUT_FILENO, statement, strlen(statement));
+   db_execute_statement(db,statement);
 
-    db_execute_statement(db,statement);
-
-    memset(statement,'\0',MAXLINE);
 }
 
 /* Callback by db_get_image_by_name to fill the img struct passed as (void *), later casted back */
@@ -168,7 +169,7 @@ void db_get_image_by_name(char *name,struct img *image)
         exit(EXIT_FAILURE);
     }
 
-    free(statement);
+    //free(statement);
     db_close(db);
 }
 
@@ -202,7 +203,7 @@ void db_delete_image_by_name(char *name)
         return;
     }
 
-    free(statement);
+    //free(statement);
     db_close(db);
 }
 

@@ -148,7 +148,7 @@ int main(int argc, char **argv)
     db_open(db);
     /* load all server images that are in a specified directory */
     struct img **images;
-    db_load_all_images(db,(char *)PATH, images);
+    //db_load_all_images(db,(char *)PATH, images);
 
 
     // creates a listening socket

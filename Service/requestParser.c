@@ -44,36 +44,50 @@ struct req *parseRequest(int sockfd)
 
         if (strstr(line,HTTP_1)!=NULL) {
             //read request method GET or HEAD and URI of file requested
-            sscanf(line,"%s %s ",request->method,request->uri);
-            //read resource name from URI in the request-line
             char *name;
-            int i=0, j=0;
+            char method[4];
+            memset(method,'\0',strlen(method));
             char resource[256];
+            memset(resource,'\0',strlen(resource));
             char type[4];
-            if ((name = strrchr(request->uri,'/'))!=NULL) {
+            memset(type,'\0',strlen(type));
+            int i=0;
+            name = &line[0];
+            while (*name!=' ') {
+                method[i] = *name;
                 name++;
-                while (*name!='.') {
-                    resource[i] = *name;
-                    name++;
-                    i++;
-                }
-                sprintf(request->resource,resource);
-                // read resource file read from uri
-                name++;
-                while (*name!=' ') {
-                    type[j] = *name;
-                    name++;
-                    j++;
-                }
-                sprintf(request->type,type);
+                i++;
             }
-            //n+=1;
+            sprintf(request->method,method);
+            printf("method: %s\n",request->method);
+            //read resource name from URI in the request-line
+            i=0;
+            name++;
+            name++;
+            while (*name!='.') {
+                resource[i] = *name;
+                name++;
+                i++;
+            }
+            strcpy(request->resource,resource);
+            printf("name of resource: %s\n",resource);
+            // read resource file read from uri
+            name++;
+            i=0;
+            while (*name!=' ') {
+                type[i] = *name;
+                name++;
+                i++;
+            }
+            sprintf(request->type,type);
+            printf("type of resource: %s\n",type);
             continue;
         }
 
         if (strncmp(line,USER_AGENT,strlen(USER_AGENT))==0) {
             // read entity line with device's description
-            sscanf(line," %s",request->userAgent);
+            strcpy(request->userAgent,line+strlen(USER_AGENT)+1);
+            printf("device user-agent: %s\n",request->userAgent);
             //n+=1;
             continue;
         }
