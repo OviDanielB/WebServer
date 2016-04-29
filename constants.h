@@ -84,4 +84,10 @@ typedef struct req {
     char    userAgent[50];
 };
 
+/* Log file line struct */
+typedef struct logline {
+    //hostIP, userIdent, reqPersonID, date, reqLine, status, size
+    char ip_host[12];
+};
+
 #endif //WEBSERVER_CONSTANTS_H
