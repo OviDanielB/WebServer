@@ -101,14 +101,8 @@ struct req *parseRequest(int sockfd)
             // read entity line with device's description
             strcpy(request->userAgent,line+strlen(USER_AGENT)+1);
             printf("device user-agent: %s\n",request->userAgent);
-            //n+=1;
             continue;
         }
-
-        // NON PARSA q PER TEST METTO COSTANTE
-        //request->quality = 0.5;
-        //n++;
-        // fine test
 
         if (strncmp(line,ACCEPT,strlen(ACCEPT))==0) {
             //read resource type from Accept line
@@ -123,8 +117,10 @@ struct req *parseRequest(int sockfd)
                     t++;
                     i++;
                 }
-                sprintf(request->type,type);
-                printf("image format: %s\n",request->type);
+                if (strcmp(type,"*")!=0) {
+                    sprintf(request->type, type);
+                }
+                printf("accept image's format: %s\n",request->type);
 
             }
             /*  read resource quality from Accept line    */
@@ -143,8 +139,6 @@ struct req *parseRequest(int sockfd)
             request->quality = factor;
 
             printf("q: %f\n",factor);
-
-            //n+=1;
         }
 
         /* end while cycle when "\n\n" read as index of request's end   */

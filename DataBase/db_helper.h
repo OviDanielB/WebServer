@@ -24,7 +24,7 @@ void db_execute_statement(sqlite3 * db, const char *sql);
 /*  Insert new image into database in table IMAGES or CONV_IMG (cache)  */
 void db_insert_img(sqlite3 *db,struct img *originalImg, struct conv_img *convImg);
 /*  Select from database an image from table IMAGES */
-void db_get_image_by_name(char *name, struct img *image);
+void db_get_image_by_name(sqlite3 *db, char *name, struct img *image);
 /*  Deleting image from database    */
 void db_delete_image_by_name(char *name);
 /*  Loading into Database all images contained in the server directory of file  */

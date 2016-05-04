@@ -34,15 +34,6 @@ void db_close(sqlite3 * db)
     sqlite3_close(db);
 }
 
-static int callback(void *NotUsed, int argc, char **argv, char **azColName){
-    int i;
-    for(i=0; i<argc; i++){
-        printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
-    }
-    printf("\n");
-    return 0;
-}
-
 /*  Executing a SQLite statement.
  *
  * @param: db = database to be queried
@@ -98,11 +89,6 @@ void db_insert_img(sqlite3 *db, struct img *originalImg, struct conv_img *convIm
         exit(EXIT_FAILURE);
     }
 
-    if (db==NULL) {
-        printf("null\n");
-    } else {
-        printf("not null\n");
-    }
     if (originalImg != NULL) {
         sprintf(statement, "INSERT INTO 'IMAGES' ('Name','Type','Length','Width','Height') " \
         "VALUES ('%s','%s',%ld,%ld,%ld);",
@@ -150,23 +136,17 @@ int fill_img_struct(void *data, int argc, char **argv, char **azColName)
  * @param image: struct img * previously allocated with malloc(sizeof(struct img)),
  *               the name and type char * arrays is done by itself
 */
-void db_get_image_by_name(char *name,struct img *image)
+void db_get_image_by_name(sqlite3 *db, char *name,struct img *image)
 {
     char *statement, *errorMsg = 0;
     int rc;
-
-    sqlite3 *db;
-/*    if ((db=malloc(sizeof(sqlite3)))==NULL) {
-        perror("error in malloc db\n");
-        exit(EXIT_FAILURE);
-    }*/
-    db_open(db);
 
     statement = malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
         perror("Malloc error. \n");
         exit(EXIT_FAILURE);
     }
+    memset(statement,'\0',strlen(statement));
 
     sprintf(statement,"SELECT * FROM IMAGES WHERE Name='%s';", name);
     printf(statement);
@@ -178,7 +158,7 @@ void db_get_image_by_name(char *name,struct img *image)
     }
 
     //free(statement);
-    db_close(db);
+    //db_close(db);
 }
 
 /*  Deleting image from database.
@@ -283,8 +263,8 @@ struct img ** db_load_all_images(sqlite3 *db, char *path)
             printf("name = %s, type = %s, width = %ld, height = %ld\n",
                    images[fileCount]->name,images[fileCount]->type,images[fileCount]->width,images[fileCount]->height);
 
-            if(fileCount>10){
-                images = realloc(images,(fileCount + 1) * sizeof(char));
+            if (fileCount>10) {
+                images = realloc(images,(fileCount + 1) * sizeof(struct img*));
                 if(images == NULL){
                     perror("Calloc error.");
                     exit(EXIT_FAILURE);
@@ -294,6 +274,7 @@ struct img ** db_load_all_images(sqlite3 *db, char *path)
 
             memset(complete_path,0,1024);
 	}
+        printf ("%d immagini\n ",fileCount);
         closedir (dir);
     } else {
         /* could not open directory */
@@ -302,28 +283,3 @@ struct img ** db_load_all_images(sqlite3 *db, char *path)
     }
     return images;
 }
-
-/*int main() {
-    struct img **images = NU    LL;
-
-    char * path;
-    path="/home/laura_trive/ClionProjects/WebServer/Images";
-    sqlite3 *db;
-    db_open(db);
-    printf("inizio...\n");
-    struct img *image = malloc(sizeof(struct img));
-    sprintf(image->name,"provaaa");
-    sprintf(image->type,"png");
-    image->length = 480000;
-    image->width=600;
-    image->height=800;
-    //db_load_all_images(path,images); ok
-    //db_execute_statement(db,"INSERT INTO IMAGES (NAME,TYPE,LENGTH,WIDTH,HEIGHT) " \
-            "VALUES ('Big_Img','jpg',3145728,2048,1536);"); ok
-    db_insert_img(db,image,NULL);
-    char *errmsg = malloc(2342*sizeof(char));
-    int rc = sqlite3_exec(db,"SELECT * FROM IMAGES WHERE Name='Foto';",callback,0,&errmsg);
-    printf("fine con result: %d msg:%s.\n",rc,errmsg);
-    db_close(db);
-    return 0;
-}*/

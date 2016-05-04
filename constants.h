@@ -57,7 +57,7 @@ const char *ACCEPT;
 const char *INDEX;
 
 /*  Image struct    */
-typedef struct img {
+typedef struct  img {
     char    name[256];
     size_t  width;
     size_t  height;

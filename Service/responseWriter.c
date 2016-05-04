@@ -53,34 +53,33 @@ FILE *openImage(struct conv_img *image)
 
 char *composeHomePage(struct img **images)
 {
+    int n = sizeof(images)/sizeof(struct img *); //number of images
     char *home;
-    if ((home = malloc(sizeof(char)*MAXLINE*sizeof(images)))==NULL) {
+    if ((home = malloc(sizeof(char)*MAXLINE*n))==NULL) {
         perror("error in malloc\n");
         exit(EXIT_FAILURE);
     }
-    /*
-    strcpy(home,"<html>"
-                "<body>"
-                "<p>Click on the image you want to visualize.</p>");
-    int i;
-    for (i=0; i<sizeof(images); i++ ) {
-        char fullname[270];
-        sprintf(fullname, "%s.%s", images[i]->name, images[i]->type);
-        strcat(home,"<a href = """);
-        strcat(home,fullname);
-        strcat(home, """> "
-                     "<img src=""");
-        strcat(home,fullname);
-        strcat(home, """ alt=""image"" style=""style=""width:42px;height:42px;border:0;"">"
-                     "</a>");
 
-    }
-
-    strcat(home,"</body>"
-                "</html>");
-*/
-    // come src da mettere richiesta immagine al server
     sprintf(home,"<!DOCTYPE html>"
+            "<html>"
+            "<body>"
+            "<p>Click on image</p><br>");
+
+    int i;
+    for (i=0; i<n; i++) {
+        char div[MAXLINE];
+        sprintf(div, "<div><a href = \"http://127.0.0.1:5193/%s.%s\">"
+                "%d: %s"
+                //"<img src = \"/Images/mare.jpg\" alt = \"mare\" style=\"width:80px;height:80px;border:1;\">"
+                "</a></div><br>", images[i]->name, images[i]->type, i+1, images[i]->name);
+        strcat(home,div);
+    }
+    strcat(home,
+            "</body>"
+            "</html>");
+
+    // come src da mettere richiesta immagine al server
+    /*sprintf(home,"<!DOCTYPE html>"
             "<html>"
             "<body>"
             "<p>Click on image</p><br>"
@@ -89,7 +88,7 @@ char *composeHomePage(struct img **images)
             //"<img src = \"/Images/mare.jpg\" alt = \"mare\" style=\"width:80px;height:80px;border:1;\">"
             "</a></div>"
             "</body>"
-            "</html>");
+            "</html>");*/
     return home;
 }
 
@@ -114,7 +113,7 @@ char *composeHeader(char *result, struct conv_img *image)
                             "Content-Type: text/html; charset=UTF-8 \n"
                             "Content-Length: %ld\n"
                             "Connection: keep-alive\n\n",
-                    HTTP_OK, date, MAXLINE) < 0) {
+                    HTTP_OK, date, image->length*256+MAXLINE) < 0) {
             perror("error in sprintf\n");
             return "";
         }
@@ -267,13 +266,21 @@ void writeResponse(int connfd, char *result, char *method, struct conv_img *imag
 
     /*  requested home page of server content   */
     if (strcmp(result, INDEX) == 0) {
-        image->length = sizeof(images)/sizeof(struct img); // number of images
-        printf("numero immagini %ld\n",image->length);
+        image->length = 4; // COME COSTANTE FINCHE NON TROVO COME TROVARE NUMERO DI ELEMENTI DELL'ARRAY IMAGES
+        //image->length = sizeof(images)/sizeof(struct img *); // number of images
+        //printf("numero immagini %ld\n",image->length);
         header = composeHeader(result, image);
-        printf ("header:%s\n",header);
+        printf ("header:\n%s\n",header);
         write(connfd, header, strlen(header));
         char *home = composeHomePage(images);
-        write(connfd, home, strlen(home));
+        ssize_t n;
+        printf("home: \n %s",home);
+        n = write(connfd, home, strlen(home));
+        printf("Bytes sent %d \n", (int) n);
+        /*while ((n = write(connfd, home, strlen(home)))>0) {
+            printf("Bytes sent %d \n", (int) n);
+        }*/
+
     } else {
 
         FILE *imgfd = openImage(image);
@@ -282,8 +289,6 @@ void writeResponse(int connfd, char *result, char *method, struct conv_img *imag
         }
         size_t n;
         header = composeHeader(result, image);
-        //char buff[MAXLINE];
-
 
         write(connfd, header, strlen(header));
 

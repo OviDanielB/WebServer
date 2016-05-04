@@ -93,27 +93,31 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
  *  @param image: image to adapt, containing info of requested quality and type
  *  @param request: HTTP request to get device's and requested file's info (size and quality and format) from
  */
-struct conv_img *adaptImageTo(sqlite3 *db, struct img *req_image, struct req *request)
+struct conv_img *adaptImageTo(sqlite3 *db, struct req *request)
 {
     struct conv_img *adaptedImg;
     if ((adaptedImg=malloc(sizeof(struct conv_img)))==NULL) {
         perror("error in malloc");
         return NULL;
     }
+    struct img *req_image = malloc(sizeof(struct img));
+    if (req_image== NULL) {
+        perror("error in malloc\n");
+        exit(EXIT_FAILURE);
+    }
+
     unsigned char nameToHash[256];
     unsigned long hashcode;
 
     /*  Load information about image from database   */
-    db_get_image_by_name(request->resource,req_image);
+    db_get_image_by_name(db,request->resource,req_image);
     /*  Check if image is in database else return NOT FOUND */
     if (strcmp(request->resource,req_image->name)!=0) {
         adaptedImg->name_code = 404; // NOT FOUND
         return adaptedImg;
     }
 
-    adaptedImg->quality = (size_t) request->quality*100;
-    //adaptedImg->quality = 80;
-    //sprintf(adaptedImg->type,"jpg");
+    adaptedImg->quality = (size_t) (int) (size_t) request->quality*100;
     sprintf(adaptedImg->type,request->type);
     // TODO da ottenere con WURFL usando useragent
     adaptedImg->width = 200;

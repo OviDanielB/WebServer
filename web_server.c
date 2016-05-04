@@ -143,8 +143,11 @@ pid_t child_make(int i, int listenfd, int addrlen, sqlite3 *db, struct img **ima
         return pid;
     }
 
+    pid = getpid();
+
     child_main(i,listenfd,addrlen,db,images);
 
+    return pid;
 }
 
 int main(int argc, char **argv)
@@ -178,6 +181,17 @@ int main(int argc, char **argv)
     sqlite3 *db = db_open();
     /* load all server images that are in a specified directory */
     struct img **images = db_load_all_images(db,(char *)PATH);
+
+    // TODO numero immagini caricate
+    printf ("size images **: %d\n", sizeof(struct img **));
+    printf ("size images: %d\n", sizeof(&images));
+    printf ("size struct img *: %d\n", sizeof(struct img *));
+    printf ("size struct img : %d\n", sizeof(struct img));
+    printf ("size struct img : %d\n", sizeof(&images));
+    printf ("NUMERO IMGS: %d\n", sizeof(images)/sizeof(struct img*));
+    printf ("nome unica immagine: %s\n",images[0]->name);
+    printf ("nome forse img immagine: %s\n",images[3]->name);
+
 
     // creates a listening socket
     if((listensd=socket(AF_INET,SOCK_STREAM,0)) < 0){
