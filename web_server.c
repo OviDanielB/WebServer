@@ -29,6 +29,7 @@
 
 // define sigfunc to simplify signal sys call
 typedef void sigfunc(int);
+typedef struct sqlite sqlite;
 
 void getServerIp();
 void getServerIp()
@@ -60,8 +61,6 @@ void getServerIp()
     if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
 }
 
-static sqlite3 * db;
-
 static pid_t *pids;
 
 /* generic function for signal handling
@@ -92,8 +91,8 @@ void sig_handler(int sig){
 
 }
 
-void child_main(int index, int listenfd, int addrlen, struct img **images);
-void child_main(int index, int listenfd, int addrlen, struct img **images) {
+void child_main(int index, int listenfd, int addrlen, sqlite3 *db, struct img **images);
+void child_main(int index, int listenfd, int addrlen, sqlite3 *db, struct img **images) {
 
     int connfd, imagefd,pictfd;
     socklen_t clilen;
@@ -134,8 +133,8 @@ void child_main(int index, int listenfd, int addrlen, struct img **images) {
     }
 }
 
-pid_t child_make(int i, int listenfd, int addrlen, struct img **images);
-pid_t child_make(int i, int listenfd, int addrlen, struct img **images)
+pid_t child_make(int i, int listenfd, int addrlen, sqlite3 *db, struct img **images);
+pid_t child_make(int i, int listenfd, int addrlen, sqlite3 *db, struct img **images)
 {
     pid_t pid;
 
@@ -144,7 +143,7 @@ pid_t child_make(int i, int listenfd, int addrlen, struct img **images)
         return pid;
     }
 
-    child_main(i,listenfd,addrlen,images);
+    child_main(i,listenfd,addrlen,db,images);
 
 }
 
@@ -161,7 +160,7 @@ int main(int argc, char **argv)
     char * sqlStatement;
 
 
-    pid_t child_make(int, int, int, struct img **);
+    pid_t child_make(int, int, int, sqlite3 *, struct img **);
 
     // TODO arguments
     if(argc <= 2){
@@ -176,11 +175,9 @@ int main(int argc, char **argv)
     }
 
     /* open server database or create it if doesn't exist */
-    db_open(db);
+    sqlite3 *db = db_open();
     /* load all server images that are in a specified directory */
-    struct img **images;
-    //db_load_all_images(db,(char *)PATH, images);
-
+    struct img **images = db_load_all_images(db,(char *)PATH);
 
     // creates a listening socket
     if((listensd=socket(AF_INET,SOCK_STREAM,0)) < 0){
@@ -220,7 +217,7 @@ int main(int argc, char **argv)
 
     // create pids array with children pids
     for(i = 0; i < CHILDREN_NUM; i++ ){
-        pids[i] = child_make(i, listensd, addrlen, images);
+        pids[i] = child_make(i, listensd, addrlen, db, images);
     }
 
     // when SIGINT arrives (press ctrl-C) the father process and the children terminate

@@ -7,7 +7,7 @@
 #include "constants.h"
 
 /*  path of images' directory    */
-const char *PATH =               "/home/laura_trive/Scrivania/ServerFiles/";
+const char *PATH =               "/home/laura_trive/Scrivania/ServerFiles/Images/";
 /*  path of cached images' directory    */
 const char *CACHE_PATH =         "/home/laura_trive/Scrivania/ServerFiles/Cache/";
 /*  path of server's database of images */

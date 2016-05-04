@@ -8,9 +8,10 @@
  *
  * @param: db =  SQLite database to create/open
  */
-void db_open(sqlite3 * db)
+sqlite3 *db_open()
 {
     int rc;
+    sqlite3 *db;
 
     rc = sqlite3_open(DB_PATH ,&db);
 
@@ -20,6 +21,8 @@ void db_open(sqlite3 * db)
     } else {
         fprintf(stdout, "Opened database successfully\n");
     }
+
+    return db;
 }
 
 /*  Closing database.
@@ -95,8 +98,13 @@ void db_insert_img(sqlite3 *db, struct img *originalImg, struct conv_img *convIm
         exit(EXIT_FAILURE);
     }
 
+    if (db==NULL) {
+        printf("null\n");
+    } else {
+        printf("not null\n");
+    }
     if (originalImg != NULL) {
-        sprintf(statement, "INSERT INTO IMAGES (Name,Type,Length,Width,Height) " \
+        sprintf(statement, "INSERT INTO 'IMAGES' ('Name','Type','Length','Width','Height') " \
         "VALUES ('%s','%s',%ld,%ld,%ld);",
                 originalImg->name, originalImg->type, originalImg->length, originalImg->width, originalImg->height);
     } else if (convImg != NULL) {
@@ -236,7 +244,7 @@ void setImgInfo(struct img *img, char *complete_path, char *fullname)
  * the char ** in the call     char** files = files_in_dir(path) DOESN'T HAVE TO BE INITIALIZED
  * the names of the files are at maximum 256 as defined in dirent.h
 */
-void db_load_all_images(sqlite3 *db, char *path, struct img **images)
+struct img ** db_load_all_images(sqlite3 *db, char *path)
 {
     DIR *dir;
     struct dirent *ent;
@@ -244,7 +252,12 @@ void db_load_all_images(sqlite3 *db, char *path, struct img **images)
     char complete_path[1024];
     complete_path[0] = 0;
 
-    images = malloc(30 *sizeof(struct img *));
+    struct img **images = malloc(30 *sizeof(struct img *));
+    if (images==NULL) {
+        perror("malloc error\n");
+        exit(EXIT_FAILURE);
+    }
+
     if ((dir = opendir (path)) != NULL) {
         /* print all the files and directories within directory */
         while ((ent = readdir (dir)) != NULL) {
@@ -285,13 +298,13 @@ void db_load_all_images(sqlite3 *db, char *path, struct img **images)
     } else {
         /* could not open directory */
         perror ("Could not open directory for images search.");
-        return;
+        exit(EXIT_FAILURE);
     }
-    return;
+    return images;
 }
 
 /*int main() {
-    struct img **images = NULL;
+    struct img **images = NU    LL;
 
     char * path;
     path="/home/laura_trive/ClionProjects/WebServer/Images";

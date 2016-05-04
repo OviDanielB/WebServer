@@ -84,9 +84,10 @@ char *composeHomePage(struct img **images)
             "<html>"
             "<body>"
             "<p>Click on image</p><br>"
-            "<a href = \"http://127.0.0.1:5193/mare.jpg\">"
-            "<img src = \"/Images/mare.jpg\" alt = \"mare\" style=\"width:80px;height:80px;border:1;\">"
-            "</a>"
+            "<div><a href = \"http://127.0.0.1:5193/mare.jpg\">"
+            "mare"
+            //"<img src = \"/Images/mare.jpg\" alt = \"mare\" style=\"width:80px;height:80px;border:1;\">"
+            "</a></div>"
             "</body>"
             "</html>");
     return home;
@@ -111,9 +112,9 @@ char *composeHeader(char *result, struct conv_img *image)
                             "Date: %s\n"
                             "Server: WebServer/1.0.0\n"
                             "Content-Type: text/html; charset=UTF-8 \n"
-                            "Content-Length: 5000\n"
+                            "Content-Length: %ld\n"
                             "Connection: keep-alive\n\n",
-                    HTTP_OK, date) < 0) {
+                    HTTP_OK, date, MAXLINE) < 0) {
             perror("error in sprintf\n");
             return "";
         }

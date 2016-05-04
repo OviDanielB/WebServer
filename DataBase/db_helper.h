@@ -16,7 +16,7 @@
 #include "db_cache.h"
 
 /*  Creating database if not exists and opening it  */
-void db_open(sqlite3 * db);
+sqlite3 *db_open();
 /*  Closing database    */
 void db_close(sqlite3 * db);
 /*  Executing an SQL statement on database  */
@@ -27,8 +27,8 @@ void db_insert_img(sqlite3 *db,struct img *originalImg, struct conv_img *convImg
 void db_get_image_by_name(char *name, struct img *image);
 /*  Deleting image from database    */
 void db_delete_image_by_name(char *name);
-
-void db_load_all_images(sqlite3 *db, char *path, struct img **);
+/*  Loading into Database all images contained in the server directory of file  */
+struct img **db_load_all_images(sqlite3 *db, char *path);
 
 
 #endif //WEBSERVER_DB_HELPER_H
