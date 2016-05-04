@@ -46,3 +46,5 @@ const char *HTTP_0 =            "HTTP/1.0";
 const char *USER_AGENT =        "User-Agent:";
 /*  HTTP request Accept line    */
 const char *ACCEPT =            "Accept:";
+/*  home page of server images to show to the client    */
+const char *INDEX =             "index";

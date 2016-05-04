@@ -94,9 +94,15 @@ char *getTodayToHTTPLine()
         default:break;
     }
 
-    char date[50];
+    char *date;
+    date = malloc(50*sizeof(char));
+    if (date == NULL) {
+        perror("error in malloc\n");
+        exit(EXIT_FAILURE);
+    }
+
     sprintf(date,"%s, %d %s %d %d:%d:%d GMT",
-            weekDay,today->tm_mday,month,today->tm_year,today->tm_hour,today->tm_min,today->tm_sec);
+            weekDay,today->tm_mday,month,today->tm_year+1900,today->tm_hour,today->tm_min,today->tm_sec);
     return date;
 }
 

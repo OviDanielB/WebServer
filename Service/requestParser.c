@@ -24,6 +24,7 @@ struct req *parseRequest(int sockfd)
     }
 
     char line[MAXLINE];
+    memset(line,'\0',sizeof(line));
     int read;
     int n=0; // counter of line of information to be read
 
@@ -36,6 +37,8 @@ struct req *parseRequest(int sockfd)
             return NULL;
         }
 
+        printf("%s\n",line);
+
         if (strstr(line,HTTP_0)!=NULL) {
             //not supported protocol
             printf("Not supported protocol\n");
@@ -43,7 +46,7 @@ struct req *parseRequest(int sockfd)
         }
 
         if (strstr(line,HTTP_1)!=NULL) {
-            //read request method GET or HEAD and URI of file requested
+            //read request method GET or HEAD of file requested
             char *name;
             char method[4];
             memset(method,'\0',strlen(method));
@@ -62,8 +65,13 @@ struct req *parseRequest(int sockfd)
             printf("method: %s\n",request->method);
             //read resource name from URI in the request-line
             i=0;
-            name++;
-            name++;
+            //name++;
+            if ((name=strstr(line,"Images/"))==NULL) {
+                name = strchr(line,'/');
+                name++;
+            } else {
+                name+=7;
+            }
             while (*name!='.') {
                 resource[i] = *name;
                 name++;
@@ -71,6 +79,11 @@ struct req *parseRequest(int sockfd)
             }
             strcpy(request->resource,resource);
             printf("name of resource: %s\n",resource);
+
+            if (strcmp(resource,INDEX)==0) {
+                return request;
+            }
+
             // read resource file read from uri
             name++;
             i=0;
@@ -102,15 +115,16 @@ struct req *parseRequest(int sockfd)
             char *t;
             int i=0;
             char type[4];
+            memset(type,'\0',sizeof(type));
             if ((t = strstr(line,"image/"))!=NULL) {
                 t+=6;
-                while (*t!=' ') {
+                while (*t!=',') {
                     type[i] = *t;
                     t++;
                     i++;
                 }
                 sprintf(request->type,type);
-                printf("image format: %s\n",type);
+                printf("image format: %s\n",request->type);
 
             }
             /*  read resource quality from Accept line    */
@@ -118,8 +132,9 @@ struct req *parseRequest(int sockfd)
             int j=0;
             char quality[3];
 
-            t+=3;
-            while (*t!=' ' && j<3) {
+            t=strstr(line,"q=");
+            t+=2;
+            while (j<3) {
                 quality[j] = *t;
                 t++;
                 j++;

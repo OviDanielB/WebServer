@@ -7,6 +7,7 @@
  */
 
 #include "responseWriter.h"
+#include "../helper/io_func.h"
 
 char result[50];
 
@@ -50,6 +51,47 @@ FILE *openImage(struct conv_img *image)
     }
 }
 
+char *composeHomePage(struct img **images)
+{
+    char *home;
+    if ((home = malloc(sizeof(char)*MAXLINE*sizeof(images)))==NULL) {
+        perror("error in malloc\n");
+        exit(EXIT_FAILURE);
+    }
+    /*
+    strcpy(home,"<html>"
+                "<body>"
+                "<p>Click on the image you want to visualize.</p>");
+    int i;
+    for (i=0; i<sizeof(images); i++ ) {
+        char fullname[270];
+        sprintf(fullname, "%s.%s", images[i]->name, images[i]->type);
+        strcat(home,"<a href = """);
+        strcat(home,fullname);
+        strcat(home, """> "
+                     "<img src=""");
+        strcat(home,fullname);
+        strcat(home, """ alt=""image"" style=""style=""width:42px;height:42px;border:0;"">"
+                     "</a>");
+
+    }
+
+    strcat(home,"</body>"
+                "</html>");
+*/
+    // come src da mettere richiesta immagine al server
+    sprintf(home,"<!DOCTYPE html>"
+            "<html>"
+            "<body>"
+            "<p>Click on image</p><br>"
+            "<a href = \"http://127.0.0.1:5193/mare.jpg\">"
+            "<img src = \"/Images/mare.jpg\" alt = \"mare\" style=\"width:80px;height:80px;border:1;\">"
+            "</a>"
+            "</body>"
+            "</html>");
+    return home;
+}
+
 /*  Compose response HTTP message to send to the client */
 char *composeHeader(char *result, struct conv_img *image)
 {
@@ -62,7 +104,24 @@ char *composeHeader(char *result, struct conv_img *image)
     long file_length = 0;
     char *date = getTodayToHTTPLine();
 
+    if (strcmp(result,INDEX)==0) {
+        printf("header\n");
+        if (sprintf(header,
+                    "%s\n"
+                            "Date: %s\n"
+                            "Server: WebServer/1.0.0\n"
+                            "Content-Type: text/html; charset=UTF-8 \n"
+                            "Content-Length: 5000\n"
+                            "Connection: keep-alive\n\n",
+                    HTTP_OK, date) < 0) {
+            perror("error in sprintf\n");
+            return "";
+        }
+
+    }
+
     if (strcmp(result,HTTP_OK)==0) {
+
         if (sprintf(header,
                             "%s\n"
                             "Date: %s\n"
@@ -128,47 +187,135 @@ char *composeHeader(char *result, struct conv_img *image)
  * @param: method = HTTP request method (GET or HEAD)
  * @param: image = image to send as data in the message
  */
-void writeResponse(int connfd, char *result, char *method, struct conv_img *image)
+void writeResponse(int connfd, char *result, char *method, struct conv_img *image, struct img **images)
 {
-    FILE *imgfd = openImage(image);
-    if (imgfd==NULL) {
-        strcpy(result,HTTP_BAD_REQUEST);
-    }
-    char *header = composeHeader(result, image);
     char buff[MAXLINE];
-    size_t n;
+    char *header;
 
-    write(connfd, header, strlen(header));
+    /*for(;;) {
+        if (readline(connfd, buff, (int) MAXLINE) == 0) {
+            printf("Client quit connection\n");
+            return;
+        }
 
-    if (strcmp(result, HTTP_OK) == 0) {
-        /* response to GET method is header + image;
-         * response to HEAD method is only header, composed like that one for GET   */
-        if (strcmp(method,"GET")==0) {
-            while (1) {
+        pid_t p = getpid();
+        printf("%d sending response...\n",p);
 
-                n = fread(buff, 1, (size_t) MAXLINE, imgfd);
-                printf("Bytes read %d \n", (int) n);
+        /*  requested home page of server content   */
+        /*if (strcmp(result, INDEX) == 0) {
+            image->length = sizeof(images);
+            printf("numero immagini %ld\n",image->length);
+            header = composeHeader(result, image);
+            printf ("header:%s\n",header);
+            write(connfd, header, strlen(header));
+            char *home = composeHomePage(images);
+            write(connfd, home, strlen(home));
+        } else {
 
-                if (n > 0) {
-                    printf("Sending \n");
-                    write(connfd, buff, n);
+            FILE *imgfd = openImage(image);
+            if (imgfd == NULL) {
+                strcpy(result, HTTP_BAD_REQUEST);
+            }
+            size_t n;
+            header = composeHeader(result, image);
 
-                }
 
-                if (n < MAXLINE) {
-                    if (feof(imgfd)) {
-                        printf("End of file \n ");
+            write(connfd, header, strlen(header));
+
+            if (strcmp(result, HTTP_OK) == 0) {*/
+                /* response to GET method is header + image;
+                 * response to HEAD method is only header, composed like that one for GET   */
+                /*if (strcmp(method, "GET") == 0) {
+                    while (1) {
+
+                        n = fread(buff, 1, (size_t) MAXLINE, imgfd);
+                        printf("Bytes read %d \n", (int) n);
+
+                        if (n > 0) {
+                            printf("Sending \n");
+                            write(connfd, buff, n);
+
+                        }
+
+                        if (n < MAXLINE) {
+                            if (feof(imgfd)) {
+                                printf("End of file \n ");
+                            }
+                            if (ferror(imgfd)) {
+                                printf("Error Reading \n");
+                            }
+                            break;
+                        }
                     }
-                    if (ferror(imgfd)) {
-                        printf("Error Reading \n");
-                    }
-                    break;
                 }
+            } else if (strcmp(result, HTTP_NOT_FOUND) == 0) {
+                write(connfd, HTML_404, strlen(HTML_404));
+            } else if (strcmp(result, HTTP_BAD_REQUEST) == 0) {
+                write(connfd, HTML_400, strlen(HTML_400));
             }
         }
-    } else if (strcmp(result, HTTP_NOT_FOUND) == 0) {
-        write(connfd, HTML_404, strlen(HTML_404));
-    } else if (strcmp(result, HTTP_BAD_REQUEST) == 0) {
-        write(connfd, HTML_400, strlen(HTML_400));
+    }
+    */
+    if (readline(connfd, buff, (int) MAXLINE) == 0) {
+        printf("Client quit connection\n");
+        return;
+    }
+
+    pid_t p = getpid();
+    printf("%d sending response...\n",p);
+
+    /*  requested home page of server content   */
+    if (strcmp(result, INDEX) == 0) {
+        image->length = sizeof(images)/sizeof(struct img); // number of images
+        printf("numero immagini %ld\n",image->length);
+        header = composeHeader(result, image);
+        printf ("header:%s\n",header);
+        write(connfd, header, strlen(header));
+        char *home = composeHomePage(images);
+        write(connfd, home, strlen(home));
+    } else {
+
+        FILE *imgfd = openImage(image);
+        if (imgfd == NULL) {
+            strcpy(result, HTTP_BAD_REQUEST);
+        }
+        size_t n;
+        header = composeHeader(result, image);
+        //char buff[MAXLINE];
+
+
+        write(connfd, header, strlen(header));
+
+        if (strcmp(result, HTTP_OK) == 0) {
+            /* response to GET method is header + image;
+             * response to HEAD method is only header, composed like that one for GET   */
+            if (strcmp(method, "GET") == 0) {
+                while (1) {
+
+                    n = fread(buff, 1, (size_t) MAXLINE, imgfd);
+                    printf("Bytes read %d \n", (int) n);
+
+                    if (n > 0) {
+                        printf("Sending \n");
+                        write(connfd, buff, n);
+
+                    }
+
+                    if (n < MAXLINE) {
+                        if (feof(imgfd)) {
+                            printf("End of file \n ");
+                        }
+                        if (ferror(imgfd)) {
+                            printf("Error Reading \n");
+                        }
+                        break;
+                    }
+                }
+            }
+        } else if (strcmp(result, HTTP_NOT_FOUND) == 0) {
+            write(connfd, HTML_404, strlen(HTML_404));
+        } else if (strcmp(result, HTTP_BAD_REQUEST) == 0) {
+            write(connfd, HTML_400, strlen(HTML_400));
+        }
     }
 }

@@ -4,7 +4,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <constants.h>
 #include "constants.h"
 
 FILE *log_file;
@@ -17,7 +16,7 @@ struct logline *logonfile()
         return NULL;
     }
 
-    log_file=fopen("FILE_PATH","w");
+    /*log_file=fopen("FILE_PATH","w");
     sprintf(log_line->ip_host, echo_ip_host());
     sprintf(log_line->ip_host, echo_user_id());
     sprintf(log_line->ip_host, echo_reqpers_id());
@@ -25,7 +24,7 @@ struct logline *logonfile()
     sprintf(log_line->ip_host, echo_req_line());
     sprintf(log_line->ip_host, echo_status());
     sprintf(log_line->ip_host, echo_size());
-    fclose(log_file);
+    fclose(log_file);*/
     return log_line;
 
 }

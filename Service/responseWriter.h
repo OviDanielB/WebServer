@@ -18,10 +18,13 @@
 #include "../constants.h"
 #include "../helper/calendar.h"
 
+
+char *composeHomePage(struct img **images);
+
 /*  Compose header of HTTP message to send to the client, based on result of request's elaboration */
 char *composeHeader(char *result, struct conv_img *image);
 
 /*  This function sends server response, based on result of the request's elaboration */
-void writeResponse(int connfd, char *result, char *method, struct conv_img *image);
+void writeResponse(int connfd, char *result, char *method, struct conv_img *image, struct img **images);
 
 #endif //WEBSERVER_RESPONSE_H

@@ -53,6 +53,8 @@ const char *HTTP_0;
 const char *USER_AGENT;
 /*  HTTP request Accept line    */
 const char *ACCEPT;
+/*  home page of server images to show to the client    */
+const char *INDEX;
 
 /*  Image struct    */
 typedef struct img {

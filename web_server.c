@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <signal.h>
+#include <ifaddrs.h>
 
 #include "DataBase/db_helper.h"
 #include "helper/locking.h"
@@ -29,7 +30,37 @@
 // define sigfunc to simplify signal sys call
 typedef void sigfunc(int);
 
-sqlite3 * db;
+void getServerIp();
+void getServerIp()
+{
+    struct ifaddrs * ifAddrStruct=NULL;
+    struct ifaddrs * ifa=NULL;
+    void * tmpAddrPtr=NULL;
+
+    getifaddrs(&ifAddrStruct);
+
+    for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
+        if (!ifa->ifa_addr) {
+            continue;
+        }
+        if (ifa->ifa_addr->sa_family == AF_INET) { // check it is IP4
+            // is a valid IP4 Address
+            tmpAddrPtr=&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+            char addressBuffer[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
+            printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
+        } else if (ifa->ifa_addr->sa_family == AF_INET6) { // check it is IP6
+            // is a valid IP6 Address
+            tmpAddrPtr=&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
+            char addressBuffer[INET6_ADDRSTRLEN];
+            inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
+            printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
+        }
+    }
+    if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
+}
+
+static sqlite3 * db;
 
 static pid_t *pids;
 
@@ -61,8 +92,8 @@ void sig_handler(int sig){
 
 }
 
-void child_main(int index, int listenfd, int addrlen);
-void child_main(int index, int listenfd, int addrlen) {
+void child_main(int index, int listenfd, int addrlen, struct img **images);
+void child_main(int index, int listenfd, int addrlen, struct img **images) {
 
     int connfd, imagefd,pictfd;
     socklen_t clilen;
@@ -97,14 +128,14 @@ void child_main(int index, int listenfd, int addrlen) {
 
         printf("server process %ld accepted request from client %s\n",(long) getpid(), clientIPAddr);
 
-        serveRequest(db, connfd);
+        serveRequest(db, connfd, images);
 
         close(connfd);
     }
 }
 
-pid_t child_make(int i, int listenfd, int addrlen);
-pid_t child_make(int i, int listenfd, int addrlen)
+pid_t child_make(int i, int listenfd, int addrlen, struct img **images);
+pid_t child_make(int i, int listenfd, int addrlen, struct img **images)
 {
     pid_t pid;
 
@@ -113,7 +144,7 @@ pid_t child_make(int i, int listenfd, int addrlen)
         return pid;
     }
 
-    child_main(i,listenfd,addrlen);
+    child_main(i,listenfd,addrlen,images);
 
 }
 
@@ -130,7 +161,7 @@ int main(int argc, char **argv)
     char * sqlStatement;
 
 
-    pid_t child_make(int, int, int);
+    pid_t child_make(int, int, int, struct img **);
 
     // TODO arguments
     if(argc <= 2){
@@ -172,6 +203,8 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+    getServerIp();
+
     // marks the socket as a passive socket and it is ready to accept connections
     // BACKLOG max number of allowed connections. if max reached the user will get an error
     if(listen(listensd, BACKLOG) < 0){
@@ -187,7 +220,7 @@ int main(int argc, char **argv)
 
     // create pids array with children pids
     for(i = 0; i < CHILDREN_NUM; i++ ){
-        pids[i] = child_make(i, listensd, addrlen);
+        pids[i] = child_make(i, listensd, addrlen, images);
     }
 
     // when SIGINT arrives (press ctrl-C) the father process and the children terminate
