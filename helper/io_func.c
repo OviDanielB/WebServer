@@ -67,7 +67,8 @@ ssize_t writen(int fd, const void *buf, size_t n)
 /******/
 int readline(int fd, void *buf, int maxlen)
 {
-  int  n, rc;
+  int n;
+  ssize_t rc;
   char c, *ptr;
 
   ptr = buf;

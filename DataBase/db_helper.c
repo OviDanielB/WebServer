@@ -84,7 +84,7 @@ void db_insert_img(sqlite3 *db, struct img *originalImg, struct conv_img *convIm
 {
     char *statement;
 
-    if ((statement = malloc(MAXLINE * sizeof(char)))==NULL) {
+    if ((statement = (char *) malloc(MAXLINE * sizeof(char)))==NULL) {
         perror("error in malloc \n");
         exit(EXIT_FAILURE);
     }
@@ -141,7 +141,7 @@ void db_get_image_by_name(sqlite3 *db, char *name,struct img *image)
     char *statement, *errorMsg = 0;
     int rc;
 
-    statement = malloc(MAXLINE * sizeof(char));
+    statement = (char *) malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
         perror("Malloc error. \n");
         exit(EXIT_FAILURE);
@@ -165,17 +165,10 @@ void db_get_image_by_name(sqlite3 *db, char *name,struct img *image)
  *
  * @param: name = image name to delete from database
  */
-void db_delete_image_by_name(char *name)
+void db_delete_image_by_name(sqlite3 *db, char *name)
 {
     int rc;
     char *statement, *errorMsg;
-
-    sqlite3 *db;
-/*    if ((db=malloc(sizeof(sqlite3)))==NULL) {
-        perror("error in malloc db\n");
-        exit(EXIT_FAILURE);
-    }*/
-    db_open(db);
 
     statement = malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
@@ -192,7 +185,6 @@ void db_delete_image_by_name(char *name)
     }
 
     //free(statement);
-    db_close(db);
 }
 
 /* Set name type and size of the image

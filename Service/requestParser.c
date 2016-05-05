@@ -1,7 +1,3 @@
-//
-// Created by laura_trive on 23/03/16.
-//
-
 /*
  * Functions implementation to parse lines of client's HTTP request.
  */
@@ -25,14 +21,10 @@ struct req *parseRequest(int sockfd)
 
     char line[MAXLINE];
     memset(line,'\0',sizeof(line));
-    int read;
-    int n=0; // counter of line of information to be read
-
-    //while ((read=readline(sockfd,line,MAXLINE))!=0) {
 
     while (1) {
 
-        if ((read = readline(sockfd, line, (int) MAXLINE)) == 0) {
+        if ((readline(sockfd, line, (int) MAXLINE)) == 0) {
             printf("Client quit connection\n");
             return NULL;
         }
@@ -104,41 +96,34 @@ struct req *parseRequest(int sockfd)
             continue;
         }
 
+        // read resource's type from Accept line
         if (strncmp(line,ACCEPT,strlen(ACCEPT))==0) {
-            //read resource type from Accept line
+            /* check if requested jpeg image format;
+             * if yes, server response will be adapted to factor of quality q
+             * defined in this line;
+             * if not, server response will be adapted to client device described by user-agent line    */
             char *t;
-            int i=0;
-            char type[4];
-            memset(type,'\0',sizeof(type));
-            if ((t = strstr(line,"image/"))!=NULL) {
-                t+=6;
-                while (*t!=',') {
-                    type[i] = *t;
+            if ((t=strstr(line,"image/jpeg"))==NULL || (t=strstr(line,"image/jpg"))==NULL) {
+                request->quality = -1;
+            } else {
+                /*  read quality of JPEG resource's format from Accept line    */
+                float factor;
+                int j = 0;
+                char quality[3];
+                while (*t!='q') {
                     t++;
-                    i++;
                 }
-                if (strcmp(type,"*")!=0) {
-                    sprintf(request->type, type);
+                t += 2;
+                while (j < 3) {
+                    quality[j] = *t;
+                    t++;
+                    j++;
                 }
-                printf("accept image's format: %s\n",request->type);
+                sscanf(quality, "%f", &factor);
+                request->quality = factor;
 
+                printf("factor of quality q: %f\n", factor);
             }
-            /*  read resource quality from Accept line    */
-            float factor;
-            int j=0;
-            char quality[3];
-
-            t=strstr(line,"q=");
-            t+=2;
-            while (j<3) {
-                quality[j] = *t;
-                t++;
-                j++;
-            }
-            sscanf(quality,"%f",&factor);
-            request->quality = factor;
-
-            printf("q: %f\n",factor);
         }
 
         /* end while cycle when "\n\n" read as index of request's end   */

@@ -95,7 +95,7 @@ char *getTodayToHTTPLine()
     }
 
     char *date;
-    date = malloc(50*sizeof(char));
+    date = (char *) malloc(50*sizeof(char)+1);
     if (date == NULL) {
         perror("error in malloc\n");
         exit(EXIT_FAILURE);
@@ -130,7 +130,7 @@ struct tm *fromStringToTm(char *date)
     struct tm *dateTm;
     char weekDay[3];
     char month[3];
-    if ((dateTm = malloc(sizeof(struct tm)))==NULL){
+    if ((dateTm = (struct tm *) malloc(sizeof(struct tm)))==NULL){
         perror("error in malloc\n");
         exit(1);
     }

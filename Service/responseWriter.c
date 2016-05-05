@@ -55,7 +55,7 @@ char *composeHomePage(struct img **images)
 {
     int n = sizeof(images)/sizeof(struct img *); //number of images
     char *home;
-    if ((home = malloc(sizeof(char)*MAXLINE*n))==NULL) {
+    if ((home = (char *) malloc(sizeof(char)*MAXLINE*n))==NULL) {
         perror("error in malloc\n");
         exit(EXIT_FAILURE);
     }
@@ -97,7 +97,7 @@ char *composeHeader(char *result, struct conv_img *image)
 {
     char *reply;
     char *header;
-    if ((header=malloc(image->length+MAXLINE))==NULL) {
+    if ((header = (char *) malloc(image->length+MAXLINE))==NULL) {
         perror("error in malloc\n");
         exit(EXIT_FAILURE);
     }
@@ -167,7 +167,7 @@ char *composeHeader(char *result, struct conv_img *image)
         }
     }
 
-    if ((reply=malloc(strlen(header)+file_length))==NULL) {
+    if ((reply = (char *) malloc(strlen(header)+file_length+1))==NULL) {
         perror("error in malloc\n");
         return "";
     }

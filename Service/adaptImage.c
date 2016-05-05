@@ -96,11 +96,11 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
 struct conv_img *adaptImageTo(sqlite3 *db, struct req *request)
 {
     struct conv_img *adaptedImg;
-    if ((adaptedImg=malloc(sizeof(struct conv_img)))==NULL) {
+    if ((adaptedImg = (struct conv_img *) malloc(sizeof(struct conv_img)))==NULL) {
         perror("error in malloc");
         return NULL;
     }
-    struct img *req_image = malloc(sizeof(struct img));
+    struct img *req_image = (struct img *) malloc(sizeof(struct img));
     if (req_image== NULL) {
         perror("error in malloc\n");
         exit(EXIT_FAILURE);

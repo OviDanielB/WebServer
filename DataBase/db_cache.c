@@ -49,7 +49,7 @@ int isInCache(sqlite3 *db, unsigned long hashcode)
     char result[3];
     int rc;
 
-    statement = malloc(MAXLINE * sizeof(char));
+    statement = (char *) malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
         perror("Malloc error. \n");
         return 0; // false
@@ -81,7 +81,7 @@ int isFull(sqlite3 *db)
     size_t rows = 0;
     int rc;
 
-    statement = malloc(MAXLINE * sizeof(char));
+    statement = (char *) malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
         perror("Malloc error. \n");
         return 0; // false
@@ -111,7 +111,7 @@ void deleteByAge(sqlite3 *db)
     int rc;
     char *statement, *errorMsg;
 
-    statement = malloc(MAXLINE * sizeof(char));
+    statement = (char *) malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
         perror("delete image by name malloc error");
         return;
@@ -135,7 +135,7 @@ void deleteByTimeout(sqlite3 *db)
     int rc;
     char *statement, *errorMsg;
 
-    statement = malloc(MAXLINE * sizeof(char));
+    statement = (char *) malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
         perror("delete image by name malloc error");
         return;
@@ -157,7 +157,7 @@ void updateDate(sqlite3 *db, struct conv_img *adaptedImg)
     int rc;
     char *statement, *errorMsg;
 
-    statement = malloc(MAXLINE * sizeof(char));
+    statement = (char *) malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
         perror("delete image by name malloc error");
         return;
