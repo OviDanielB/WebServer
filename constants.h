@@ -61,7 +61,7 @@ typedef struct  img {
     char    name[256];
     size_t  width;
     size_t  height;
-    char    type[4];
+    char    type[5];
     size_t  length;
 };
 
@@ -72,18 +72,18 @@ typedef struct conv_img {
     size_t           width;
     size_t           height;
     size_t           quality; // quality factor * 100
-    char             type[4];
+    char             type[5];
     size_t           length;
-    char             last_modified[20]; // date in SQL format
+    char             last_modified[21]; // date in SQL format
 };
 
 /*  HTTP request struct    */
 typedef struct req {
-    char    method[4];  // GET or HEAD
+    char    method[5];  // GET or HEAD
     char    resource[256]; // name of resource read from URI
-    char    type[4];
+    char    type[5];
     float   quality;
-    char    userAgent[50];
+    char    userAgent[1024];
 };
 
 /* Log file line struct */

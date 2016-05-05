@@ -111,6 +111,10 @@ struct conv_img *adaptImageTo(sqlite3 *db, struct req *request)
 
     /*  Load information about image from database   */
     db_get_image_by_name(db,request->resource,req_image);
+
+    printf("READING FROM DB:\n name %s, type %s, heigth %ld, length %ld, width %ld",
+           req_image->name,req_image->type,req_image->height,req_image->length, req_image->width);
+
     /*  Check if image is in database else return NOT FOUND */
     if (strcmp(request->resource,req_image->name)!=0) {
         adaptedImg->name_code = 404; // NOT FOUND

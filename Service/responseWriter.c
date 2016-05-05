@@ -53,7 +53,8 @@ FILE *openImage(struct conv_img *image)
 
 char *composeHomePage(struct img **images)
 {
-    int n = sizeof(images)/sizeof(struct img *); //number of images
+    //int n = sizeof(images)/sizeof(struct img *); //number of images
+    int n = 4;
     char *home;
     if ((home = (char *) malloc(sizeof(char)*MAXLINE*n))==NULL) {
         perror("error in malloc\n");
@@ -192,24 +193,32 @@ void writeResponse(int connfd, char *result, char *method, struct conv_img *imag
     char buff[MAXLINE];
     char *header;
 
-    /*for(;;) {
+    //for (;;) {
         if (readline(connfd, buff, (int) MAXLINE) == 0) {
             printf("Client quit connection\n");
             return;
         }
 
         pid_t p = getpid();
-        printf("%d sending response...\n",p);
+        printf("%d sending response...\n", p);
 
         /*  requested home page of server content   */
-        /*if (strcmp(result, INDEX) == 0) {
-            image->length = sizeof(images);
-            printf("numero immagini %ld\n",image->length);
+        if (strcmp(result, INDEX) == 0) {
+            image->length = 4; // COME COSTANTE FINCHE NON TROVO COME TROVARE NUMERO DI ELEMENTI DELL'ARRAY IMAGES
+            //image->length = sizeof(images)/sizeof(struct img *); // number of images
+            //printf("numero immagini %ld\n",image->length);
             header = composeHeader(result, image);
-            printf ("header:%s\n",header);
+            printf("header:\n%s\n", header);
             write(connfd, header, strlen(header));
             char *home = composeHomePage(images);
-            write(connfd, home, strlen(home));
+            ssize_t n;
+            printf("home: \n %s", home);
+            n = write(connfd, home, strlen(home));
+            printf("Bytes sent %d \n", (int) n);
+            /*while ((n = write(connfd, home, strlen(home)))>0) {
+                printf("Bytes sent %d \n", (int) n);
+            }*/
+
         } else {
 
             FILE *imgfd = openImage(image);
@@ -219,13 +228,12 @@ void writeResponse(int connfd, char *result, char *method, struct conv_img *imag
             size_t n;
             header = composeHeader(result, image);
 
-
             write(connfd, header, strlen(header));
 
-            if (strcmp(result, HTTP_OK) == 0) {*/
+            if (strcmp(result, HTTP_OK) == 0) {
                 /* response to GET method is header + image;
                  * response to HEAD method is only header, composed like that one for GET   */
-                /*if (strcmp(method, "GET") == 0) {
+                if (strcmp(method, "GET") == 0) {
                     while (1) {
 
                         n = fread(buff, 1, (size_t) MAXLINE, imgfd);
@@ -254,74 +262,5 @@ void writeResponse(int connfd, char *result, char *method, struct conv_img *imag
                 write(connfd, HTML_400, strlen(HTML_400));
             }
         }
-    }
-    */
-    if (readline(connfd, buff, (int) MAXLINE) == 0) {
-        printf("Client quit connection\n");
-        return;
-    }
-
-    pid_t p = getpid();
-    printf("%d sending response...\n",p);
-
-    /*  requested home page of server content   */
-    if (strcmp(result, INDEX) == 0) {
-        image->length = 4; // COME COSTANTE FINCHE NON TROVO COME TROVARE NUMERO DI ELEMENTI DELL'ARRAY IMAGES
-        //image->length = sizeof(images)/sizeof(struct img *); // number of images
-        //printf("numero immagini %ld\n",image->length);
-        header = composeHeader(result, image);
-        printf ("header:\n%s\n",header);
-        write(connfd, header, strlen(header));
-        char *home = composeHomePage(images);
-        ssize_t n;
-        printf("home: \n %s",home);
-        n = write(connfd, home, strlen(home));
-        printf("Bytes sent %d \n", (int) n);
-        /*while ((n = write(connfd, home, strlen(home)))>0) {
-            printf("Bytes sent %d \n", (int) n);
-        }*/
-
-    } else {
-
-        FILE *imgfd = openImage(image);
-        if (imgfd == NULL) {
-            strcpy(result, HTTP_BAD_REQUEST);
-        }
-        size_t n;
-        header = composeHeader(result, image);
-
-        write(connfd, header, strlen(header));
-
-        if (strcmp(result, HTTP_OK) == 0) {
-            /* response to GET method is header + image;
-             * response to HEAD method is only header, composed like that one for GET   */
-            if (strcmp(method, "GET") == 0) {
-                while (1) {
-
-                    n = fread(buff, 1, (size_t) MAXLINE, imgfd);
-                    printf("Bytes read %d \n", (int) n);
-
-                    if (n > 0) {
-                        printf("Sending \n");
-                        write(connfd, buff, n);
-
-                    }
-
-                    if (n < MAXLINE) {
-                        if (feof(imgfd)) {
-                            printf("End of file \n ");
-                        }
-                        if (ferror(imgfd)) {
-                            printf("Error Reading \n");
-                        }
-                        break;
-                    }
-                }
-            }
-        } else if (strcmp(result, HTTP_NOT_FOUND) == 0) {
-            write(connfd, HTML_404, strlen(HTML_404));
-        } else if (strcmp(result, HTTP_BAD_REQUEST) == 0) {
-            write(connfd, HTML_400, strlen(HTML_400));
-        }
-    }
+    //}
 }

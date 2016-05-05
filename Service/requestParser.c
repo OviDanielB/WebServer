@@ -14,7 +14,7 @@
 struct req *parseRequest(int sockfd)
 {
     struct req *request;
-    if ((request=malloc(sizeof(struct req)))==NULL) {
+    if ((request = malloc(sizeof(struct req)))==NULL) {
         perror("error in malloc\n");
         return NULL;
     }
@@ -22,14 +22,15 @@ struct req *parseRequest(int sockfd)
     char line[MAXLINE];
     memset(line,'\0',sizeof(line));
 
-    while (1) {
-
+    int n=0;
+    //while (1) {
+    while (n!=3) {
         if ((readline(sockfd, line, (int) MAXLINE)) == 0) {
             printf("Client quit connection\n");
             return NULL;
         }
 
-        printf("%s\n",line);
+        //printf("%s\n",line);
 
         if (strstr(line,HTTP_0)!=NULL) {
             //not supported protocol
@@ -39,12 +40,16 @@ struct req *parseRequest(int sockfd)
 
         if (strstr(line,HTTP_1)!=NULL) {
             //read request method GET or HEAD of file requested
+
+            printf("reading request line...\n");
+            n+=1;
+
             char *name;
-            char method[4];
+            char method[5];
             memset(method,'\0',strlen(method));
             char resource[256];
             memset(resource,'\0',strlen(resource));
-            char type[4];
+            char type[5];
             memset(type,'\0',strlen(type));
             int i=0;
             name = &line[0];
@@ -90,6 +95,10 @@ struct req *parseRequest(int sockfd)
         }
 
         if (strncmp(line,USER_AGENT,strlen(USER_AGENT))==0) {
+
+            printf("reading user-agent line...\n");
+            n+=1;
+
             // read entity line with device's description
             strcpy(request->userAgent,line+strlen(USER_AGENT)+1);
             printf("device user-agent: %s\n",request->userAgent);
@@ -98,6 +107,10 @@ struct req *parseRequest(int sockfd)
 
         // read resource's type from Accept line
         if (strncmp(line,ACCEPT,strlen(ACCEPT))==0) {
+
+            printf("reading accept line...\n");
+            n+=1;
+
             /* check if requested jpeg image format;
              * if yes, server response will be adapted to factor of quality q
              * defined in this line;
@@ -109,7 +122,7 @@ struct req *parseRequest(int sockfd)
                 /*  read quality of JPEG resource's format from Accept line    */
                 float factor;
                 int j = 0;
-                char quality[3];
+                char quality[4];
                 while (*t!='q') {
                     t++;
                 }
@@ -128,9 +141,11 @@ struct req *parseRequest(int sockfd)
 
         /* end while cycle when "\n\n" read as index of request's end   */
         if (strstr(line,"\n\n")!=NULL) {
+
+            printf("end request...\n");
+
             break;
         }
     }
-
     return request;
 }

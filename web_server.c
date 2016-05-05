@@ -110,7 +110,10 @@ void serveRequest(sqlite3 *db, int sockfd, struct img **images)
         exit(EXIT_FAILURE);
     }
 
+    printf("begin reading request...\n");
     struct req *request = parseRequest(sockfd);
+    printf("end reading request...\n");
+
     if (request == NULL) {
         sprintf(result,HTTP_BAD_REQUEST);
         writeResponse(sockfd, result, NULL, NULL, NULL);
@@ -121,8 +124,9 @@ void serveRequest(sqlite3 *db, int sockfd, struct img **images)
             writeResponse(sockfd, (char *)INDEX, NULL, adaptedImage, images);
 
         } else {
-
+            printf("begin adaptation...\n");
             adaptedImage = adaptImageTo(db, request);
+            printf("end adaptation...\n");
 
             switch (adaptedImage->name_code) {
                 case 400 :
@@ -140,6 +144,7 @@ void serveRequest(sqlite3 *db, int sockfd, struct img **images)
 
             sprintf(adaptedImage->original_name, request->resource);
 
+            printf("begin response...\n");
             writeResponse(sockfd, result, request->method, adaptedImage, NULL);
         }
     }
