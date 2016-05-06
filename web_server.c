@@ -115,8 +115,10 @@ void serveRequest(sqlite3 *db, int sockfd, struct img **images)
     printf("end reading request...\n");
 
     if (request == NULL) {
+
         sprintf(result,HTTP_BAD_REQUEST);
         writeResponse(sockfd, result, NULL, NULL, NULL);
+
     } else {
         /*  first client request to get view of server content  */
         if (strcmp(request->resource,INDEX)==0) {
@@ -126,7 +128,9 @@ void serveRequest(sqlite3 *db, int sockfd, struct img **images)
         } else {
             printf("begin adaptation...\n");
             adaptedImage = adaptImageTo(db, request);
-            printf("end adaptation...\n");
+
+            printf("end adaptation...\n"
+                           "code: %lu type: %s", adaptedImage->name_code,adaptedImage->type);
 
             switch (adaptedImage->name_code) {
                 case 400 :
@@ -141,8 +145,6 @@ void serveRequest(sqlite3 *db, int sockfd, struct img **images)
                     sprintf(result, HTTP_OK);
                     break;
             }
-
-            sprintf(adaptedImage->original_name, request->resource);
 
             printf("begin response...\n");
             writeResponse(sockfd, result, request->method, adaptedImage, NULL);
@@ -184,7 +186,7 @@ void child_main(int index, int listenfd, int addrlen, sqlite3 *db, struct img **
         // use ntoa to convert client address from binary form to readable string
         clientIPAddr = inet_ntoa(addr->sin_addr);
 
-        printf("server process %ld accepted request from client %s\n",(long) getpid(), clientIPAddr);
+        printf("server process %ld accepted request from client %s\n", (long) getpid(), clientIPAddr);
 
         serveRequest(db, connfd, images);
 

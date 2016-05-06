@@ -26,7 +26,7 @@ const char *DB_NAME;
 /* size of a line   */
 const size_t MAXLINE;
 /* size of database cache table (CONV_IMG) as number of rows   */
-const size_t MAX_CACHE_ROWS_NUM;
+const int MAX_CACHE_ROWS_NUM;
 /* default protocol port number */
 const in_port_t DEFAULT_PORT;
 /* size of request queue        */

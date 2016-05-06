@@ -48,7 +48,7 @@ void db_execute_statement(sqlite3 *db, const char *sql)
     printf("%s\n",sql);
 
     rc = sqlite3_exec(db, sql, 0, 0, &zErrorMsg);
-    printf("\ninsert result:%d\n",rc);
+    printf("\nstatement result:%d\n",rc);
     if( rc!=SQLITE_OK ) {
         fprintf(stderr, "SQL error %d: %s\n", rc, sqlite3_errmsg(db));
         //sqlite3_free(zErrorMsg);
@@ -66,13 +66,13 @@ void db_update_cache(sqlite3 *db)
 {
     // check if cache memory is full
     if (isFull(db)) {
+        printf("checkes full cache\n");
         // delete by time of insertion (older saved element)
         deleteByAge(db);
     }
+    printf("deleting fr timeout");
     // delete by timeout if there are expired ones
     deleteByTimeout(db);
-
-    db_close(db);
 }
 
 /*  Insert new image into database in table IMAGES or CONV_IMG (cache)
@@ -93,9 +93,11 @@ void db_insert_img(sqlite3 *db, struct img *originalImg, struct conv_img *convIm
         sprintf(statement, "INSERT INTO 'IMAGES' ('Name','Type','Length','Width','Height') " \
         "VALUES ('%s','%s',%ld,%ld,%ld);",
                 originalImg->name, originalImg->type, originalImg->length, originalImg->width, originalImg->height);
-    } else if (convImg != NULL) {
-        sprintf(statement, "INSERT INTO CONV_IMG (Original_Name,Name,Type,Last_Modified,Width,Height,Length,Quality) " \
-            "VALUES ('%s',%ld,'%s','%s',%ld,%ld,%ld,%ld);",
+    }
+
+    if (convImg != NULL) {
+        sprintf(statement, "INSERT INTO 'CONV_IMG' ('Original_Name','Name','Type','Last_Modified','Width','Height','Length','Quality') " \
+            "VALUES ('%s',%lu,'%s','%s',%ld,%ld,%ld,%ld);",
                 convImg->original_name, convImg->name_code, convImg->type, convImg->last_modified,
                 convImg->width, convImg->height, convImg->length, convImg->quality);
 
@@ -103,7 +105,66 @@ void db_insert_img(sqlite3 *db, struct img *originalImg, struct conv_img *convIm
     }
 
    db_execute_statement(db,statement);
+}
 
+/* Callback by db_get_conv_image_by_code to fill the conv_img struct passed as (void *), later casted back */
+int fill_conv_img_struct(void *data, int argc, char **argv, char **azColName)
+{
+    int i;
+    struct conv_img *image = (struct conv_img *) data;
+
+    for(i = 0; i < argc; i++){
+        if (strcmp(azColName[i],"Original_Name") == 0) {
+            sscanf(argv[i], "%s", image->original_name);
+        } else if (strcmp(azColName[i],"Name") == 0) {
+            sscanf(argv[i], "%lu", &image->name_code);
+        } else if(strcmp(azColName[i],"Type") == 0){
+            sscanf(argv[i], "%s", image->type);
+        } else if(strcmp(azColName[i],"Last_Modified") == 0){
+            sscanf(argv[i], "%s", image->last_modified);
+        } else if(strcmp(azColName[i],"Width") == 0){
+            image->width = (size_t) atoll(argv[i]);
+        } else if(strcmp(azColName[i],"Height") == 0){
+            image->height = (size_t) atoll(argv[i]);
+        } else if(strcmp(azColName[i],"Length") == 0) {
+            image->length = (size_t) atoll(argv[i]);
+        } else if(strcmp(azColName[i],"Quality") == 0) {
+            image->quality = (size_t) atoll(argv[i]);
+        }
+
+        printf("%s = %s\n", azColName[i], argv[i]);
+    }
+    return 0;
+}
+
+/* Fill a conv_img struct from database info.
+ *
+ * @param code: unsigned long as hashcode of the manipulated image to search in server cache
+ * @param image: struct conv_img * previously allocated with malloc(sizeof(struct conv_img))
+*/
+void db_get_conv_image_by_code(sqlite3 *db, unsigned long code,struct conv_img *image)
+{
+    char *statement, *errorMsg = 0;
+    int rc;
+
+    statement = (char *) malloc(MAXLINE * sizeof(char));
+    if(statement == NULL){
+        perror("Malloc error. \n");
+        exit(EXIT_FAILURE);
+    }
+    memset(statement,'\0',strlen(statement));
+
+    sprintf(statement,"SELECT * FROM CONV_IMG WHERE Name='%lu';", code);
+    printf(statement);
+
+    rc = sqlite3_exec(db,statement, fill_conv_img_struct, image, &errorMsg);
+    if(rc != SQLITE_OK){
+        fprintf(stderr, "SQLITE SELECT error: %s \n",errorMsg);
+        exit(EXIT_FAILURE);
+    }
+
+    //free(statement);
+    //db_close(db);
 }
 
 /* Callback by db_get_image_by_name to fill the img struct passed as (void *), later casted back */

@@ -113,8 +113,12 @@ char *getTodayToHTTPLine()
 char *getTodayToSQL()
 {
     struct tm *today = getToday();
-    char date[20];
-    sprintf(date,"%d-%d-%d",today->tm_year,today->tm_mon,today->tm_mday);
+    char *date = (char *) malloc(21*sizeof(char));
+    if (date == NULL) {
+        perror("malloc error\n");
+        exit(EXIT_FAILURE);
+    }
+    sprintf(date,"%d-%d-%d",today->tm_year+1900,today->tm_mon,today->tm_mday);
 
     return date;
 }

@@ -30,8 +30,6 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
     }
 
     char tmpFilename[MAXLINE];
-    // hash sulla stringa formata da: <nomeoriginale><width><height><q><type><c> per indicare univocamente l'immagine modificata
-    // caratteristica origianel o  0 se elemento non modificato
     char destination[MAXLINE];
 
 
@@ -69,16 +67,21 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
         }
     }
 
-    /* For the JPEG and MPEG image formats, quality is
-    * 1 (lowest image quality and highest compression)
-    * to 100 (best quality but least effective compression) */
-    status = MagickSetCompressionQuality(magickWand, (size_t) adaptImg->quality);
-    if (status == MagickFalse) {
-        perror("error in compressing image quality\n");
-        return 400; // ERROR
+    /* using factor of quality just if specified into the request for JPEG images   */
+    if (adaptImg->quality != 0) {
+        /* For the JPEG and MPEG image formats, quality is
+        * 1 (lowest image quality and highest compression)
+        * to 100 (best quality but least effective compression) */
+        status = MagickSetCompressionQuality(magickWand, (size_t) adaptImg->quality);
+        if (status == MagickFalse) {
+            perror("error in compressing image quality\n");
+            return 400; // ERROR
+        }
     }
 
-    sprintf(destination,"%s%ld.%s",CACHE_PATH,adaptImg->name_code,req_image->type);
+    sprintf(destination,"%s%lu.%s",CACHE_PATH,adaptImg->name_code,req_image->type);
+
+    printf("destination: %s\n",destination);
 
     MagickWriteImage(magickWand,destination);
 
@@ -107,22 +110,25 @@ struct conv_img *adaptImageTo(sqlite3 *db, struct req *request)
     }
 
     unsigned char nameToHash[256];
-    unsigned long hashcode;
 
     /*  Load information about image from database   */
     db_get_image_by_name(db,request->resource,req_image);
 
-    printf("READING FROM DB:\n name %s, type %s, heigth %ld, length %ld, width %ld",
-           req_image->name,req_image->type,req_image->height,req_image->length, req_image->width);
-
     /*  Check if image is in database else return NOT FOUND */
-    if (strcmp(request->resource,req_image->name)!=0) {
+    if (strcmp(request->resource, req_image->name) != 0) {
         adaptedImg->name_code = 404; // NOT FOUND
         return adaptedImg;
     }
 
-    adaptedImg->quality = (size_t) (int) (size_t) request->quality*100;
-    sprintf(adaptedImg->type,request->type);
+    if (request->quality == -1) {
+        adaptedImg->quality = 0;
+    } else {
+        adaptedImg->quality = (size_t) request->quality*100;
+        sprintf(adaptedImg->type,request->type);
+    }
+
+    sprintf(adaptedImg->original_name, req_image->name);
+    sprintf(adaptedImg->type, req_image->type);
     // TODO da ottenere con WURFL usando useragent
     adaptedImg->width = 200;
     adaptedImg->height = 200;
@@ -137,11 +143,24 @@ struct conv_img *adaptImageTo(sqlite3 *db, struct req *request)
     char *date = getTodayToSQL();
     sprintf(adaptedImg->last_modified,date);
 
+    printf("date %s",date);
+
     if (!isInCache(db,adaptedImg->name_code)) {
-        adapt(req_image, adaptedImg);
-        /*  add adapted img to server cache */
-        db_insert_img(db,NULL,adaptedImg);
+        printf("not previously adapted\n");
+
+        unsigned long res = adapt(req_image, adaptedImg);
+        /*   check result of adaptation */
+        if (res != 200) {
+            /* if not OK, return error code */
+            adaptedImg->name_code = res;
+        } else {
+            /*  add adapted img to server cache */
+            printf("add in CACHE\n");
+
+            db_insert_img(db,NULL,adaptedImg);
+        }
     } else {
+        printf("previously adapted\n");
         /*  update last modified date at img in cache   */
         updateDate(db,adaptedImg);
     }

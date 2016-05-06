@@ -8,15 +8,19 @@
 /*  Callback by isFull to verify TABLE STATUS result saved in size_T *rows passed as void *, later casted back */
 int cache_check_status(void *data, int argc, char **argv, char **azColName)
 {
-    int i;
+    int *rows = (int *) data;
+    rows = &argc;
+    printf("rows: %d\n",*rows);
+    /*int i;
     size_t rows = (size_t) data;
-
+    printf(argv[1]);
+    rows = (size_t ) atoi(argv[1]);
     /*  SHOW TABLE STATUS output has the following column "Row" to describe actual number of rows of db table */
-    for(i = 0; i < argc; i++) {
+    /*for(i = 0; i < argc; i++) {
         if (strcmp(azColName[i], "Rows") == 0) {
             sscanf(argv[i], "%ld", &rows);
         }
-    }
+    }*/
 
     return 0;
 }
@@ -26,14 +30,8 @@ int cache_check_result(void *data, int argc, char **argv, char **azColName)
 {
     char *result = (char *) data;
 
-    if (argc > 1) {
-        sprintf(result,"%d",200); // SELECT returns a tuple, so image is in cache
-        printf("Searched image %s = %s\n", azColName[1], argv[0]);
-        return 0;
-    }
-
-    sprintf(result,"%d",404); // SELECT doesn't return a tuple, so image is not in cache
-    printf("Searched image %ld is not in cache \n", atol(argv[1]));
+    /* if the callback is called, SELECT returns at least a tuple, so image is in cache */
+    sscanf("200",result);
 
     return 0;
 }
@@ -46,7 +44,7 @@ int cache_check_result(void *data, int argc, char **argv, char **azColName)
 int isInCache(sqlite3 *db, unsigned long hashcode)
 {
     char *statement, *errorMsg = 0;
-    char result[3];
+    char *result = "404";
     int rc;
 
     statement = (char *) malloc(MAXLINE * sizeof(char));
@@ -55,18 +53,18 @@ int isInCache(sqlite3 *db, unsigned long hashcode)
         return 0; // false
     }
 
-    sprintf(statement,"SELECT * FROM CONV_IMG WHERE Name=%ld;", hashcode);
+    sprintf(statement,"SELECT * FROM CONV_IMG WHERE Name=%lu;", hashcode);
     printf(statement);
 
     rc = sqlite3_exec(db, statement, cache_check_result, result, &errorMsg);
-    if(rc != SQLITE_OK){
-        fprintf(stderr, "SQLITE SELECT error: %s \n",errorMsg);
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "SQLITE SELECT error: %s \n", errorMsg);
         exit(EXIT_FAILURE);
     }
 
     free(statement);
 
-    if (strcmp(result,"404")==0) { // not found in cache table
+    if (strcmp(result, "404") == 0 ) { // not found in cache table
         return 0; // false
     }
 
@@ -78,7 +76,7 @@ int isInCache(sqlite3 *db, unsigned long hashcode)
 int isFull(sqlite3 *db)
 {
     char *statement, *errorMsg = 0;
-    size_t rows = 0;
+    int rows = 0;
     int rc;
 
     statement = (char *) malloc(MAXLINE * sizeof(char));
@@ -87,16 +85,21 @@ int isFull(sqlite3 *db)
         return 0; // false
     }
 
-    sprintf(statement,"SHOW TABLE STATUS '%s' LIKE CONV_IMG", DB_NAME);
+    sprintf(statement,"SELECT COUNT('Name') FROM 'CONV_IMG';");
     printf(statement);
+
+    printf ("in isfull \n");
 
     rc = sqlite3_exec(db, statement, cache_check_status, &rows, &errorMsg);
     if(rc != SQLITE_OK){
         fprintf(stderr, "SQLITE SELECT error: %s \n",errorMsg);
+        sqlite3_free(errorMsg);
         exit(EXIT_FAILURE);
     }
 
     free(statement);
+
+    printf("rows dopo op:%d",rows);
 
     if (rows <= MAX_CACHE_ROWS_NUM) {
         return 0; // false
@@ -132,15 +135,15 @@ void deleteByAge(sqlite3 *db)
  *  is greater than TIMEOUT value  */
 void deleteByTimeout(sqlite3 *db)
 {
-    int rc;
-    char *statement, *errorMsg;
+    char *statement;
 
     statement = (char *) malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
         perror("delete image by name malloc error");
         return;
     }
-    sprintf(statement, "DELETE FROM CONV_IMG WHERE DATEDIFF(CURDATE(),Last_Modified)>=%d;",TIMEOUT);
+    sprintf(statement, "DELETE FROM CONV_IMG WHERE "
+            "((strftime('%%d','YYYY-MM-DD') - strftime('%%d','Last_Modified')) >= %d);",TIMEOUT);
 
     db_execute_statement(db,statement);
 
@@ -159,11 +162,11 @@ void updateDate(sqlite3 *db, struct conv_img *adaptedImg)
 
     statement = (char *) malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
-        perror("delete image by name malloc error");
+        perror("malloc error\n");
         return;
     }
 
-    sprintf(statement, "UPDATE CONV_IMG SET Last_Modified='%s' WHERE Name=%ld;",
+    sprintf(statement, "UPDATE CONV_IMG SET Last_Modified='%s' WHERE Name=%lu;",
             adaptedImg->last_modified,adaptedImg->name_code);
 
     rc = sqlite3_exec(db,statement,0,0,&errorMsg);
