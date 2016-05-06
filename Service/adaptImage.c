@@ -143,10 +143,7 @@ struct conv_img *adaptImageTo(sqlite3 *db, struct req *request)
     char *date = getTodayToSQL();
     sprintf(adaptedImg->last_modified,date);
 
-    printf("date %s",date);
-
     if (!isInCache(db,adaptedImg->name_code)) {
-        printf("not previously adapted\n");
 
         unsigned long res = adapt(req_image, adaptedImg);
         /*   check result of adaptation */
@@ -155,17 +152,12 @@ struct conv_img *adaptImageTo(sqlite3 *db, struct req *request)
             adaptedImg->name_code = res;
         } else {
             /*  add adapted img to server cache */
-            printf("add in CACHE\n");
-
             db_insert_img(db,NULL,adaptedImg);
         }
     } else {
-        printf("previously adapted\n");
         /*  update last modified date at img in cache   */
         updateDate(db,adaptedImg);
     }
-
-    printf("end adaptation...\n");
 
     return adaptedImg;
 }

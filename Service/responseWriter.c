@@ -53,11 +53,8 @@ FILE *openImage(struct conv_img *image)
 
 char *composeHomePage(struct img **images)
 {
-    // TODO numero immagini
-    //int n = sizeof(images)/sizeof(struct img *); //number of images
-    int n = 4;
     char *home;
-    if ((home = (char *) malloc(sizeof(char)*MAXLINE*n))==NULL) {
+    if ((home = (char *) malloc(sizeof(char)*MAXLINE*IMAGESNUM))==NULL) {
         perror("error in malloc\n");
         exit(EXIT_FAILURE);
     }
@@ -68,7 +65,7 @@ char *composeHomePage(struct img **images)
             "<p>Click on image</p><br>");
 
     int i;
-    for (i=0; i<n; i++) {
+    for (i = 0; i < IMAGESNUM; i++) {
         char div[MAXLINE];
         sprintf(div, "<div><a href = \"http://127.0.0.1:5193/%s.%s\">"
                 "%d: %s"
@@ -210,10 +207,7 @@ void writeResponse(int connfd, char *result, char *method, struct conv_img *imag
             char *home = composeHomePage(images);
 
             image->length = strlen(home);
-            // TODO numero immagini da images
-            image->height = 4; // COME COSTANTE FINCHE NON TROVO COME TROVARE NUMERO DI ELEMENTI DELL'ARRAY IMAGES
-            //image->height = sizeof(images)/sizeof(struct img *); // number of images
-            //printf("numero immagini %ld\n",image->height);
+            image->height = (size_t) IMAGESNUM;
 
             ssize_t n;
 

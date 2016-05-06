@@ -38,7 +38,6 @@ void db_close(sqlite3 * db)
  *
  * @param: db = database to be queried
  * @param: sql = statement to execute
- * @param: image = TODO
  */
 void db_execute_statement(sqlite3 *db, const char *sql)
 {
@@ -70,7 +69,6 @@ void db_update_cache(sqlite3 *db)
         // delete by time of insertion (older saved element)
         deleteByAge(db);
     }
-    printf("deleting fr timeout");
     // delete by timeout if there are expired ones
     deleteByTimeout(db);
 }
@@ -327,6 +325,7 @@ struct img ** db_load_all_images(sqlite3 *db, char *path)
 
             memset(complete_path,0,1024);
 	}
+        IMAGESNUM = fileCount;
         printf ("%d immagini\n ",fileCount);
         closedir (dir);
     } else {

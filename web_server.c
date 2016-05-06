@@ -129,8 +129,7 @@ void serveRequest(sqlite3 *db, int sockfd, struct img **images)
             printf("begin adaptation...\n");
             adaptedImage = adaptImageTo(db, request);
 
-            printf("end adaptation...\n"
-                           "code: %lu type: %s", adaptedImage->name_code,adaptedImage->type);
+            printf("end adaptation.\n");
 
             switch (adaptedImage->name_code) {
                 case 400 :
@@ -242,17 +241,6 @@ int main(int argc, char **argv)
     sqlite3 *db = db_open();
     /* load all server images that are in a specified directory */
     struct img **images = db_load_all_images(db,(char *)PATH);
-
-    // TODO numero immagini caricate
-    printf ("size images **: %d\n", sizeof(struct img **));
-    printf ("size images: %d\n", sizeof(&images));
-    printf ("size struct img *: %d\n", sizeof(struct img *));
-    printf ("size struct img : %d\n", sizeof(struct img));
-    printf ("size struct img : %d\n", sizeof(&images));
-    printf ("NUMERO IMGS: %d\n", sizeof(images)/sizeof(struct img*));
-    printf ("nome unica immagine: %s\n",images[0]->name);
-    printf ("nome forse img immagine: %s\n",images[3]->name);
-
 
     // creates a listening socket
     if((listensd=socket(AF_INET,SOCK_STREAM,0)) < 0){

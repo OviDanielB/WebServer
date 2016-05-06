@@ -9,7 +9,7 @@
 int cache_check_status(void *data, int argc, char **argv, char **azColName)
 {
     int *rows = (int *) data;
-    rows = &argc;
+    *rows = argc;
     printf("rows: %d\n",*rows);
     /*int i;
     size_t rows = (size_t) data;
@@ -59,6 +59,7 @@ int isInCache(sqlite3 *db, unsigned long hashcode)
     rc = sqlite3_exec(db, statement, cache_check_result, result, &errorMsg);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "SQLITE SELECT error: %s \n", errorMsg);
+        sqlite3_free(errorMsg);
         exit(EXIT_FAILURE);
     }
 
@@ -88,8 +89,6 @@ int isFull(sqlite3 *db)
     sprintf(statement,"SELECT COUNT('Name') FROM 'CONV_IMG';");
     printf(statement);
 
-    printf ("in isfull \n");
-
     rc = sqlite3_exec(db, statement, cache_check_status, &rows, &errorMsg);
     if(rc != SQLITE_OK){
         fprintf(stderr, "SQLITE SELECT error: %s \n",errorMsg);
@@ -99,7 +98,7 @@ int isFull(sqlite3 *db)
 
     free(statement);
 
-    printf("rows dopo op:%d",rows);
+    printf("rows dopo op:%d\n",rows);
 
     if (rows <= MAX_CACHE_ROWS_NUM) {
         return 0; // false
@@ -125,6 +124,7 @@ void deleteByAge(sqlite3 *db)
     rc = sqlite3_exec(db,statement,0,0,&errorMsg);
     if(rc != SQLITE_OK){
         fprintf(stderr,"SQLITE DELETE ERROR: %s \n",errorMsg);
+        sqlite3_free(errorMsg);
         return;
     }
 
@@ -139,7 +139,7 @@ void deleteByTimeout(sqlite3 *db)
 
     statement = (char *) malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
-        perror("delete image by name malloc error");
+        perror("malloc error\n");
         return;
     }
     sprintf(statement, "DELETE FROM CONV_IMG WHERE "
@@ -172,6 +172,7 @@ void updateDate(sqlite3 *db, struct conv_img *adaptedImg)
     rc = sqlite3_exec(db,statement,0,0,&errorMsg);
     if(rc != SQLITE_OK){
         fprintf(stderr,"SQLITE UPDATE ERROR: %s \n",errorMsg);
+        sqlite3_free(errorMsg);
         return;
     }
 
