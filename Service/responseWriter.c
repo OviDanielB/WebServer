@@ -206,8 +206,8 @@ void writeResponse(int connfd, char *result, char *method, struct conv_img *imag
 
             char *home = composeHomePage(images);
 
-            image->length = strlen(home);
             image->height = (size_t) IMAGESNUM;
+            image->length = strlen(home);
 
             ssize_t n;
 
