@@ -54,7 +54,7 @@ FILE *openImage(struct conv_img *image)
 char *composeHomePage(struct img **images)
 {
     char *home;
-    if ((home = (char *) malloc(sizeof(char)*MAXLINE*IMAGESNUM))==NULL) {
+    if ((home = (char *) malloc(sizeof(char)*IMAGESNUM*MAXLINE))==NULL) {
         perror("error in malloc\n");
         exit(EXIT_FAILURE);
     }

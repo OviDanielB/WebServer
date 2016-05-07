@@ -325,8 +325,9 @@ struct img ** db_load_all_images(sqlite3 *db, char *path)
 
             memset(complete_path,0,1024);
 	}
+        /* total number of images loaded in the database    */
         IMAGESNUM = fileCount;
-        printf ("%d immagini\n ",fileCount);
+
         closedir (dir);
     } else {
         /* could not open directory */
