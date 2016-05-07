@@ -13,6 +13,7 @@
 #include <wchar.h>
 #include <netinet/in.h>
 
+/* number of images loaded in the server database   */
 int IMAGESNUM;
 /*  path of images' directory    */
 const char *PATH;

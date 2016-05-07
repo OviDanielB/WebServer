@@ -7,15 +7,15 @@
 #include "constants.h"
 
 /*  path of images' directory    */
-const char *PATH =               "/home/laura_trive/Scrivania/ServerFiles/Images/";
+const char *PATH =               "/home/laura_trive/Scrivania/ProgettoIIW/ServerFiles/Images/";
 /*  path of cached images' directory    */
-const char *CACHE_PATH =         "/home/laura_trive/Scrivania/ServerFiles/Cache/";
+const char *CACHE_PATH =         "/home/laura_trive/Scrivania/ProgettoIIW/ServerFiles/Cache/";
 /*  path of server's database of images */
 const char *DB_PATH =            "/home/laura_trive/ClionProjects/WebServer/DataBase/serverContent.db";
 /*  name of server's database of images */
 const char *DB_NAME =            "serverContent";
 /*  path of log file    */
-const char *LOG_PATH =           "/home/laura_trive/Scrivania/ServerFiles/Log/log.txt";
+const char *LOG_PATH =           "/home/laura_trive/Scrivania/ProgettoIIW/ServerFiles/Log/log.txt";
 /* default protocol port number */
 const in_port_t DEFAULT_PORT =   5193;
 /* size of request queue        */
