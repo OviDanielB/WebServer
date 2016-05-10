@@ -90,7 +90,9 @@ typedef struct req {
 
 /* Log file line struct */
 typedef struct logline {
+
     //hostIP, userIdent, reqPersonID, date, reqLine, status, size
+
     char ip_host[];
     char user_id[];
     char req_id[];
