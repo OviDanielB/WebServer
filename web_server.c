@@ -192,6 +192,14 @@ void child_main(int index, int listenfd, int addrlen, struct img **images) {
 
         serveRequest(connfd, images);
 
+        /*log
+         * int logging_thread = pthread_create(&log_thread, NULL, &log_on_file());
+         * int log_min_priority = sched_get_priority_min(sched_getscheduler(log_thread));
+         * if (pthread_setschedprio(log_thread, log_min_priority)!=0){
+         *  perror("error in set priority")
+         * }
+         * */
+
         close(connfd);
     }
 }
