@@ -74,20 +74,8 @@ char *composeHomePage(struct img **images)
         strcat(home,div);
     }
     strcat(home,
-            "</body>"
-            "</html>\n");
-
-    // come src da mettere richiesta immagine al server
-    /*sprintf(home,"<!DOCTYPE html>"
-            "<html>"
-            "<body>"
-            "<p>Click on image</p><br>"
-            "<div><a href = \"http://127.0.0.1:5193/mare.jpg\">"
-            "mare"
-            //"<img src = \"/Images/mare.jpg\" alt = \"mare\" style=\"width:80px;height:80px;border:1;\">"
-            "</a></div>"
-            "</body>"
-            "</html>");*/
+            " </body>"
+            " </html>\n");
     return home;
 }
 

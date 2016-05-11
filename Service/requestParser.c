@@ -19,6 +19,11 @@ struct req *parseRequest(int sockfd)
         return NULL;
     }
 
+    memset(request->resource,'\0',strlen(request->resource));
+    memset(request->type,'\0',strlen(request->type));
+    memset(request->userAgent,'\0',strlen(request->userAgent));
+    memset(request->method,'\0',strlen(request->method));
+
     char line[MAXLINE];
     memset(line,'\0',sizeof(line));
 
@@ -30,7 +35,7 @@ struct req *parseRequest(int sockfd)
             return NULL;
         }
 
-        //printf("%s\n",line);
+        printf("%s\n",line);
 
         if (strstr(line,HTTP_0)!=NULL) {
             //not supported protocol
@@ -69,12 +74,12 @@ struct req *parseRequest(int sockfd)
             } else {
                 name+=7;
             }
-            while (*name!='.') {
+            while (*name != '.') {
                 resource[i] = *name;
                 name++;
                 i++;
             }
-            strcpy(request->resource,resource);
+            sprintf(request->resource,resource);
             printf("name of resource: %s\n",resource);
 
             if (strcmp(resource,INDEX)==0) {

@@ -100,7 +100,7 @@ void sig_handler(int sig){
  *
  *  @param sockfd: file descriptor for connection socket
  */
-void serveRequest(sqlite3 *db, int sockfd, struct img **images)
+void serveRequest(int sockfd, struct img **images)
 {
     char result[50];
     struct conv_img *adaptedImage;
@@ -120,6 +120,11 @@ void serveRequest(sqlite3 *db, int sockfd, struct img **images)
         writeResponse(sockfd, result, NULL, NULL, NULL);
 
     } else {
+
+        if (strcmp(request->resource,"favicon")==0) {
+            return;
+        }
+
         /*  first client request to get view of server content  */
         if (strcmp(request->resource,INDEX)==0) {
 
@@ -127,7 +132,7 @@ void serveRequest(sqlite3 *db, int sockfd, struct img **images)
 
         } else {
             printf("begin adaptation...\n");
-            adaptedImage = adaptImageTo(db, request);
+            adaptedImage = adaptImageTo(request);
 
             printf("end adaptation.\n");
 
@@ -151,16 +156,14 @@ void serveRequest(sqlite3 *db, int sockfd, struct img **images)
     }
 }
 
-void child_main(int index, int listenfd, int addrlen, sqlite3 *db, struct img **images);
-void child_main(int index, int listenfd, int addrlen, sqlite3 *db, struct img **images) {
+void child_main(int index, int listenfd, int addrlen, struct img **images);
+void child_main(int index, int listenfd, int addrlen, struct img **images) {
 
-    int connfd, imagefd,pictfd;
+    int connfd;
     socklen_t clilen;
     struct sockaddr * cliaddr;
     time_t ticks;
     char buff[MAXLINE];
-    FILE * clientRequest, *pict;
-    ssize_t numRead;
 
     char * clientIPAddr;
     struct sockaddr_in * addr;
@@ -187,14 +190,14 @@ void child_main(int index, int listenfd, int addrlen, sqlite3 *db, struct img **
 
         printf("server process %ld accepted request from client %s\n", (long) getpid(), clientIPAddr);
 
-        serveRequest(db, connfd, images);
+        serveRequest(connfd, images);
 
         close(connfd);
     }
 }
 
-pid_t child_make(int i, int listenfd, int addrlen, sqlite3 *db, struct img **images);
-pid_t child_make(int i, int listenfd, int addrlen, sqlite3 *db, struct img **images)
+pid_t child_make(int i, int listenfd, int addrlen, struct img **images);
+pid_t child_make(int i, int listenfd, int addrlen, struct img **images)
 {
     pid_t pid;
 
@@ -205,7 +208,7 @@ pid_t child_make(int i, int listenfd, int addrlen, sqlite3 *db, struct img **ima
 
     pid = getpid();
 
-    child_main(i,listenfd,addrlen,db,images);
+    child_main(i, listenfd, addrlen, images);
 
     return pid;
 }
@@ -223,7 +226,7 @@ int main(int argc, char **argv)
     char * sqlStatement;
 
 
-    pid_t child_make(int, int, int, sqlite3 *, struct img **);
+    pid_t child_make(int, int, int, struct img **);
 
     // TODO arguments
     if(argc <= 2){
@@ -237,10 +240,8 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    /* open server database or create it if doesn't exist */
-    sqlite3 *db = db_open();
     /* load all server images that are in a specified directory */
-    struct img **images = db_load_all_images(db,(char *)PATH);
+    struct img **images = db_load_all_images((char *)PATH);
 
     // creates a listening socket
     if((listensd=socket(AF_INET,SOCK_STREAM,0)) < 0){
@@ -280,7 +281,7 @@ int main(int argc, char **argv)
 
     // create pids array with children pids
     for(i = 0; i < CHILDREN_NUM; i++ ){
-        pids[i] = child_make(i, listensd, addrlen, db, images);
+        pids[i] = child_make(i, listensd, addrlen, images);
     }
 
     // when SIGINT arrives (press ctrl-C) the father process and the children terminate
@@ -298,6 +299,4 @@ int main(int argc, char **argv)
     return 0;
 
     close(listensd);
-
-    db_close(db);
 }

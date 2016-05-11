@@ -96,7 +96,7 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
  *  @param image: image to adapt, containing info of requested quality and type
  *  @param request: HTTP request to get device's and requested file's info (size and quality and format) from
  */
-struct conv_img *adaptImageTo(sqlite3 *db, struct req *request)
+struct conv_img *adaptImageTo(struct req *request)
 {
     struct conv_img *adaptedImg;
     if ((adaptedImg = (struct conv_img *) malloc(sizeof(struct conv_img)))==NULL) {
@@ -112,7 +112,7 @@ struct conv_img *adaptImageTo(sqlite3 *db, struct req *request)
     unsigned char nameToHash[256];
 
     /*  Load information about image from database   */
-    db_get_image_by_name(db,request->resource,req_image);
+    db_get_image_by_name(request->resource,req_image);
 
     /*  Check if image is in database else return NOT FOUND */
     if (strcmp(request->resource, req_image->name) != 0) {
@@ -143,20 +143,23 @@ struct conv_img *adaptImageTo(sqlite3 *db, struct req *request)
     char *date = getTodayToSQL();
     sprintf(adaptedImg->last_modified,date);
 
-    if (!isInCache(db,adaptedImg->name_code)) {
+    printf("before check cache...\n");
+
+    if (!isInCache(adaptedImg)) {
 
         unsigned long res = adapt(req_image, adaptedImg);
         /*   check result of adaptation */
         if (res != 200) {
             /* if not OK, return error code */
             adaptedImg->name_code = res;
-        } else {
-            /*  add adapted img to server cache */
-            db_insert_img(db,NULL,adaptedImg);
-        }
+            db_delete_image_by_name(NULL, adaptedImg->name_code); // if error in adapting, to delete from database
+        } /*else {
+            /*  add adapted img to server cache /
+            db_insert_img(NULL,adaptedImg);
+        }*/
     } else {
         /*  update last modified date at img in cache   */
-        updateDate(db,adaptedImg);
+        updateDate(adaptedImg);
     }
 
     return adaptedImg;
