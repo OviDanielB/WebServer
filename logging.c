@@ -86,7 +86,7 @@ void *logonfile(char *clientIPAddr, struct req *request, struct conv_img *image)
     log_line->ip_host = echo_ip_host(clientIPAddr);
     log_line->date = echo_date();
     log_line->reqline = echo_req_line(request);
-    log_line->status = echo_status();
+    //log_line->status = echo_status();
     log_line->size = echo_size(image);
 
     /*write on server log and close it*/
