@@ -13,8 +13,12 @@
 #include <wchar.h>
 #include <netinet/in.h>
 
-/* number of images loaded in the server database   */
+/*  home server's path  */
+const char *HOME;
+/* number of images loaded in the server images' table of database   */
 int IMAGESNUM;
+/* number of images manipulated loaded in the server cache's table of database   */
+int CACHENUM;
 /*  path of images' directory    */
 const char *PATH;
 /*  path of cached images' directory    */
@@ -57,6 +61,8 @@ const char *USER_AGENT;
 const char *ACCEPT;
 /*  home page of server images to show to the client    */
 const char *INDEX;
+/*  HTTP request for favicon.ico    */
+const char *FAVICON;
 
 /*  Image struct    */
 typedef struct  img {
@@ -93,13 +99,13 @@ typedef struct logline {
 
     //hostIP, userIdent, reqPersonID, date, reqLine, status, size
 
-    char ip_host[];
-    char user_id[];
-    char req_id[];
-    char date[];
-    char reqline[];
-    char status[];
-    char size[];
+    char *ip_host;
+    char *user_id;
+    char *req_id;
+    char *date;
+    char *reqline;
+    char *status;
+    char *size;
 };
 
 #endif //WEBSERVER_CONSTANTS_H
