@@ -100,7 +100,7 @@ void sig_handler(int sig){
  *
  *  @param sockfd: file descriptor for connection socket
  */
-void serveRequest(int sockfd, struct img **images)
+struct logline serveRequest(int sockfd, struct img **images, struct logline *log)
 {
     char result[50];
     struct conv_img *adaptedImage;
@@ -140,7 +140,11 @@ void serveRequest(int sockfd, struct img **images)
 
             switch (adaptedImage->name_code) {
                 case 400 :
+                    char final400[20] = "";
                     sprintf(result, HTTP_BAD_REQUEST);
+                    strcat(final400, "400 ");
+                    strcat(final400, result);
+                    log->status = final400;
                     break;
 
                 case 404 :

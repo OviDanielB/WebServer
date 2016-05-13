@@ -11,30 +11,30 @@ FILE *log_file;
 
 char *echo_ip_host(char *clientIPAddr)
 {
+    /*return IP address of the client*/
     return clientIPAddr;
 }
 
 /*char *echo_user_id()
 {
-
 }
-
 char *echo_reqpers_id()
 {
-
 }*/
 
 char *echo_date()
 {
-    char date[12];
 
+    char date[24];
     time_t current_time;
     char *current_time_str;
 
     current_time = time(NULL);
 
+    /*convert time in string*/
     current_time_str = ctime(&current_time);
 
+    /*return the current date and time in the format "Day Month Date HH:MM:SS Year"*/
     return current_time_str;
 
 }
@@ -57,42 +57,42 @@ char *echo_status()
 
 }
 
-char *echo_size()
+char *echo_size(struct conv_img *image)
 {
+    char size[1000] = "";
 
+    sprintf(size,"%ld", image->length);
+
+    return size;
 }
 
-void *logonfile(struct req *request, struct conv_img *image, char *clientIPAddr)
+void *logonfile(char *clientIPAddr, struct req *request, struct conv_img *image)
 {
     struct logline *log_line;
 
+    /*malloc of struct*/
     if ((log_line=malloc(sizeof(struct logline)))==NULL){
         perror("error in malloc");
         return NULL;
     }
 
+    /*open server log*/
     log_file = fopen("PATH", "w");
+    if (log_file == NULL) {
+        perror("error in opening file.");
+    }
 
+    /*fill the struct*/
     log_line->ip_host = echo_ip_host(clientIPAddr);
     log_line->date = echo_date();
     log_line->reqline = echo_req_line(request);
     log_line->status = echo_status();
-    log_line->size = echo_size();
+    log_line->size = echo_size(image);
 
+    /*write on server log and close it*/
     if (log_file!=NULL){
-
         fwrite(log_line, sizeof(struct logline), 1, log_file);
         fclose(log_file);
     }
-
-    /*log_file=fopen("FILE_PATH","w");
-    sprintf(log_line->ip_host, echo_ip_host());
-    sprintf(log_line->ip_host, echo_user_id());
-    sprintf(log_line->ip_host, echo_reqpers_id());
-    sprintf(log_line->ip_host, echo_date());
-    sprintf(log_line->ip_host, echo_req_line());
-    sprintf(log_line->ip_host, echo_status());
-    sprintf(log_line->ip_host, echo_size());
-    fclose(log_file);*/
 
 }
