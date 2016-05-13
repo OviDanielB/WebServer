@@ -22,8 +22,9 @@
 #include <arpa/inet.h>
 #include <signal.h>
 #include <ifaddrs.h>
-#include "logging.h"
+#include <pthread.h>
 
+#include "logging.h"
 #include "DataBase/db_helper.h"
 #include "helper/locking.h"
 #include "Service/responseWriter.h"
@@ -201,6 +202,7 @@ struct logline * serveRequest(int sockfd, struct img **images, struct logline *l
 void child_main(int index, int listenfd, int addrlen, struct img **images);
 void child_main(int index, int listenfd, int addrlen, struct img **images) {
 
+    FILE *file;
     int connfd;
     socklen_t clilen;
     struct sockaddr * cliaddr;
@@ -211,6 +213,7 @@ void child_main(int index, int listenfd, int addrlen, struct img **images) {
     struct sockaddr_in * addr;
 
     struct logline *log;
+    pthread_t log_thread;
 
 
     memset(buff,'0', MAXLINE);
@@ -234,15 +237,22 @@ void child_main(int index, int listenfd, int addrlen, struct img **images) {
         clientIPAddr = inet_ntoa(addr->sin_addr);
 
         printf("server process %ld accepted request from client %s\n", (long) getpid(), clientIPAddr);
-        serveRequest(connfd, images, log, clientIPAddr); //return struct logline con result size e req
+        log = serveRequest(connfd, images, log, clientIPAddr);
 
-        /*log
-         * int logging_thread = pthread_create(&log_thread, NULL, &log_on_file());
-         * int log_min_priority = sched_get_priority_min(sched_getscheduler(log_thread));
-         * if (pthread_setschedprio(log_thread, log_min_priority)!=0){
-         *  perror("error in set priority")
-         * }
-         * */
+        /*log on file*/
+        int logging_thread;
+
+        /*set low priority for logging thread*/
+        // TODO: change priority by pthread_attr_t
+        /* int log_min_priority;
+        log_min_priority = sched_get_priority_min(sched_getscheduler(log_thread));
+        if (pthread_setschedprio(log_thread, log_min_priority)!=0){
+            perror("error in set priority");
+        }*/
+        logging_thread = pthread_create(&log_thread, NULL, (void *)logonfile, (void *)log);
+        if(logging_thread){
+            perror("error in creating logging thread");
+        }
 
         close(connfd);
     }

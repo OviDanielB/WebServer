@@ -59,8 +59,11 @@ void *log_size(struct logline *log, struct conv_img *image)
 
 }
 
-void *logonfile(FILE *log_file, struct logline *log)
+void *logonfile(void *logLine)
 {
+
+    FILE * log_file;
+    struct logline *log = (struct logline *) logLine;
 
     //TODO: dove definire log_file?
 
