@@ -62,6 +62,8 @@ void *log_size(struct logline *log, struct conv_img *image)
 void *logonfile(FILE *log_file, struct logline *log)
 {
 
+    //TODO: dove definire log_file?
+
     /*malloc of struct*/
     if ((log=malloc(sizeof(struct logline)))==NULL){
         perror("error in malloc");

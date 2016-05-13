@@ -95,6 +95,7 @@ typedef struct logline {
     char date[30]; // current date and time
     char reqline[300]; // HTTP request line
     char status[20]; // HTTP response status
+    //TODO: size[??]
     char size[]; // image size
 };
 
