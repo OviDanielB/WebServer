@@ -121,12 +121,14 @@ void serveRequest(int sockfd, struct img **images)
 
     } else {
 
-        if (strcmp(request->resource,"favicon")==0) {
-            return;
+        if (strcmp(request->resource,"favicon") == 0) {
+
+            writeResponse(sockfd, (char *) FAVICON, NULL, NULL, NULL);
+
         }
 
         /*  first client request to get view of server content  */
-        if (strcmp(request->resource,INDEX)==0) {
+        if (strcmp(request->resource,INDEX) ==0 ) {
 
             writeResponse(sockfd, (char *)INDEX, NULL, adaptedImage, images);
 
@@ -189,7 +191,6 @@ void child_main(int index, int listenfd, int addrlen, struct img **images) {
         clientIPAddr = inet_ntoa(addr->sin_addr);
 
         printf("server process %ld accepted request from client %s\n", (long) getpid(), clientIPAddr);
-
         serveRequest(connfd, images);
 
         /*log
@@ -223,16 +224,12 @@ pid_t child_make(int i, int listenfd, int addrlen, struct img **images)
 
 int main(int argc, char **argv)
 {
-    int listensd, connsd, i;
+    int listensd, i;
     struct sockaddr_in servaddr;
-    char buff[MAXLINE];
     socklen_t addrlen;
 
     in_port_t port;
     time_t ticks;
-
-    char * sqlStatement;
-
 
     pid_t child_make(int, int, int, struct img **);
 
@@ -249,7 +246,9 @@ int main(int argc, char **argv)
     }
 
     /* load all server images that are in a specified directory */
-    struct img **images = db_load_all_images((char *)PATH);
+    struct img **images = db_load_all_images((char *) PATH);
+    /* load all server images previously manipulated that are in a specified directory */
+    //db_load_cache_images((char *) CACHE_PATH);
 
     // creates a listening socket
     if((listensd=socket(AF_INET,SOCK_STREAM,0)) < 0){
