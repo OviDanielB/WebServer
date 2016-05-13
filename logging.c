@@ -1,5 +1,5 @@
 //
-// Created by root on 4/23/16.
+// Created by Sasha on 4/23/16.
 //
 
 #include <stdio.h>
@@ -7,25 +7,15 @@
 #include <time.h>
 #include "constants.h"
 
-FILE *log_file;
-
-char *echo_ip_host(char *clientIPAddr)
+void *log_clientIP(char *clientIPAddr, struct logline *log)
 {
-    /*return IP address of the client*/
-    return clientIPAddr;
+    /*fill ip_host field in struct logline with IP address of client*/
+    strcat(log->ip_host, clientIPAddr);
 }
 
-/*char *echo_user_id()
-{
-}
-char *echo_reqpers_id()
-{
-}*/
-
-char *echo_date()
+void *log_date(struct logline *log)
 {
 
-    char date[24];
     time_t current_time;
     char *current_time_str;
 
@@ -34,44 +24,46 @@ char *echo_date()
     /*convert time in string*/
     current_time_str = ctime(&current_time);
 
-    /*return the current date and time in the format "Day Month Date HH:MM:SS Year"*/
-    return current_time_str;
+    /*fill date field in struct logline with the current date and time in the format "Day Month Date HH:MM:SS Year"*/
+    strcat(log->date, current_time_str);
 
 }
 
-char *echo_req_line(struct req *request)
+void *log_requestline(struct logline *log, struct req *request)
 {
-    char final_string[300] = "";
-
-    strcat(final_string, request->method);
-    strcat(final_string, " /");
-    strcat(final_string, request->resource);
-    strcat(final_string, " HTTP 1.1");
-
-    return final_string;
+    /*generate HTTP request line and fill reqline field in struct logline with HTTP request line*/
+    strcat(log->reqline, request->method);
+    strcat(log->reqline, " /");
+    strcat(log->reqline, request->resource);
+    strcat(log->reqline, " HTTP 1.1");
 
 }
 
-char *echo_status()
+void *log_status(char status[3], char result[16], struct logline *log)
 {
+    /*generate HTTP response status*/
+    strcat(status, "400 ");
+    strcat(status, result);
+
+    /*fill status field in struct logline with HTTP response status*/
+    strcat(log->status, status);
+}
+
+void *log_size(struct logline *log, struct conv_img *image)
+{
+    char image_str[]="";
+
+    /*fill size field in struct logline with image lenght*/
+    sprintf(image_str, "%zu", image->length);
+    strcat(log->size, image_str);
 
 }
 
-char *echo_size(struct conv_img *image)
+void *logonfile(FILE *log_file, struct logline *log)
 {
-    char size[1000] = "";
-
-    sprintf(size,"%ld", image->length);
-
-    return size;
-}
-
-void *logonfile(char *clientIPAddr, struct req *request, struct conv_img *image)
-{
-    struct logline *log_line;
 
     /*malloc of struct*/
-    if ((log_line=malloc(sizeof(struct logline)))==NULL){
+    if ((log=malloc(sizeof(struct logline)))==NULL){
         perror("error in malloc");
         return NULL;
     }
@@ -82,16 +74,9 @@ void *logonfile(char *clientIPAddr, struct req *request, struct conv_img *image)
         perror("error in opening file.");
     }
 
-    /*fill the struct*/
-    log_line->ip_host = echo_ip_host(clientIPAddr);
-    log_line->date = echo_date();
-    log_line->reqline = echo_req_line(request);
-    //log_line->status = echo_status();
-    log_line->size = echo_size(image);
-
     /*write on server log and close it*/
     if (log_file!=NULL){
-        fwrite(log_line, sizeof(struct logline), 1, log_file);
+        fwrite(log, sizeof(struct logline), 1, log_file);
         fclose(log_file);
     }
 

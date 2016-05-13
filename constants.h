@@ -91,11 +91,9 @@ typedef struct req {
 /* Log file line struct */
 typedef struct logline {
 
-    char ip_host[]; // IP address of the client
-    char user_id[];
-    char req_id[];
-    char date[]; // current date and time
-    char reqline[]; // HTTP request line
+    char ip_host[15]; // IP address of the client
+    char date[30]; // current date and time
+    char reqline[300]; // HTTP request line
     char status[20]; // HTTP response status
     char size[]; // image size
 };

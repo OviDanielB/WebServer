@@ -22,6 +22,7 @@
 #include <arpa/inet.h>
 #include <signal.h>
 #include <ifaddrs.h>
+#include "logging.h"
 
 #include "DataBase/db_helper.h"
 #include "helper/locking.h"
@@ -100,9 +101,11 @@ void sig_handler(int sig){
  *
  *  @param sockfd: file descriptor for connection socket
  */
-struct logline serveRequest(int sockfd, struct img **images, struct logline *log)
+struct logline * serveRequest(int sockfd, struct img **images, struct logline *log, char *clientIPAddr)
 {
     char result[50];
+    char status[3];
+    char final_string[100] = "";
     struct conv_img *adaptedImage;
     adaptedImage = (struct conv_img * ) malloc(sizeof(struct conv_img));
     if (adaptedImage == NULL) {
@@ -120,6 +123,16 @@ struct logline serveRequest(int sockfd, struct img **images, struct logline *log
         writeResponse(sockfd, result, NULL, NULL, NULL);
 
     } else {
+
+        /*log req line*/
+        log_requestline(log, request);
+
+        /*log date*/
+        log_date(log);
+
+        /*log IPAddr*/
+        log_clientIP(clientIPAddr, log);
+
 
         if (strcmp(request->resource,"favicon") == 0) {
 
@@ -140,26 +153,49 @@ struct logline serveRequest(int sockfd, struct img **images, struct logline *log
 
             switch (adaptedImage->name_code) {
                 case 400 :
-                    char final400[20] = "";
                     sprintf(result, HTTP_BAD_REQUEST);
-                    strcat(final400, "400 ");
-                    strcat(final400, result);
-                    log->status = final400;
+
+                    sprintf(status, "400");
+
+                    /*log status*/
+                    log_status(status, result, log);
+
+                    /*log size*/
+                    log_size(log, NULL);
+
                     break;
 
                 case 404 :
                     sprintf(result, HTTP_NOT_FOUND);
+
+                    sprintf(status, "404");
+
+                    /*log status*/
+                    log_status(status, result, log);
+
+                    /*log size*/
+                    log_size(log, NULL);
                     break;
 
                 default :
                     sprintf(result, HTTP_OK);
+
+                    sprintf(status, "200");
+
+                    /*log status*/
+                    log_status(status, result, log);
+
+                    /*log size*/
+                    log_size(log, adaptedImage);
                     break;
             }
+
 
             printf("begin response...\n");
             writeResponse(sockfd, result, request->method, adaptedImage, NULL);
         }
     }
+    return log;
 }
 
 void child_main(int index, int listenfd, int addrlen, struct img **images);
@@ -173,6 +209,9 @@ void child_main(int index, int listenfd, int addrlen, struct img **images) {
 
     char * clientIPAddr;
     struct sockaddr_in * addr;
+
+    struct logline *log;
+
 
     memset(buff,'0', MAXLINE);
     cliaddr = (struct sockaddr *) malloc((size_t)addrlen);
@@ -195,7 +234,7 @@ void child_main(int index, int listenfd, int addrlen, struct img **images) {
         clientIPAddr = inet_ntoa(addr->sin_addr);
 
         printf("server process %ld accepted request from client %s\n", (long) getpid(), clientIPAddr);
-        serveRequest(connfd, images);
+        serveRequest(connfd, images, log, clientIPAddr); //return struct logline con result size e req
 
         /*log
          * int logging_thread = pthread_create(&log_thread, NULL, &log_on_file());
