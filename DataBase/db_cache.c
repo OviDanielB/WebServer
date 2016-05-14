@@ -49,7 +49,7 @@ int cache_check_result(void *data, int argc, char **argv, char **azColName)
 int isInCache(struct conv_img *im)
 {
     /*  if adapted image wasn't just added in cache table, insert it   */
-    if (db_insert_img(NULL, im) == SQLITE_CONSTRAINT) { // if UNIQUE constraints failed
+    if (dbInsertImg(NULL, im) == SQLITE_CONSTRAINT) { // if UNIQUE constraints failed
         printf("IN CACHE\n");
         return 1; // true
     }
@@ -73,7 +73,7 @@ int isFull()
 
     sprintf(statement,"SELECT COUNT('Name') FROM 'CONV_IMG';");
 
-    db_execute_statement(statement, cache_check_status, &rows);
+    dbExecuteStatement(statement, cache_check_status, &rows);
     free(statement);
 
     printf("rows dopo op:%d\n",rows);
@@ -98,7 +98,7 @@ void deleteByAge()
 
     sprintf(statement, "DELETE FROM CONV_IMG WHERE Last_Modified=( SELECT MIN(Last_Modified) FROM CONV_IMG);");
 
-    db_execute_statement(statement, 0, 0);
+    dbExecuteStatement(statement, 0, 0);
     free(statement);
 }
 
@@ -116,7 +116,7 @@ void deleteByTimeout()
     sprintf(statement, "DELETE FROM CONV_IMG WHERE "
             "((strftime('%%d','YYYY-MM-DD') - strftime('%%d','Last_Modified')) >= %d);",TIMEOUT);
 
-    db_execute_statement(statement, 0, 0);
+    dbExecuteStatement(statement, 0, 0);
 
     free(statement);
 }
@@ -139,6 +139,25 @@ void updateDate(struct conv_img *adaptedImg)
     sprintf(statement, "UPDATE CONV_IMG SET Last_Modified='%s' WHERE Name=%lu;",
             adaptedImg->last_modified,adaptedImg->name_code);
 
-    db_execute_statement(statement, 0, 0);
+    dbExecuteStatement(statement, 0, 0);
     free(statement);
+}
+
+
+/* Update server cache checking for saturation of memory dedicated
+ * or after timeout of cached image lifetime.
+ *
+ * @param db = SQLite database where server cache is
+ */
+void updateCache()
+{
+    // check if cache memory is full
+    //if (isFull()) {
+    if (CACHENUM >= MAX_CACHE_ROWS_NUM) {
+        printf("checkes full cache\n");
+        // delete by time of insertion (older saved element)
+        deleteByAge();
+    }
+    // delete by timeout if there are expired ones
+    deleteByTimeout();
 }

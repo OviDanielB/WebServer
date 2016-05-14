@@ -21,7 +21,6 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <signal.h>
-#include <ifaddrs.h>
 #include <pthread.h>
 
 #include "logging.h"
@@ -33,36 +32,6 @@
 // define sigfunc to simplify signal sys call
 typedef void sigfunc(int);
 typedef struct sqlite sqlite;
-
-void getServerIp();
-void getServerIp()
-{
-    struct ifaddrs * ifAddrStruct=NULL;
-    struct ifaddrs * ifa=NULL;
-    void * tmpAddrPtr=NULL;
-
-    getifaddrs(&ifAddrStruct);
-
-    for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
-        if (!ifa->ifa_addr) {
-            continue;
-        }
-        if (ifa->ifa_addr->sa_family == AF_INET) { // check it is IP4
-            // is a valid IP4 Address
-            tmpAddrPtr=&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
-            char addressBuffer[INET_ADDRSTRLEN];
-            inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
-            printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
-        } else if (ifa->ifa_addr->sa_family == AF_INET6) { // check it is IP6
-            // is a valid IP6 Address
-            tmpAddrPtr=&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
-            char addressBuffer[INET6_ADDRSTRLEN];
-            inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
-            printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
-        }
-    }
-    if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
-}
 
 static pid_t *pids;
 
@@ -102,13 +71,13 @@ void sig_handler(int sig){
  *
  *  @param sockfd: file descriptor for connection socket
  */
-struct logline * serveRequest(int sockfd, struct img **images, struct logline *log, char *clientIPAddr)
+void serveRequest(int sockfd, struct img **images, char *serverIp, in_port_t serverPort, struct logline *log)
 {
     char result[50];
-    char status[3];
-    char final_string[100] = "";
-    struct conv_img *adaptedImage;
-    adaptedImage = (struct conv_img * ) malloc(sizeof(struct conv_img));
+    char status[4];
+    //char final_string[100] = "";
+
+    struct conv_img *adaptedImage = (struct conv_img * ) malloc(sizeof(struct conv_img));
     if (adaptedImage == NULL) {
         perror("error in malloc\n");
         exit(EXIT_FAILURE);
@@ -128,21 +97,17 @@ struct logline * serveRequest(int sockfd, struct img **images, struct logline *l
         /*log req line*/
         log_requestline(log, request);
 
-        /*log date*/
-        log_date(log);
-
-        /*log IPAddr*/
-        log_clientIP(clientIPAddr, log);
-
-
+        /*   ignoring requests for favicon.ico, generated from browser  */
         if (strcmp(request->resource,"favicon") == 0) {
-
-            writeResponse(sockfd, (char *) FAVICON, NULL, NULL, NULL);
-
+            return;
+            //writeResponse(sockfd, (char *) FAVICON, NULL, NULL, NULL);
         }
 
         /*  first client request to get view of server content  */
         if (strcmp(request->resource,INDEX) ==0 ) {
+            /*  using field of struct conv_img to pass server info (IP address and port number) */
+            sscanf(getServerIp(),"%s",adaptedImage->last_modified);
+            adaptedImage->width = (size_t) serverPort;
 
             writeResponse(sockfd, (char *)INDEX, NULL, adaptedImage, images);
 
@@ -159,35 +124,30 @@ struct logline * serveRequest(int sockfd, struct img **images, struct logline *l
                     sprintf(status, "400");
 
                     /*log status*/
-                    log_status(status, result, log);
-
+                    sprintf(log->status, result);
                     /*log size*/
-                    log_size(log, NULL);
+                    log->size = 0;
 
                     break;
 
                 case 404 :
                     sprintf(result, HTTP_NOT_FOUND);
 
-                    sprintf(status, "404");
-
                     /*log status*/
-                    log_status(status, result, log);
-
+                    sprintf(log->status, result);
                     /*log size*/
-                    log_size(log, NULL);
+                    log->size = 0;
+
                     break;
 
                 default :
                     sprintf(result, HTTP_OK);
 
-                    sprintf(status, "200");
-
                     /*log status*/
-                    log_status(status, result, log);
-
+                    sprintf(log->status, result);
                     /*log size*/
-                    log_size(log, adaptedImage);
+                    log->size = adaptedImage->length;
+
                     break;
             }
 
@@ -196,13 +156,28 @@ struct logline * serveRequest(int sockfd, struct img **images, struct logline *l
             writeResponse(sockfd, result, request->method, adaptedImage, NULL);
         }
     }
-    return log;
+
+    pthread_t log_thread;
+    /*log on file*/
+    int logging_thread;
+
+    /*set low priority for logging thread*/
+    // TODO: change priority by pthread_attr_t
+    /* int log_min_priority;
+    log_min_priority = sched_get_priority_min(sched_getscheduler(log_thread));
+    if (pthread_setschedprio(log_thread, log_min_priority)!=0){
+        perror("error in set priority");
+    }*/
+    logging_thread = pthread_create(&log_thread, NULL, (void *)logonfile, (void *)log);
+    if(logging_thread){
+        perror("error in creating logging thread");
+        exit(EXIT_FAILURE);
+    }
 }
 
-void child_main(int index, int listenfd, int addrlen, struct img **images);
-void child_main(int index, int listenfd, int addrlen, struct img **images) {
-
-    FILE *file;
+void child_main(int index, int listenfd, int addrlen, char *serverIp, in_port_t serverPort, struct img **images);
+void child_main(int index, int listenfd, int addrlen, char *serverIp, in_port_t serverPort, struct img **images)
+{
     int connfd;
     socklen_t clilen;
     struct sockaddr * cliaddr;
@@ -211,10 +186,6 @@ void child_main(int index, int listenfd, int addrlen, struct img **images) {
 
     char * clientIPAddr;
     struct sockaddr_in * addr;
-
-    struct logline *log;
-    pthread_t log_thread;
-
 
     memset(buff,'0', MAXLINE);
     cliaddr = (struct sockaddr *) malloc((size_t)addrlen);
@@ -237,29 +208,26 @@ void child_main(int index, int listenfd, int addrlen, struct img **images) {
         clientIPAddr = inet_ntoa(addr->sin_addr);
 
         printf("server process %ld accepted request from client %s\n", (long) getpid(), clientIPAddr);
-        log = serveRequest(connfd, images, log, clientIPAddr);
 
-        /*log on file*/
-        int logging_thread;
-
-        /*set low priority for logging thread*/
-        // TODO: change priority by pthread_attr_t
-        /* int log_min_priority;
-        log_min_priority = sched_get_priority_min(sched_getscheduler(log_thread));
-        if (pthread_setschedprio(log_thread, log_min_priority)!=0){
-            perror("error in set priority");
-        }*/
-        logging_thread = pthread_create(&log_thread, NULL, (void *)logonfile, (void *)log);
-        if(logging_thread){
-            perror("error in creating logging thread");
+        struct logline *log = (struct logline *) malloc(sizeof(struct logline));
+        if (log == NULL) {
+            perror("error in malloc\n");
+            exit(EXIT_FAILURE);
         }
+
+        /*log date*/
+        sprintf(log->date, getTodayToHTTPLine());
+        /*log IPAddr*/
+        sprintf(log->ip_host, clientIPAddr);
+
+        serveRequest(connfd, images, serverIp, serverPort, log);
 
         close(connfd);
     }
 }
 
-pid_t child_make(int i, int listenfd, int addrlen, struct img **images);
-pid_t child_make(int i, int listenfd, int addrlen, struct img **images)
+pid_t child_make(int i, int listenfd, int addrlen, char *serverIp, in_port_t serverPort, struct img **images);
+pid_t child_make(int i, int listenfd, int addrlen, char *serverIp, in_port_t serverPort, struct img **images)
 {
     pid_t pid;
 
@@ -270,7 +238,7 @@ pid_t child_make(int i, int listenfd, int addrlen, struct img **images)
 
     pid = getpid();
 
-    child_main(i, listenfd, addrlen, images);
+    child_main(i, listenfd, addrlen, serverIp, serverPort, images);
 
     return pid;
 }
@@ -280,26 +248,27 @@ int main(int argc, char **argv)
     int listensd, i;
     struct sockaddr_in servaddr;
     socklen_t addrlen;
+    char *serverIp;
+    in_port_t serverPort;
 
-    in_port_t port;
     time_t ticks;
 
-    pid_t child_make(int, int, int, struct img **);
+    pid_t child_make(int, int, int, char *, in_port_t, struct img **);
 
     // TODO arguments
     if(argc <= 2){
         // if not specified, use default port
-        port = DEFAULT_PORT;
+        serverPort = DEFAULT_PORT;
     } else if(argc == 3) {
         // use specified port
-        port = (in_port_t) atoi(argv[2]);
+        serverPort = (in_port_t) atoi(argv[2]);
     } else {
         printf("Usage : ./web_server <ip Address> <port number>");
         exit(EXIT_FAILURE);
     }
 
     /* load all server images that are in a specified directory */
-    struct img **images = db_load_all_images((char *) PATH);
+    struct img **images = dbLoadAllImages((char *) PATH);
     /* load all server images previously manipulated that are in a specified directory */
     //db_load_cache_images((char *) CACHE_PATH);
 
@@ -315,7 +284,7 @@ int main(int argc, char **argv)
     servaddr.sin_family = AF_INET; // AF_INET = IPv4 with 32-bit address and 16-bit port number (in_port_t)
     // INADDR_ANY allows the program to work without knowing the ip address of the machine it is running on
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY); // returns host_uint32 converted to network byte order
-    servaddr.sin_port = htons(port); // returns host_uint16 converted to network byte order
+    servaddr.sin_port = htons(serverPort); // returns host_uint16 converted to network byte order
 
     addrlen = sizeof(servaddr);
     // bind the listening socket to the address; needs casting to sockaddr *
@@ -324,7 +293,8 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    getServerIp();
+    serverIp = getServerIp();
+    printf("IP SERVER: %s - IP PORT: %d\n", serverIp, serverPort);
 
     // marks the socket as a passive socket and it is ready to accept connections
     // BACKLOG max number of allowed connections. if max reached the user will get an error
@@ -341,7 +311,9 @@ int main(int argc, char **argv)
 
     // create pids array with children pids
     for(i = 0; i < CHILDREN_NUM; i++ ){
-        pids[i] = child_make(i, listensd, addrlen, images);
+        serverIp = getServerIp();
+
+        pids[i] = child_make(i, listensd, addrlen, serverIp, serverPort, images);
     }
 
     // when SIGINT arrives (press ctrl-C) the father process and the children terminate

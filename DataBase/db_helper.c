@@ -8,7 +8,7 @@
  *
  * @param: db =  SQLite database to create/open
  */
-sqlite3 *db_open()
+sqlite3 *dbOpen()
 {
     int rc;
     sqlite3 *db;
@@ -29,7 +29,7 @@ sqlite3 *db_open()
  *
  * @param: db = SQLite database to close
  */
-void db_close(sqlite3 * db)
+void dbClose(sqlite3 *db)
 {
     sqlite3_close(db);
     fprintf(stdout, "Database closed.\n");
@@ -40,10 +40,10 @@ void db_close(sqlite3 * db)
  * @param: db = database to be queried
  * @param: sql = statement to execute
  */
-int db_execute_statement(const char *sql, int (*callback)(void*,int,char**,char**), void *arg)
+int dbExecuteStatement(const char *sql, int (*callback)(void *, int, char **, char **), void *arg)
 {
     /* open server database or create it if doesn't exist */
-    sqlite3 *db = db_open();
+    sqlite3 *db = dbOpen();
     int rc;
     char *zErrorMsg;
 
@@ -57,26 +57,9 @@ int db_execute_statement(const char *sql, int (*callback)(void*,int,char**,char*
     }
 
     memset((char *)sql,'\0',MAXLINE);
-    db_close(db);
+    dbClose(db);
 
     return rc;
-}
-
-/* Update server cache checking for saturation of memory dedicated
- * or after timeout of cached image lifetime.
- *
- * @param db = SQLite database where server cache is
- */
-void db_update_cache()
-{
-    // check if cache memory is full
-    if (isFull()) {
-        printf("checkes full cache\n");
-        // delete by time of insertion (older saved element)
-        deleteByAge();
-    }
-    // delete by timeout if there are expired ones
-    deleteByTimeout();
 }
 
 /*  Insert new image into database in table IMAGES or CONV_IMG (cache)
@@ -84,8 +67,10 @@ void db_update_cache()
  * @param: originalImg = image to add to server files (= NULL if it's a cache update)
  * @param: convImg = manipulated image to add to server cache (= NULL if it's a server images' update
  */
-int db_insert_img(struct img *originalImg, struct conv_img *convImg)
+int dbInsertImg(struct img *originalImg, struct conv_img *convImg)
 {
+    printf("insert img....\n");
+
     char *statement;
 
     if ((statement = (char *) malloc(MAXLINE * sizeof(char)))==NULL) {
@@ -100,19 +85,21 @@ int db_insert_img(struct img *originalImg, struct conv_img *convImg)
     }
 
     if (convImg != NULL) {
-        sprintf(statement, "INSERT INTO 'CONV_IMG' ('Original_Name','Name','Type','Last_Modified','Width','Height','Length','Quality') " \
-            "VALUES ('%s',%lu,'%s','%s',%ld,%ld,%ld,%ld);",
-                convImg->original_name, convImg->name_code, convImg->type, convImg->last_modified,
-                convImg->width, convImg->height, convImg->length, convImg->quality);
+        sprintf(statement, "INSERT INTO 'CONV_IMG' ('Original_Name','Name','Last_Modified') " \
+            "VALUES ('%s',%lu,'%s');",
+                convImg->original_name, convImg->name_code, convImg->last_modified);
 
-        db_update_cache();
+        /* TODO alternative way to count rows   */
+        CACHENUM += 1;
+
+        updateCache();
     }
 
-    return db_execute_statement(statement, 0, 0);
+    return dbExecuteStatement(statement, 0, 0);
 }
 
 /* Callback by db_get_conv_image_by_code to fill the conv_img struct passed as (void *), later casted back */
-int fill_conv_img_struct(void *data, int argc, char **argv, char **azColName)
+int fillConvImgStruct(void *data, int argc, char **argv, char **azColName)
 {
     int i;
     struct conv_img *image = (struct conv_img *) data;
@@ -159,13 +146,13 @@ void db_get_conv_image_by_code(unsigned long code,struct conv_img *image)
 
     sprintf(statement,"SELECT * FROM CONV_IMG WHERE Name='%lu';", code);
 
-    db_execute_statement(statement, fill_conv_img_struct, image);
+    dbExecuteStatement(statement, fillConvImgStruct, image);
 
     //free(statement);
 }
 
-/* Callback by db_get_image_by_name to fill the img struct passed as (void *), later casted back */
-int fill_img_struct(void *data, int argc, char **argv, char **azColName)
+/* Callback by dbGetImageByName to fill the img struct passed as (void *), later casted back */
+int fillImgStruct(void *data, int argc, char **argv, char **azColName)
 {
     int i;
     struct img *image = (struct img *) data;
@@ -194,7 +181,7 @@ int fill_img_struct(void *data, int argc, char **argv, char **azColName)
  * @param image: struct img * previously allocated with malloc(sizeof(struct img)),
  *               the name and type char * arrays is done by itself
 */
-void db_get_image_by_name(char *name, struct img *image)
+void dbGetImageByName(char *name, struct img *image)
 {
     char *statement;
 
@@ -207,7 +194,7 @@ void db_get_image_by_name(char *name, struct img *image)
 
     sprintf(statement,"SELECT * FROM IMAGES WHERE Name='%s';", name);
 
-    db_execute_statement(statement, fill_img_struct, image);
+    dbExecuteStatement(statement, fillImgStruct, image);
 
     //free(statement);
 }
@@ -217,7 +204,7 @@ void db_get_image_by_name(char *name, struct img *image)
  * @param: name = image name to delete from IMAGES table of database
  * @param: code = image hashcode to delete from CONV_IMG table of database
  */
-void db_delete_image_by_name(char *name, unsigned long code)
+void dbDeleteByImageName(char *name, unsigned long code)
 {
     char *statement;
 
@@ -227,15 +214,53 @@ void db_delete_image_by_name(char *name, unsigned long code)
         return;
     }
 
-    if (name != NULL) {
+    if (code == NULL) {
         sprintf(statement, "DELETE FROM 'IMAGES' WHERE Name='%s';", name);
     } else {
-        sprintf(statement, "DELETE FROM 'CONV_IMG' WHERE Name=%lu;", code);
+        sprintf(statement, "DELETE FROM 'CONV_IMG' WHERE 'Original_Name'='%s' AND 'Name'=%lu;", name, code);
     }
 
-    db_execute_statement(statement, 0, 0);
+    dbExecuteStatement(statement, 0, 0);
     //free(statement);
 }
+
+/* Set name, type, quality and size of the image
+ *
+ * @param img: struct conv_img* to fill with info
+ * @param complete path: image path
+ * @param fullname: image name (type included)
+ */
+void setConvImgInfo(struct conv_img *img, char *complete_path, char *fullname)
+{
+    printf("in convimg info\n");
+
+    MagickWand *m_wand = NULL;
+    m_wand = NewMagickWand();
+
+    if(MagickReadImage(m_wand,complete_path) == MagickFalse){
+        perror("MagickReadImage error");
+        exit(EXIT_FAILURE);
+    }
+
+    char name[256];
+    if (memset(name,'\0',256)==NULL) {
+        perror("memset error\n");
+        exit(EXIT_FAILURE);
+    }
+    readNameAndType(fullname, name, img->type);
+
+    printf("in convimg info2\n");
+
+    sscanf(name, "%lu", &img->name_code);
+    img->width = MagickGetImageWidth(m_wand);
+    img->height = MagickGetImageHeight(m_wand);
+    img->length = img->width*img->height;
+//    img->quality = MagickGetCompressionQuality(m_wand);
+
+    MagickRemoveImage(m_wand);
+    DestroyMagickWand(m_wand);
+}
+
 
 /* Set name type and size of the image
  *
@@ -262,11 +287,81 @@ void setImgInfo(struct img *img, char *complete_path, char *fullname)
     DestroyMagickWand(m_wand);
 }
 
-/* returns a char** with the names of the files in the directory specified by path
- * the char ** in the call     char** files = files_in_dir(path) DOESN'T HAVE TO BE INITIALIZED
- * the names of the files are at maximum 256 as defined in dirent.h
-*/
-struct img ** db_load_all_images(char *path)
+/* Load all server images previously manipulated into CONV_IMG table of Database.
+ *
+ * @param: path = string of path to the server cache's directory
+ */
+void db_load_cache_images(char *path)
+{
+    printf("in load cache\n");
+
+    DIR *dir;
+    struct dirent *ent;
+    int fileCount = 0;
+    char complete_path[strlen(CACHE_PATH)+280];
+    complete_path[0] = 0;
+
+    struct conv_img **images = malloc(30 * sizeof(struct conv_img *));
+    if (images == NULL) {
+        perror("malloc error\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if ((dir = opendir (path)) != NULL) {
+        /* print all the files and directories within directory */
+        while ((ent = readdir (dir)) != NULL) {
+            /* doesn't put the . and .. directory*/
+            printf("in loading3\n");
+            if (strcmp(ent->d_name,".") == 0 || strcmp(ent->d_name,"..") == 0){
+                continue;
+            }
+
+            sprintf(complete_path,"%s%s", path, ent->d_name);
+            printf("%d: %s\n", fileCount+1, complete_path);
+
+            images[fileCount] = malloc(sizeof(struct conv_img));
+            if (images[fileCount] == NULL){
+                perror("Malloc error.");
+                exit(EXIT_FAILURE);
+            }
+
+            /*  set name, type, size and quality of image    */
+            setConvImgInfo(images[fileCount], complete_path, ent->d_name);
+            /*  add manipulated image to sever database  */
+            dbInsertImg(NULL, images[fileCount]);
+
+            printf("name_code = %lu, type = %s, width = %ld, height = %ld, quality = %ld\n",
+                   images[fileCount]->name_code,images[fileCount]->type,images[fileCount]->width,
+                   images[fileCount]->height,images[fileCount]->quality);
+
+            if (fileCount > 10) {
+                images = realloc(images, (fileCount + 1) * sizeof(struct conv_img *));
+                if(images == NULL){
+                    perror("Calloc error.");
+                    exit(EXIT_FAILURE);
+                }
+            }
+            fileCount++;
+
+            memset(complete_path,0,1024);
+        }
+        /* number of manipulated images loaded in the database    */
+        CACHENUM = fileCount;
+
+        closedir (dir);
+
+    } else {
+        /* could not open directory */
+        perror ("Could not open directory for images search.");
+        exit(EXIT_FAILURE);
+    }
+}
+
+/* Load all server images into the IMAGES table of Database.
+ *
+ * @param: path = string of path where directory of images is located
+ */
+struct img ** dbLoadAllImages(char *path)
 {
     DIR *dir;
     struct dirent *ent;
@@ -288,7 +383,7 @@ struct img ** db_load_all_images(char *path)
                 continue;
             }
 
-            sprintf(complete_path,"%s%s",path,ent->d_name);
+            sprintf(complete_path, "%s%s", path, ent->d_name);
             printf("%d: %s\n",fileCount+1,complete_path);
 
             images[fileCount] = malloc(sizeof(struct img));
@@ -298,9 +393,9 @@ struct img ** db_load_all_images(char *path)
             }
 
             /*  set name, type and size of image    */
-            setImgInfo(images[fileCount],complete_path,ent->d_name);
+            setImgInfo(images[fileCount], complete_path, ent->d_name);
             /*  add image to sever database  */
-            db_insert_img(images[fileCount],NULL);
+            dbInsertImg(images[fileCount], NULL);
 
             printf("name = %s, type = %s, width = %ld, height = %ld\n",
                    images[fileCount]->name,images[fileCount]->type,images[fileCount]->width,images[fileCount]->height);
@@ -314,8 +409,8 @@ struct img ** db_load_all_images(char *path)
             }
             fileCount++;
 
-            memset(complete_path,0,1024);
-	}
+            memset(complete_path, 0, 1024);
+        }
         /* total number of images loaded in the database    */
         IMAGESNUM = fileCount;
 

@@ -17,6 +17,7 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
     char filename[MAXLINE];
     sprintf(filename, "%s%s.%s", PATH, req_image->name, req_image->type);
 
+//    MagickWandGenesis();
     MagickWand *magickWand = NULL;
     magickWand = NewMagickWand();
 
@@ -61,6 +62,9 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
     if (req_image->width!=adaptImg->width || req_image->height!=adaptImg->height) {
         size_t *dim = proportionalSize(req_image->width,req_image->height,adaptImg->width,adaptImg->height);
         status = MagickScaleImage(magickWand,dim[0],dim[1]);
+        /*ExceptionInfo exception;
+        Image *image= GetImageFromMagickWand(magickWand);
+        ThumbnailImage(image,dim[0],dim[1],&exception);*/
         if (status == MagickFalse) {
             perror("error in scaling image\n");
             return 400; // ERROR
@@ -86,6 +90,7 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
     MagickWriteImage(magickWand,destination);
 
     DestroyMagickWand(magickWand);
+    //MagickWandTerminus();
 
     return 200; // OK
 }
@@ -112,7 +117,7 @@ struct conv_img *adaptImageTo(struct req *request)
     unsigned char nameToHash[256];
 
     /*  Load information about image from database   */
-    db_get_image_by_name(request->resource,req_image);
+    dbGetImageByName(request->resource, req_image);
 
     /*  Check if image is in database else return NOT FOUND */
     if (strcmp(request->resource, req_image->name) != 0) {
@@ -152,10 +157,10 @@ struct conv_img *adaptImageTo(struct req *request)
         if (res != 200) {
             /* if not OK, return error code */
             adaptedImg->name_code = res;
-            db_delete_image_by_name(NULL, adaptedImg->name_code); // if error in adapting, to delete from database
+            dbDeleteByImageName(adaptedImg->original_name, adaptedImg->name_code); // if error in adapting, to delete from database
         } /*else {
             /*  add adapted img to server cache /
-            db_insert_img(NULL,adaptedImg);
+            dbInsertImg(NULL,adaptedImg);
         }*/
     } else {
         /*  update last modified date at img in cache   */

@@ -11,9 +11,9 @@ void *log_date(struct logline *log);
 
 void *log_requestline(struct logline *log, struct req *request);
 
-void *log_status(char status[3], char result[16], struct logline *log);
+void *log_status(char *result, struct logline *log);
 
-void *log_size(struct logline *log, struct conv_img *image);
+void *log_size(struct logline *log, size_t length);
 
 void *logonfile(struct logline *log);
 

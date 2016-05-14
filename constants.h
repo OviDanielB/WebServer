@@ -13,6 +13,12 @@
 #include <wchar.h>
 #include <netinet/in.h>
 
+/*  TODO alternative mode number of rows in cache table   */
+int CACHENUM;
+/*  IP address of server    */
+char *SERVER_IP;
+/*  Port number of server   */
+in_port_t SERVER_PORT;
 /* number of images loaded in the server database   */
 int IMAGESNUM;
 /*  path of images' directory    */
@@ -89,14 +95,13 @@ typedef struct req {
 };
 
 /* Log file line struct */
-typedef struct logline {
-
-    char ip_host[15]; // IP address of the client
-    char date[30]; // current date and time
-    char reqline[300]; // HTTP request line
-    char status[20]; // HTTP response status
-    //TODO: size[??]
-    char size[]; // image size
+typedef struct logline
+{
+    char ip_host[16];   // IP address of the client
+    char date[30];      // current date and time
+    char reqline[300];  // HTTP request line
+    char status[50];    // HTTP response status
+    size_t size;        // number of bytes sent
 };
 
 #endif //WEBSERVER_CONSTANTS_H

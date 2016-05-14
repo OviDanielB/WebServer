@@ -47,7 +47,7 @@ struct req *parseRequest(int sockfd)
             //read request method GET or HEAD of file requested
 
             printf("reading request line...\n");
-            n+=1;
+            n += 1;
 
             char *name;
             char method[5];
@@ -58,25 +58,30 @@ struct req *parseRequest(int sockfd)
             memset(type,'\0',strlen(type));
             int i=0;
             name = &line[0];
+            sscanf(" %c", name);
             while (*name!=' ') {
                 method[i] = *name;
                 name++;
+                sscanf(" %c", name);
                 i++;
             }
             sprintf(request->method,method);
             printf("method: %s\n",request->method);
             //read resource name from URI in the request-line
             i=0;
-            //name++;
-            if ((name=strstr(line,"Images/"))==NULL) {
+            name = strchr(line,'/');
+            name++;
+            sscanf(" %c", name);
+            /*if ((name=strstr(line,"Images/"))==NULL) {
                 name = strchr(line,'/');
                 name++;
             } else {
                 name+=7;
-            }
+            }*/
             while (*name != '.') {
                 resource[i] = *name;
                 name++;
+                sscanf(" %c", name);
                 i++;
             }
             sprintf(request->resource,resource);
@@ -88,10 +93,12 @@ struct req *parseRequest(int sockfd)
 
             // read resource file read from uri
             name++;
+            sscanf(" %c", name);
             i=0;
             while (*name!=' ') {
                 type[i] = *name;
                 name++;
+                sscanf(" %c", name);
                 i++;
             }
             sprintf(request->type,type);
@@ -121,20 +128,23 @@ struct req *parseRequest(int sockfd)
              * defined in this line;
              * if not, server response will be adapted to client device described by user-agent line    */
             char *t;
-            if ((t=strstr(line,"image/jpeg"))==NULL || (t=strstr(line,"image/jpg"))==NULL) {
+            if ((t = strstr(line,"image/jpeg")) == NULL || (t = strstr(line,"image/jpg")) == NULL) {
                 request->quality = -1;
             } else {
                 /*  read quality of JPEG resource's format from Accept line    */
                 float factor;
                 int j = 0;
                 char quality[4];
-                while (*t!='q') {
+                sscanf(" %c", t);
+                while (*t != 'q') {
                     t++;
+                    sscanf(" %c", t);
                 }
                 t += 2;
                 while (j < 3) {
                     quality[j] = *t;
                     t++;
+                    sscanf(" %c", t);
                     j++;
                 }
                 sscanf(quality, "%f", &factor);
@@ -145,7 +155,7 @@ struct req *parseRequest(int sockfd)
         }
 
         /* end while cycle when "\n\n" read as index of request's end   */
-        if (strstr(line,"\n\n")!=NULL) {
+        if (strstr(line,"\n\n") != NULL) {
 
             printf("end request...\n");
 

@@ -30,6 +30,8 @@ static int jpg(char *ext)
  * from the resource name, where are indicated the adapted values or the original ones.  */
 unsigned long getHashCode(unsigned char *name);
 
+char *getServerIp();
+
 /*  Calculation of image's dimensions, maintaining the aspect ratio  */
 size_t *proportionalSize(size_t original_w, size_t original_h, size_t adapted_w, size_t adapted_h);
 

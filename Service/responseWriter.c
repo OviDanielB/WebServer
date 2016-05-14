@@ -7,51 +7,8 @@
  */
 
 #include "responseWriter.h"
-#include "../helper/io_func.h"
 
-char result[50];
-
-/*  This function opens the image file if it was previously adapted and saved in cache;
- *  if that exists, it returns the file descriptor, else 0.
- *
- * @param img: adapted image
- */
-FILE *openCachedImage(struct conv_img *image)
-{
-    char path[MAXLINE];
-    FILE *cachedImg;
-    sprintf(path,"%s%lu.%s", CACHE_PATH, image->name_code, image->type);
-    if ((cachedImg = fopen(path, "rb"))==NULL) {
-        return NULL;
-    } else {
-        sprintf(result, (char *)HTTP_OK);
-        return cachedImg;
-    }
-}
-
-/* Opening original image file and if that exists, it returns the file descriptor.
- *
- * @param img: original image
- */
-FILE *openImage(struct conv_img *image)
-{
-    char path[MAXLINE];
-    FILE *imgfd;
-    // check if adapted image just manipulated before
-    if ((imgfd = openCachedImage(image)) != NULL) {
-        return imgfd;
-    }
-    sprintf(path, "%s%s.%s", PATH, image->original_name, image->type);
-
-    if ((imgfd = fopen(path, "rb")) == NULL) {
-        perror("error in fopen\n");
-        return NULL;
-    } else {
-        return imgfd;
-    }
-}
-
-char *composeHomePage(struct img **images)
+char *composeHomePage(struct img **images, struct conv_img *info)
 {
     char *home;
     if ((home = (char *) malloc(sizeof(char)*IMAGESNUM*MAXLINE))==NULL) {
@@ -67,10 +24,10 @@ char *composeHomePage(struct img **images)
     int i;
     for (i = 0; i < IMAGESNUM; i++) {
         char div[MAXLINE];
-        sprintf(div, "<div><a href = \"http://127.0.0.1:5193/%s.%s\">"
+        sprintf(div, "<div><a href = \"http://%s:%ld/%s.%s\">"
                 "%d: %s"
                 //"<img src = \"/Images/mare.jpg\" alt = \"mare\" style=\"width:80px;height:80px;border:1;\">"
-                " </a></div><br>", images[i]->name, images[i]->type, i+1, images[i]->name);
+                " </a></div><br>", info->last_modified, info->width, images[i]->name, images[i]->type, i+1, images[i]->name);
         strcat(home,div);
     }
     strcat(home,
@@ -112,10 +69,11 @@ char *composeHeader(char *result, struct conv_img *image)
         if (sprintf(header,
                             "%s\n"
                             "Date: %s\n"
+                            "Connection: keep-alive\n"
                             "Server: WebServer/1.0.0\n"
+                            //"Accept-Ranges: bytes\n"
                             "Content-Type: image/%s\n"
-                            "Content-Length: %ld\n"
-                            "Connection: keep-alive\n\n",
+                            "Content-Length: %ld\n\n",
                             HTTP_OK, date, image->type, image->length+1) < 0) {
             perror("error in sprintf\n");
             return "";
@@ -180,7 +138,7 @@ void writeResponse(int connfd, char *result, char *method, struct conv_img *imag
     char buff[MAXLINE];
     char *header;
 
-    //for (;;) {
+    for (;;) {
         if (readline(connfd, buff, (int) MAXLINE) == 0) {
             printf("Client quit connection\n");
             return;
@@ -192,7 +150,7 @@ void writeResponse(int connfd, char *result, char *method, struct conv_img *imag
         /*  requested home page of server content   */
         if (strcmp(result, INDEX) == 0) {
 
-            char *home = composeHomePage(images);
+            char *home = composeHomePage(images, image);
 
             image->height = (size_t) IMAGESNUM;
             image->length = strlen(home);
@@ -202,8 +160,6 @@ void writeResponse(int connfd, char *result, char *method, struct conv_img *imag
             header = composeHeader(result, image);
             write(connfd, header, strlen(header));
 
-            //n = write(connfd, home, strlen(home));
-            //printf("Bytes sent %d \n", (int) n);
             while ((n = write(connfd, home, strlen(home))) > 0) {
                 printf("Bytes sent %d \n", (int) n);
             }
@@ -212,17 +168,31 @@ void writeResponse(int connfd, char *result, char *method, struct conv_img *imag
 
             FILE *imgfd;
             char path[MAXLINE];
+            /*if (strcmp(result, FAVICON) == 0) {
+                sprintf(path, "%s%s.ico", HOME, FAVICON);
+            } else {
+                sprintf(path, "%s%lu.%s", CACHE_PATH, image->name_code, image->type);
+            }*/
+
             sprintf(path, "%s%lu.%s", CACHE_PATH, image->name_code, image->type);
+
+            printf("PATH FILE TO SEND: %s",path);
 
             if ((imgfd = fopen(path, "rb")) == NULL) {
                 perror("error in fopen\n");
                 strcpy(result, HTTP_BAD_REQUEST);
             }
+            fseek(imgfd,0,0);
 
             size_t n;
             header = composeHeader(result, image);
 
-            write(connfd, header, strlen(header));
+            printf("header to send:\n %s\n",header);
+            ssize_t nn = write(connfd, header, strlen(header));
+            printf("sent %ld bytes of header(%ld)\n",nn,strlen(header));
+            while((nn = write(connfd, header, strlen(header)-nn))>0) {
+            }
+            printf("header sent");
 
             if (strcmp(result, HTTP_OK) == 0) {
                 /* response to GET method is header + image;
@@ -238,17 +208,19 @@ void writeResponse(int connfd, char *result, char *method, struct conv_img *imag
                             write(connfd, buff, n);
                         }
 
-                        //if (n < MAXLINE) {
-                        if (feof(imgfd)) {
-                            printf("End of file \n ");
+                        if (n < MAXLINE) {
+                            if (feof(imgfd)) {
+                                printf("End of file \n ");
+                                fclose(imgfd);
+                                break;
+                            }
+                            if (ferror(imgfd)) {
+                                printf("Error Reading \n");
+                                fclose(imgfd);
+                                break;
+                            }
                             break;
                         }
-                        if (ferror(imgfd)) {
-                            printf("Error Reading \n");
-                            break;
-                        }
-                            //break;
-                        //}
                     }
                 }
             } else if (strcmp(result, HTTP_NOT_FOUND) == 0) {
@@ -257,5 +229,5 @@ void writeResponse(int connfd, char *result, char *method, struct conv_img *imag
                 write(connfd, HTML_400, strlen(HTML_400));
             }
         }
-    //}
+    }
 }

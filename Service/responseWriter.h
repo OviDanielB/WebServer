@@ -17,9 +17,11 @@
 
 #include "../constants.h"
 #include "../helper/calendar.h"
+#include "../helper/io_func.h"
+#include "../helper/helper.h"
 
 
-char *composeHomePage(struct img **images);
+char *composeHomePage(struct img **images, struct conv_img *info);
 
 /*  Compose header of HTTP message to send to the client, based on result of request's elaboration */
 char *composeHeader(char *result, struct conv_img *image);

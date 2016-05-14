@@ -6,8 +6,6 @@
 
 #include "constants.h"
 
-/*  home server's path  */
-const char *HOME =               "/home/laura_trive/Scrivania/ProgettoIIW/ServerFiles/";
 /*  path of images' directory    */
 const char *PATH =               "/home/laura_trive/Scrivania/ProgettoIIW/ServerFiles/Images/";
 /*  path of cached images' directory    */
@@ -50,5 +48,3 @@ const char *USER_AGENT =        "User-Agent:";
 const char *ACCEPT =            "Accept:";
 /*  home page of server images to show to the client    */
 const char *INDEX =             "index";
-/*  HTTP request for favicon.ico    */
-const char *FAVICON =           "favicon";

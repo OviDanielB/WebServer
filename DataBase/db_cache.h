@@ -16,6 +16,9 @@
 #include "db_helper.h"
 
 
+/* Update server cache checking for saturation of memory dedicated or after timeout
+ * of cached image lifetime and update CACHE table in Database    */
+void updateCache();
 /*  Check if server cache is full (CONV_IMG has reached max number of rows) */
 int isFull();
 /*  Check if searched manipulated image has been just inserted in server cache. */
