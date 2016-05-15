@@ -39,16 +39,29 @@ char *composeHomePage(struct img **images, struct conv_img *info)
 /*  Compose header response HTTP message to send to the client */
 char *composeHeader(char *result, struct conv_img *image)
 {
-    //char *reply;
     char *header;
     if ((header = (char *) malloc(MAXLINE))==NULL) {
         perror("error in malloc\n");
         exit(EXIT_FAILURE);
     }
-    //long file_length = 0;
     char *date = getTodayToHTTPLine();
 
-    if (strcmp(result,INDEX)==0) {
+    if (strcmp(result,HTTP_0) == 0) {
+
+        if (sprintf(header,
+                    "%s\n"
+                            "Date: %s\n"
+                            "Server: WebServer/1.0.0\n"
+                            "Content-Type: text/html; charset=UTF-8 \n"
+                            "Content-Length: %ld\n"
+                            "Connection: keep-alive\n\n",
+                    HTTP_OK, date, strlen(HTML_NOT_SUPPORTED)+1) < 0) {
+            perror("error in sprintf\n");
+            return "";
+        }
+    }
+
+    if (strcmp(result,INDEX) == 0) {
 
         if (sprintf(header,
                     "%s\n"
@@ -61,7 +74,6 @@ char *composeHeader(char *result, struct conv_img *image)
             perror("error in sprintf\n");
             return "";
         }
-
     }
 
     if (strcmp(result,HTTP_OK)==0) {
@@ -71,15 +83,12 @@ char *composeHeader(char *result, struct conv_img *image)
                             "Date: %s\n"
                             "Connection: keep-alive\n"
                             "Server: WebServer/1.0.0\n"
-                            //"Accept-Ranges: bytes\n"
                             "Content-Type: image/%s\n"
                             "Content-Length: %ld\n\n",
                             HTTP_OK, date, image->type, image->length+1) < 0) {
             perror("error in sprintf\n");
             return "";
         }
-
-        //file_length = image->length;
     }
 
     if (strcmp(result,HTTP_NOT_FOUND)==0) {
@@ -111,18 +120,6 @@ char *composeHeader(char *result, struct conv_img *image)
             return "";
         }
     }
-
-    /*if ((reply = (char *) malloc(strlen(header)+file_length+1))==NULL) {
-        perror("error in malloc\n");
-        return "";
-    }*/
-
-    /*if (sprintf(reply,"%s",header)<0){
-        perror("error in sprintf\n");
-        return "";
-    }*/
-
-    //return reply;
     return header;
 }
 
@@ -147,8 +144,13 @@ void writeResponse(int connfd, char *result, char *method, struct conv_img *imag
         pid_t p = getpid();
         printf("%d sending response...\n", p);
 
-        /*  requested home page of server content   */
-        if (strcmp(result, INDEX) == 0) {
+        /*  request HTTP 1.0 not supported   */
+        if (strcmp(result, HTTP_0) == 0) {
+
+            header = composeHeader(result, image);
+            write(connfd, header, strlen(header));
+
+        } else if (strcmp(result, INDEX) == 0) { /*  requested home page of server content   */
 
             char *home = composeHomePage(images, image);
 

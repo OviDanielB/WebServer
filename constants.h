@@ -53,6 +53,8 @@ const char *HTTP_NOT_FOUND;
 const char *HTML_404;
 /*  HTML page to show bad-request error    */
 const char *HTML_400;
+/*  HTML page to show not supported protocol HTTP 1.0 error    */
+const char *HTML_NOT_SUPPORTED;
 /*  version HTTP protocol 1.1   */
 const char *HTTP_1;
 /*  version HTTP protocol 1.0   */

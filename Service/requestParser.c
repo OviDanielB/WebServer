@@ -35,12 +35,12 @@ struct req *parseRequest(int sockfd)
             return NULL;
         }
 
-        printf("%s\n",line);
+        //printf("%s\n",line);
 
         if (strstr(line,HTTP_0)!=NULL) {
             //not supported protocol
-            printf("Not supported protocol\n");
-            return NULL;
+            sprintf(request->resource, HTTP_0);
+            return request;
         }
 
         if (strstr(line,HTTP_1)!=NULL) {
@@ -49,63 +49,29 @@ struct req *parseRequest(int sockfd)
             printf("reading request line...\n");
             n += 1;
 
-            char *name;
-            char method[5];
-            memset(method,'\0',strlen(method));
-            char resource[256];
-            memset(resource,'\0',strlen(resource));
-            char type[5];
-            memset(type,'\0',strlen(type));
-            int i=0;
-            name = &line[0];
-            sscanf(" %c", name);
-            while (*name!=' ') {
-                method[i] = *name;
-                name++;
-                sscanf(" %c", name);
-                i++;
-            }
-            sprintf(request->method,method);
-            printf("method: %s\n",request->method);
-            //read resource name from URI in the request-line
-            i=0;
-            name = strchr(line,'/');
-            name++;
-            sscanf(" %c", name);
-            /*if ((name=strstr(line,"Images/"))==NULL) {
-                name = strchr(line,'/');
-                name++;
-            } else {
-                name+=7;
-            }*/
-            while (*name != '.') {
-                resource[i] = *name;
-                name++;
-                sscanf(" %c", name);
-                i++;
-            }
-            sprintf(request->resource,resource);
-            printf("name of resource: %s\n",resource);
+            char *method;
+            char *resource;
+            char *type;
+
+            method = strtok(line, " ");
+            sprintf(request->method, method);
+            printf("METHOD %s ",request->method);
+
+            resource = strtok(NULL, ".");
+            resource++;
+            sprintf(request->resource, resource);
+            printf("NAME %s ",request->resource);
 
             if (strcmp(resource,INDEX)==0) {
                 return request;
             }
 
-            // read resource file read from uri
-            name++;
-            sscanf(" %c", name);
-            i=0;
-            while (*name!=' ') {
-                type[i] = *name;
-                name++;
-                sscanf(" %c", name);
-                i++;
-            }
-            sprintf(request->type,type);
-            printf("type of resource: %s\n",type);
+            type = strtok(NULL, " ");
+            sprintf(request->type, type);
+            printf("TYPE %s\n",request->type);
+
             continue;
         }
-
         if (strncmp(line,USER_AGENT,strlen(USER_AGENT))==0) {
 
             printf("reading user-agent line...\n");

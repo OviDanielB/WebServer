@@ -103,10 +103,15 @@ void serveRequest(int sockfd, struct img **images, char *serverIp, in_port_t ser
             //writeResponse(sockfd, (char *) FAVICON, NULL, NULL, NULL);
         }
 
+        /*  error message for HTTP 1.0 request  */
+        if (strcmp(request->resource, HTTP_0) == 0) {
+            writeResponse(sockfd, (char *) HTML_NOT_SUPPORTED, NULL, NULL, NULL);
+        }
+
         /*  first client request to get view of server content  */
         if (strcmp(request->resource,INDEX) ==0 ) {
             /*  using field of struct conv_img to pass server info (IP address and port number) */
-            sscanf(getServerIp(),"%s",adaptedImage->last_modified);
+            sprintf(adaptedImage->last_modified, getServerIp());
             adaptedImage->width = (size_t) serverPort;
 
             writeResponse(sockfd, (char *)INDEX, NULL, adaptedImage, images);
