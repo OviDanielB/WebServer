@@ -58,12 +58,10 @@ void *logonfile(void *logLine)
         exit(EXIT_FAILURE);
     }
 
-    sprintf(line, "%s %s %s %s %ld\n", log->ip_host, log->date, log->reqline, log->status, log->size);
+    sprintf(line, "%s - %s  - %s - %s - %ld\n", log->ip_host, log->date, log->reqline, log->status, log->size);
 
-    //TODO: dove definire log_file?
-
-    /*open server log*/
-    log_file = fopen(LOG_PATH, "w");
+    /*  open server logging file in append mode   */
+    log_file = fopen(LOG_PATH, "a");
     if (log_file == NULL) {
         perror("error in opening file.");
         exit(EXIT_FAILURE);
