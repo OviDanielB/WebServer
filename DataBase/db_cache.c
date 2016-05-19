@@ -55,7 +55,7 @@ int isInCache(struct conv_img *im)
     }
 
     printf("NOT IN CACHE\n");
-    return 0; // false
+    return 0; // FALSE
 }
 
 
@@ -68,7 +68,7 @@ int isFull()
     statement = (char *) malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
         perror("Malloc error. \n");
-        return 0; // false
+        return 0; // FALSE
     }
 
     sprintf(statement,"SELECT COUNT('Name') FROM 'CONV_IMG';");
@@ -79,7 +79,7 @@ int isFull()
     printf("rows dopo op:%d\n",rows);
 
     if (rows <= MAX_CACHE_ROWS_NUM) {
-        return 0; // false
+        return 0; // FALSE
     }
 
     return 1;   // true

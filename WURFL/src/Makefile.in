@@ -133,7 +133,7 @@ test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(test_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
-am__v_P_0 = false
+am__v_P_0 = FALSE
 am__v_P_1 = :
 AM_V_GEN = $(am__v_GEN_@AM_V@)
 am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
@@ -169,7 +169,7 @@ SOURCES = $(libwurfl_la_SOURCES) $(test_SOURCES)
 DIST_SOURCES = $(libwurfl_la_SOURCES) $(test_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
-    n|no|NO) false;; \
+    n|no|NO) FALSE;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
 HEADERS = $(nobase_include_HEADERS)
@@ -871,7 +871,7 @@ $(TEST_SUITE_LOG): $(TEST_LOGS)
 	if test `expr $$fail + $$xpass + $$error` -eq 0; then \
 	  success=true; \
 	else \
-	  success=false; \
+	  success=FALSE; \
 	fi; \
 	br='==================='; br=$$br$$br$$br$$br; \
 	result_count () \

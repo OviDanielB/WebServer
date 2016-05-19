@@ -339,7 +339,7 @@ AC_CACHE_CHECK([dependency style of $depcc],
   if test "$am_compiler_list" = ""; then
      am_compiler_list=`sed -n ['s/^#*\([a-zA-Z0-9]*\))$/\1/p'] < ./depcomp`
   fi
-  am__universal=false
+  am__universal=FALSE
   m4_case([$1], [CC],
     [case " $depcc " in #(
      *\ -arch\ *\ -arch\ *) am__universal=true ;;
@@ -375,7 +375,7 @@ AC_CACHE_CHECK([dependency style of $depcc],
     case $depmode in
     gcc)
       # This depmode causes a compiler race in universal mode.
-      test "$am__universal" = false || continue
+      test "$am__universal" = FALSE || continue
       ;;
     nosideeffect)
       # After this tag, mechanisms are not by side-effect, so they'll
@@ -964,7 +964,7 @@ am_make=${MAKE-make}
 AC_CACHE_CHECK([whether $am_make supports nested variables],
    [am_cv_make_support_nested_variables],
    [if AS_ECHO([['TRUE=$(BAR$(V))
-BAR0=false
+BAR0=FALSE
 BAR1=true
 V=1
 am__doit:
@@ -1103,9 +1103,9 @@ do
     am__untar='cpio -i -H $1 -d'
     ;;
   none)
-    am__tar=false
-    am__tar_=false
-    am__untar=false
+    am__tar=FALSE
+    am__tar_=FALSE
+    am__untar=FALSE
     ;;
   esac
 

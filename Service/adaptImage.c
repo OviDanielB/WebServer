@@ -6,6 +6,7 @@
 
 #include <wand/MagickWand.h>
 #include "adaptImage.h"
+#include "../php/wurfl.h"
 
 /*  Manipulation of original image, based on characteristics specified in input.
  *
@@ -71,6 +72,16 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
         }
     }
 
+    /*  reducing number of original image's number of colors if it's necessary    */
+    if (adaptImg->colors != 0) {
+        status = MagickQuantizeImage(magickWand, adaptImg->colors, RGBColorspace, 1, MagickTrue, MagickFalse);
+        if (status == MagickFalse) {
+            perror("error in reducing image's colors\n");
+            return 400; // ERROR
+        }
+    }
+
+
     /* using factor of quality just if specified into the request for JPEG images   */
     if (adaptImg->quality != 0) {
         /* For the JPEG and MPEG image formats, quality is
@@ -133,15 +144,37 @@ struct conv_img *adaptImageTo(struct req *request)
     }
 
     sprintf(adaptedImg->original_name, req_image->name);
-    sprintf(adaptedImg->type, req_image->type);
-    // TODO da ottenere con WURFL usando useragent
-    adaptedImg->width = 200;
-    adaptedImg->height = 200;
+
+    struct device *dev = getDeviceByUserAgent(request->userAgent);
+
+    // TODO valore di default se info non messa nella struttura, al momento usato 0
+    if (dev->jpg && jpg(req_image->type) ||
+            dev->png && png(req_image->type) ||
+            dev->gif && gif(req_image->type)) {
+        sprintf(adaptedImg->type, req_image->type);
+    }
+
+    if (dev->width != 0) {
+        adaptedImg->width = dev->width;
+    } else {
+        adaptedImg->width = req_image->width;
+    }
+    if (dev->height != 0) {
+        adaptedImg->height = dev->height;
+    } else {
+        adaptedImg->height = req_image->height;
+    }
+    if (dev->colors != 0) {
+        adaptedImg->colors = (size_t) dev->colors;
+    } else {
+        adaptedImg->colors = 0;
+    }
     adaptedImg->length = adaptedImg->width*adaptedImg->height;
 
-    // string <nomeoriginale><width><height><q100><type> to hash
-    sprintf((char *)nameToHash, "%s%ld%ld%ld%s",
-            req_image->name, adaptedImg->width,adaptedImg->height,adaptedImg->quality,adaptedImg->type);
+    // string <nomeoriginale><width><height><colors><q100><type> to hash
+    sprintf((char *)nameToHash, "%s%ld%ld%ld%ld%s",
+            adaptedImg->original_name, adaptedImg->width, adaptedImg->height,
+            adaptedImg->colors, adaptedImg->quality,adaptedImg->type);
 
     adaptedImg->name_code = getHashCode(nameToHash);
 

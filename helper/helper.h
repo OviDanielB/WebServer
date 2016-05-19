@@ -16,14 +16,31 @@
 
 #include "../constants.h"
 
+/*  Check gif type    */
+static int gif(char *ext)
+{
+    if (strcmp(ext,"gif") == 0 || strcmp(ext,"GIF") == 0) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/*  Check png type    */
+static int png(char *ext)
+{
+    if ( strcmp(ext,"png") == 0 || strcmp(ext,"PNG") == 0) {
+        return TRUE;
+    }
+    return FALSE;
+}
 
 /*  Check jpg type    */
 static int jpg(char *ext)
 {
-    if ((strcmp(ext,"jpg")==0) || (strcmp(ext,"JPG")==0) || (strcmp(ext,"JPEG")==0) || (strcmp(ext,"jpeg")==0)) {
-        return 1; // true
+    if (strcmp(ext,"jpg") == 0 || strcmp(ext,"JPG") == 0 || strcmp(ext,"JPEG") == 0 || strcmp(ext,"jpeg") == 0) {
+        return TRUE;
     }
-    return 0; // false
+    return FALSE;
 }
 
 /* Hash function to calculate an (almost) unique identifier for every manipulated image

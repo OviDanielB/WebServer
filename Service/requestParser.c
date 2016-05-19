@@ -35,7 +35,7 @@ struct req *parseRequest(int sockfd)
             return NULL;
         }
 
-        //printf("%s\n",line);
+        printf("%s\n",line);
 
         if (strstr(line,HTTP_0)!=NULL) {
             //not supported protocol
@@ -94,7 +94,9 @@ struct req *parseRequest(int sockfd)
              * defined in this line;
              * if not, server response will be adapted to client device described by user-agent line    */
             char *t;
-            if ((t = strstr(line,"image/jpeg")) == NULL || (t = strstr(line,"image/jpg")) == NULL) {
+            if ((t = strstr(line,"image/jpeg")) == NULL
+                && (t = strstr(line,"image/jpg")) == NULL
+                && (t = strstr(line,"image/JPEG")) == NULL) {
                 request->quality = -1;
             } else {
                 /*  read quality of JPEG resource's format from Accept line    */

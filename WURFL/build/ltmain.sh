@@ -428,10 +428,10 @@ sed_double_backslash="\
   s/\n//g"
 
 # Standard options:
-opt_dry_run=false
-opt_help=false
-opt_quiet=false
-opt_verbose=false
+opt_dry_run=FALSE
+opt_help=FALSE
+opt_quiet=FALSE
+opt_verbose=FALSE
 opt_warning=:
 
 # func_echo arg...
@@ -651,12 +651,12 @@ func_show_eval ()
     my_cmd="$1"
     my_fail_exp="${2-:}"
 
-    ${opt_silent-false} || {
+    ${opt_silent-FALSE} || {
       func_quote_for_expand "$my_cmd"
       eval "func_echo $func_quote_for_expand_result"
     }
 
-    if ${opt_dry_run-false}; then :; else
+    if ${opt_dry_run-FALSE}; then :; else
       eval "$my_cmd"
       my_status=$?
       if test "$my_status" -eq 0; then :; else
@@ -675,12 +675,12 @@ func_show_eval_locale ()
     my_cmd="$1"
     my_fail_exp="${2-:}"
 
-    ${opt_silent-false} || {
+    ${opt_silent-FALSE} || {
       func_quote_for_expand "$my_cmd"
       eval "func_echo $func_quote_for_expand_result"
     }
 
-    if ${opt_dry_run-false}; then :; else
+    if ${opt_dry_run-FALSE}; then :; else
       eval "$lt_user_locale
 	    $my_cmd"
       my_status=$?
@@ -1040,18 +1040,18 @@ esac
 
 # Option defaults:
 opt_debug=:
-opt_dry_run=false
-opt_config=false
-opt_preserve_dup_deps=false
-opt_features=false
-opt_finish=false
-opt_help=false
-opt_help_all=false
+opt_dry_run=FALSE
+opt_config=FALSE
+opt_preserve_dup_deps=FALSE
+opt_features=FALSE
+opt_finish=FALSE
+opt_help=FALSE
+opt_help_all=FALSE
 opt_silent=:
 opt_warning=:
 opt_verbose=:
-opt_silent=false
-opt_verbose=false
+opt_silent=FALSE
+opt_verbose=FALSE
 
 
 # Parse options once, thoroughly.  This comes as soon as possible in the
@@ -1114,26 +1114,26 @@ esac
 			shift
 			;;
       --no-silent|--no-quiet)
-			opt_silent=false
+			opt_silent=FALSE
 func_append preserve_args " $opt"
 			;;
       --no-warning|--no-warn)
-			opt_warning=false
+			opt_warning=FALSE
 func_append preserve_args " $opt"
 			;;
       --no-verbose)
-			opt_verbose=false
+			opt_verbose=FALSE
 func_append preserve_args " $opt"
 			;;
       --silent|--quiet)
 			opt_silent=:
 func_append preserve_args " $opt"
-        opt_verbose=false
+        opt_verbose=FALSE
 			;;
       --verbose|-v)
 			opt_verbose=:
 func_append preserve_args " $opt"
-opt_silent=false
+opt_silent=FALSE
 			;;
       --tag)
 			test $# = 0 && func_missing_arg $opt && break
@@ -2773,7 +2773,7 @@ func_mode_install ()
     # install_prog (especially on Windows NT).
     if test "$nonopt" = "$SHELL" || test "$nonopt" = /bin/sh ||
        # Allow the use of GNU shtool's install command.
-       case $nonopt in *shtool*) :;; *) false;; esac; then
+       case $nonopt in *shtool*) :;; *) FALSE;; esac; then
       # Aesthetically quote it.
       func_quote_for_eval "$nonopt"
       install_prog="$func_quote_for_eval_result "
@@ -2791,7 +2791,7 @@ func_mode_install ()
     install_shared_prog=$install_prog
     case " $install_prog " in
       *[\\\ /]cp\ *) install_cp=: ;;
-      *) install_cp=false ;;
+      *) install_cp=FALSE ;;
     esac
 
     # We need to accept at least all the BSD install flags.
@@ -2833,7 +2833,7 @@ func_mode_install ()
 	if test -n "$prev"; then
 	  if test "x$prev" = x-m && test -n "$install_override_mode"; then
 	    arg2=$install_override_mode
-	    no_mode=false
+	    no_mode=FALSE
 	  fi
 	  prev=
 	else
@@ -5085,7 +5085,7 @@ func_win32_import_lib_p ()
     $opt_debug
     case `eval $file_magic_cmd \"\$1\" 2>/dev/null | $SED -e 10q` in
     *import*) : ;;
-    *) false ;;
+    *) FALSE ;;
     esac
 }
 
@@ -8180,7 +8180,7 @@ EOF
 		      || test "$max_cmd_len" -le -1; }
 	      then
 		func_show_eval "$cmd" 'exit $?'
-		skipped_export=false
+		skipped_export=FALSE
 	      elif test -n "$nm_file_list_spec"; then
 		func_basename "$output"
 		output_la=$func_basename_result
@@ -8199,13 +8199,13 @@ EOF
 		func_show_eval "$cmd" 'exit $?'
 		output=$save_output
 		libobjs=$save_libobjs
-		skipped_export=false
+		skipped_export=FALSE
 	      else
 		# The command line is too long to execute in one step.
 		func_verbose "using reloadable object file for export list..."
 		skipped_export=:
 		# Break out early, otherwise skipped_export may be
-		# set to false by a later but shorter cmd.
+		# set to FALSE by a later but shorter cmd.
 		break
 	      fi
 	    done
@@ -8420,7 +8420,7 @@ EOF
 	      output=
 	    fi
 
-	    if ${skipped_export-false}; then
+	    if ${skipped_export-FALSE}; then
 	      func_verbose "generating symbol list for \`$libname.la'"
 	      export_symbols="$output_objdir/$libname.exp"
 	      $opt_dry_run || $RM $export_symbols
@@ -8459,13 +8459,13 @@ EOF
 	    done
 	    IFS="$save_ifs"
 
-	    if test -n "$export_symbols_regex" && ${skipped_export-false}; then
+	    if test -n "$export_symbols_regex" && ${skipped_export-FALSE}; then
 	      func_show_eval '$EGREP -e "$export_symbols_regex" "$export_symbols" > "${export_symbols}T"'
 	      func_show_eval '$MV "${export_symbols}T" "$export_symbols"'
 	    fi
 	  fi
 
-          if ${skipped_export-false}; then
+          if ${skipped_export-FALSE}; then
 	    if test -n "$export_symbols" && test -n "$include_expsyms"; then
 	      tmp_export_symbols="$export_symbols"
 	      test -n "$orig_export_symbols" && tmp_export_symbols="$orig_export_symbols"

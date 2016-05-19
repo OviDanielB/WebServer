@@ -613,7 +613,7 @@ _LT_GENERATED_FILE_INIT(["$CONFIG_LT"],
 [# Run this file to recreate a libtool stub with the current configuration.])
 
 cat >>"$CONFIG_LT" <<\_LTEOF
-lt_cl_silent=false
+lt_cl_silent=FALSE
 exec AS_MESSAGE_LOG_FD>>config.log
 {
   echo
@@ -688,7 +688,7 @@ lt_cl_success=:
 test "$silent" = yes &&
   lt_config_lt_args="$lt_config_lt_args --quiet"
 exec AS_MESSAGE_LOG_FD>/dev/null
-$SHELL "$CONFIG_LT" $lt_config_lt_args || lt_cl_success=false
+$SHELL "$CONFIG_LT" $lt_config_lt_args || lt_cl_success=FALSE
 exec AS_MESSAGE_LOG_FD>>config.log
 $lt_cl_success || AS_EXIT(1)
 ])# LT_OUTPUT
@@ -844,7 +844,7 @@ if test -z "$GOC"; then
   fi
 fi
 if test -z "$GOC"; then
-  AC_CHECK_PROG(GOC, gccgo, gccgo, false)
+  AC_CHECK_PROG(GOC, gccgo, gccgo, FALSE)
 fi
 ])#m4_defun
 ])#m4_ifndef
@@ -1415,7 +1415,7 @@ need_locks="$enable_libtool_lock"
 # _LT_PROG_AR
 # -----------
 m4_defun([_LT_PROG_AR],
-[AC_CHECK_TOOLS(AR, [ar], false)
+[AC_CHECK_TOOLS(AR, [ar], FALSE)
 : ${AR=ar}
 : ${AR_FLAGS=cru}
 _LT_DECL([], [AR], [1], [The archiver])
@@ -3142,7 +3142,7 @@ reload_cmds='$LD$reload_flag -o $output$reload_objs'
 case $host_os in
   cygwin* | mingw* | pw32* | cegcc*)
     if test "$GCC" != yes; then
-      reload_cmds=false
+      reload_cmds=FALSE
     fi
     ;;
   darwin*)
@@ -3415,7 +3415,7 @@ else
       tmp_nm="$ac_dir/$lt_tmp_nm"
       if test -f "$tmp_nm" || test -f "$tmp_nm$ac_exeext" ; then
 	# Check to see if the nm accepts a BSD-compat flag.
-	# Adding the `sed 1q' prevents false positives on HP-UX, which says:
+	# Adding the `sed 1q' prevents FALSE positives on HP-UX, which says:
 	#   nm: unknown option "B" ignored
 	# Tru64's nm complains that /dev/null is an invalid object file
 	case `"$tmp_nm" -B /dev/null 2>&1 | sed '1q'` in
@@ -7673,7 +7673,7 @@ AC_SUBST([GREP])
 # If we don't have a new enough Autoconf to choose the best objdump
 # available, choose the one first in the user's PATH.
 m4_defun([_LT_DECL_OBJDUMP],
-[AC_CHECK_TOOL(OBJDUMP, objdump, false)
+[AC_CHECK_TOOL(OBJDUMP, objdump, FALSE)
 test -z "$OBJDUMP" && OBJDUMP=objdump
 _LT_DECL([], [OBJDUMP], [1], [An object symbol dumper])
 AC_SUBST([OBJDUMP])
@@ -7683,7 +7683,7 @@ AC_SUBST([OBJDUMP])
 # ----------------
 # Ensure DLLTOOL variable is set.
 m4_defun([_LT_DECL_DLLTOOL],
-[AC_CHECK_TOOL(DLLTOOL, dlltool, false)
+[AC_CHECK_TOOL(DLLTOOL, dlltool, FALSE)
 test -z "$DLLTOOL" && DLLTOOL=dlltool
 _LT_DECL([], [DLLTOOL], [1], [DLL creation program])
 AC_SUBST([DLLTOOL])
@@ -7800,7 +7800,7 @@ _LT_CONFIG_LIBTOOL_INIT([lt_shell_append='$lt_shell_append'])
 if ( (MAIL=60; unset MAIL) || exit) >/dev/null 2>&1; then
   lt_unset=unset
 else
-  lt_unset=false
+  lt_unset=FALSE
 fi
 _LT_DECL([], [lt_unset], [0], [whether the shell understands "unset"])dnl
 

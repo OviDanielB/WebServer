@@ -81,6 +81,7 @@ typedef struct conv_img {
     unsigned long    name_code; // result hash function
     size_t           width;
     size_t           height;
+    size_t           colors;
     size_t           quality; // quality factor * 100
     char             type[5];
     size_t           length;
@@ -95,6 +96,24 @@ typedef struct req {
     float   quality;
     char    userAgent[1024];
 };
+
+
+/* boolean definition */
+typedef int bool;
+#define TRUE 1
+#define FALSE 0
+
+//#define NUM_CHILD 4
+
+typedef struct device {
+    char id[100];
+    size_t width;
+    size_t height;
+    long colors;
+    bool jpg;
+    bool png;
+    bool gif;
+} device ;
 
 /* Log file line struct */
 typedef struct logline

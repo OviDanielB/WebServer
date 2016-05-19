@@ -28,6 +28,7 @@
 #include "helper/locking.h"
 #include "Service/responseWriter.h"
 #include "Service/requestParser.h"
+#include "php/wurfl.h"
 
 // define sigfunc to simplify signal sys call
 typedef void sigfunc(int);
@@ -238,6 +239,9 @@ pid_t child_make(int i, int listenfd, int addrlen, char *serverIp, in_port_t ser
 
     // if it's father return pid
     if((pid = fork()) > 0){
+
+        initializeFifo();
+
         return pid;
     }
 
@@ -258,7 +262,7 @@ int main(int argc, char **argv)
 
     time_t ticks;
 
-    pid_t child_make(int, int, int, char *, in_port_t, struct img **);
+    //pid_t child_make(int, int, int, char *, in_port_t, struct img **);
 
     // TODO arguments
     if(argc <= 2){
@@ -320,6 +324,8 @@ int main(int argc, char **argv)
 
         pids[i] = child_make(i, listensd, addrlen, serverIp, serverPort, images);
     }
+
+    initializeFifo(pids);
 
     // when SIGINT arrives (press ctrl-C) the father process and the children terminate
     if(signal(SIGINT,sig_handler) == SIG_ERR){

@@ -127,9 +127,9 @@ LT_OPTION_DEFINE([LT_INIT], [win32-dll],
 
 case $host in
 *-*-cygwin* | *-*-mingw* | *-*-pw32* | *-*-cegcc*)
-  AC_CHECK_TOOL(AS, as, false)
-  AC_CHECK_TOOL(DLLTOOL, dlltool, false)
-  AC_CHECK_TOOL(OBJDUMP, objdump, false)
+  AC_CHECK_TOOL(AS, as, FALSE)
+  AC_CHECK_TOOL(DLLTOOL, dlltool, FALSE)
+  AC_CHECK_TOOL(OBJDUMP, objdump, FALSE)
   ;;
 esac
 

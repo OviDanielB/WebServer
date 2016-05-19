@@ -89,7 +89,7 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
-am__v_P_0 = false
+am__v_P_0 = FALSE
 am__v_P_1 = :
 AM_V_GEN = $(am__v_GEN_@AM_V@)
 am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
@@ -111,7 +111,7 @@ RECURSIVE_TARGETS = all-recursive check-recursive cscopelist-recursive \
 	tags-recursive uninstall-recursive
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
-    n|no|NO) false;; \
+    n|no|NO) FALSE;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
 RECURSIVE_CLEAN_TARGETS = mostlyclean-recursive clean-recursive	\
