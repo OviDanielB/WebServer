@@ -238,9 +238,7 @@ pid_t child_make(int i, int listenfd, int addrlen, char *serverIp, in_port_t ser
     pid_t pid;
 
     // if it's father return pid
-    if((pid = fork()) > 0){
-
-        initializeFifo();
+    if ((pid = fork()) > 0) {
 
         return pid;
     }

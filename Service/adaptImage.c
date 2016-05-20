@@ -140,18 +140,24 @@ struct conv_img *adaptImageTo(struct req *request)
         adaptedImg->quality = 0;
     } else {
         adaptedImg->quality = (size_t) request->quality*100;
-        sprintf(adaptedImg->type,request->type);
+        adaptedImg->name_code = 400; // BAD REQUEST: requested format not supported by device
+        return adaptedImg;
     }
 
     sprintf(adaptedImg->original_name, req_image->name);
 
+    /*int write_fd = openChildOwnFifo_w();
+    int read_fd = openChildOwnFifo_r();*/
+
     struct device *dev = getDeviceByUserAgent(request->userAgent);
 
-    // TODO valore di default se info non messa nella struttura, al momento usato 0
+    /*  check if format is available for devices info found */
     if (dev->jpg && jpg(req_image->type) ||
             dev->png && png(req_image->type) ||
             dev->gif && gif(req_image->type)) {
         sprintf(adaptedImg->type, req_image->type);
+    } else {
+
     }
 
     if (dev->width != 0) {
