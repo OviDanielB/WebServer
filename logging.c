@@ -51,6 +51,11 @@ void *logonfile(void *logLine)
     struct logline *log = (struct logline *) logLine;
     FILE * log_file;
     char *line;
+    pthread_mutex_t lock;
+
+    if(pthread_mutex_init(&lock, NULL)!=0){
+        perror("error in initialize lock");
+    }
 
     line = malloc (sizeof(char)*(strlen(log->reqline)+strlen(log->ip_host)+strlen(log->date)+strlen(log->status)+MAXLINE));
     if (line == NULL) {
@@ -67,10 +72,12 @@ void *logonfile(void *logLine)
         exit(EXIT_FAILURE);
     }
 
+    pthread_mutex_lock(&lock);
     /*write on server log and close it*/
     if (fwrite(line, strlen(line), 1, log_file) == -1) {
         perror("writing log error\n");
         exit(EXIT_FAILURE);
     }
+    pthread_mutex_unlock(&lock);
     fclose(log_file);
 }
