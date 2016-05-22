@@ -164,20 +164,32 @@ void serveRequest(int sockfd, struct img **images, char *serverIp, in_port_t ser
     }
 
     pthread_t log_thread;
-    /*log on file*/
-    int logging_thread;
+    /*int sched, prio;
 
-    /*set low priority for logging thread*/
-    // TODO: change priority by pthread_attr_t
-    /* int log_min_priority;
-    log_min_priority = sched_get_priority_min(sched_getscheduler(log_thread));
-    if (pthread_setschedprio(log_thread, log_min_priority)!=0){
-        perror("error in set priority");
-    }*/
-    logging_thread = pthread_create(&log_thread, NULL, (void *)logonfile, (void *)log);
-    if(logging_thread){
-        perror("error in creating logging thread");
-        exit(EXIT_FAILURE);
+    sched = sched_getscheduler(log_thread);
+
+    if (sched!=0){
+        perror("error in getting scheduler");
+    }
+
+    prio = sched_get_priority_min(sched);
+
+    if(prio!=0){
+        perror("error in getting priority");
+    }
+
+    /* set thread priority to minimal value */
+    /*if (pthread_setschedprio(log_thread, prio)!=0){
+        perror("error in setting priority");
+    }
+
+    /* thread which log on file */
+    if (pthread_create(&log_thread, NULL, (void *)logonfile, (void *)log)){
+        perror("error in creating thread for log");
+    }
+
+    if (pthread_join(thread, NULL)){
+        perror("error in joining thread for log");
     }
 }
 
