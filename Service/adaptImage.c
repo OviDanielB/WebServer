@@ -149,7 +149,22 @@ struct conv_img *adaptImageTo(struct req *request)
     /*int write_fd = openChildOwnFifo_w();
     int read_fd = openChildOwnFifo_r();*/
 
-    struct device *dev = getDeviceByUserAgent(request->userAgent);
+    struct device *dev = malloc(sizeof(struct device));
+    if (dev == NULL) {
+        perror("Malloc error\n");
+        exit(EXIT_FAILURE);
+    }
+
+    /*  check if User-Agent just inserted in database   */
+    if (isUserAgentKnown(request->userAgent)) {
+        /*  if User-Agent is known, get information saved in database   */
+        dbGetDeviceByUserAgent(request->userAgent, dev);
+    } else {
+        /*  query PHP process to get device's information  */
+        getDeviceByUserAgent(request->userAgent, dev);
+        /*  update database with new User-Agent */
+        dbInsertUserAgent(request->userAgent, dev);
+    }
 
     /*  check if format is available for devices info found */
     if (dev->jpg && jpg(req_image->type) ||

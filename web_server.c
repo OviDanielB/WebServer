@@ -330,7 +330,7 @@ int main(int argc, char **argv)
 
     // create pids array with children pids
     for(i = 0; i < CHILDREN_NUM; i++ ){
-        serverIp = getServerIp();
+        //serverIp = getServerIp();
 
         pids[i] = child_make(i, listensd, addrlen, serverIp, serverPort, images);
     }

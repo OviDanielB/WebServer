@@ -42,6 +42,22 @@ int cache_check_result(void *data, int argc, char **argv, char **azColName)
     return 0;
 }
 
+/*  Check if the searched user agent has been just inserted in database.
+ *
+ * @param userAgent: string of user agent eventually cached with associated device's characteristics.
+ */
+int isUserAgentKnown(char *userAgent)
+{
+    /*  if adapted image wasn't just added in cache table, insert it   */
+    if (dbInsertUserAgent(userAgent, NULL) == SQLITE_CONSTRAINT) { // if UNIQUE constraints failed
+        printf("IN USER AGENT TABLE\n");
+        return TRUE;
+    }
+
+    printf("NOT IN USER AGENT TABLE\n");
+    return FALSE;
+}
+
 /*  Check if searched manipulated image has been just inserted in server cache.
  *
  * @param hashcode: index of adapted image eventually cached, as hash function of original image name and adaptations done.
@@ -51,11 +67,11 @@ int isInCache(struct conv_img *im)
     /*  if adapted image wasn't just added in cache table, insert it   */
     if (dbInsertImg(NULL, im) == SQLITE_CONSTRAINT) { // if UNIQUE constraints failed
         printf("IN CACHE\n");
-        return 1; // true
+        return TRUE;
     }
 
     printf("NOT IN CACHE\n");
-    return 0; // FALSE
+    return FALSE;
 }
 
 

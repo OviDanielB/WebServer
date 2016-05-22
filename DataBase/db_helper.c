@@ -62,6 +62,35 @@ int dbExecuteStatement(const char *sql, int (*callback)(void *, int, char **, ch
     return rc;
 }
 
+/*  Insert new User-Agent line from HTTP request into the database's table USERAGENT
+ *
+ * @param: userAgent = string of line to add to table
+ * @param: dev = struct device * that contains characteristics searched through PHP process for adapting
+ *              (= NULL just to check if that line has been just saved in table)
+ */
+int dbInsertUserAgent(char *userAgent, struct device *dev)
+{
+    char *statement;
+
+    if ((statement = (char *) malloc(MAXLINE * sizeof(char)))==NULL) {
+        perror("error in malloc \n");
+        exit(EXIT_FAILURE);
+    }
+
+    if (dev != NULL) {
+        sprintf(statement, "UPDATE 'USERAGENT' " \
+            "SET 'Device'='%s', 'Colors'=%ld, 'Width'=%ld, 'Height'=%ld, 'Jpg'=%d, 'Png'=%d, 'Gif'=%d"
+                "WHERE 'Line'='%s';",
+                    dev->id, dev->colors, dev->width, dev->height, dev->jpg, dev->png, dev->gif, userAgent);
+    } else {
+        sprintf(statement, "INSERT INTO 'USERAGENT' ('Line') " \
+            "VALUES ('%s');",
+                userAgent);
+    }
+
+    return dbExecuteStatement(statement, 0, 0);
+}
+
 /*  Insert new image into database in table IMAGES or CONV_IMG (cache)
  *
  * @param: originalImg = image to add to server files (= NULL if it's a cache update)
@@ -173,6 +202,54 @@ int fillImgStruct(void *data, int argc, char **argv, char **azColName)
         printf("%s = %s\n", azColName[i], argv[i]);
     }
     return 0;
+}
+
+/* Callback by dbGetImageByName to fill the img struct passed as (void *), later casted back */
+int fillDeviceStruct(void *data, int argc, char **argv, char **azColName)
+{
+    int i;
+    struct device *device = (struct device *) data;
+
+    for(i = 0; i < argc; i++){
+        if(strcmp(azColName[i],"Width") == 0) {
+            device->width = (size_t) atoll(argv[i]);
+        } else if(strcmp(azColName[i],"Height") == 0) {
+            device->height = (size_t) atoll(argv[i]);
+        } else if(strcmp(azColName[i],"Colors") == 0) {
+            device->colors = (size_t) atoll(argv[i]);
+        } else if(strcmp(azColName[i],"Jpg") == 0) {
+            sscanf(argv[i], "%d", &device->jpg);
+        } else if(strcmp(azColName[i],"Png") == 0) {
+            sscanf(argv[i], "%d", &device->png);
+        } else if(strcmp(azColName[i],"Gif") == 0) {
+            sscanf(argv[i], "%d", &device->gif);
+        }
+
+        printf("%s = %s\n", azColName[i], argv[i]);
+    }
+    return 0;
+}
+
+/*  Select from database the characteristics of a device from table USERAGENT
+ *
+ *  @param userAgent: string as line of User-Agent
+ *  @param device: struct device* previously allocated with malloc(sizeof(struct device)),
+ *               the name and type char * arrays is done by itself
+ */
+void dbGetDeviceByUserAgent(char *userAgent, struct device *device)
+{
+    char *statement;
+
+    statement = (char *) malloc(MAXLINE * sizeof(char));
+    if(statement == NULL){
+        perror("Malloc error. \n");
+        exit(EXIT_FAILURE);
+    }
+    memset(statement,'\0',strlen(statement));
+
+    sprintf(statement,"SELECT * FROM 'USERAGENT' WHERE 'Line'='%s';", userAgent);
+
+    dbExecuteStatement(statement, fillDeviceStruct, device);
 }
 
 /* Fill an img struct fro database info.

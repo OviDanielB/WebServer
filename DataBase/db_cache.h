@@ -23,6 +23,8 @@ void updateCache();
 int isFull();
 /*  Check if searched manipulated image has been just inserted in server cache. */
 int isInCache(struct conv_img *img);
+/*  Check if the searched user agent has been just inserted in database. */
+int isUserAgentKnown(char *userAgent);
 /*  Delete from CONV_IMG table the older image inserted (with greater lifetime)   */
 void deleteByAge();
 /*  Delete from CONV_IMG table all the image where lifetime is greater than LIFETIME value  */
