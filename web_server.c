@@ -267,22 +267,45 @@ int main(int argc, char **argv)
     int listensd, i;
     struct sockaddr_in servaddr;
     socklen_t addrlen;
-    char *serverIp;
+    char *serverIp = (char *) malloc (sizeof(char)*16);
+    if (serverIp == NULL) {
+        perror("malloc error\n");
+        exit(EXIT_FAILURE);
+    }
+    memset(serverIp, '*', strlen(serverIp));
+
     in_port_t serverPort;
 
     time_t ticks;
 
     //pid_t child_make(int, int, int, char *, in_port_t, struct img **);
 
-    // TODO arguments
-    if(argc <= 2){
+    if (argc == 1) {
         // if not specified, use default port
         serverPort = DEFAULT_PORT;
-    } else if(argc == 3) {
+        // if not specified, use default number of helper
+        CHILDREN_NUM = DEFAULT_CHILDREN;
+    } else if (argc == 2) {
+        // use specified number of helper
+        CHILDREN_NUM = atoi(argv[2]);
+        // if not specified, use default port
+        serverPort = DEFAULT_PORT;
+    } else if (argc == 3) {
+        // use specified number of helper
+        CHILDREN_NUM = atoi(argv[2]);
+        // use specified IP address
+        sscanf(argv[3], "%s", serverIp);
+        // if not specified, use default port
+        serverPort = DEFAULT_PORT;
+    } else if (argc == 4) {
+        // use specified number of helper
+        CHILDREN_NUM = atoi(argv[2]);
+        // use specified IP address
+        sscanf(argv[3], "%s", serverIp);
         // use specified port
-        serverPort = (in_port_t) atoi(argv[2]);
+        serverPort = (in_port_t) atoi(argv[4]);
     } else {
-        printf("Usage : ./web_server <ip Address> <port number>");
+        printf("Usage : ./web_server <helper number> <ip Address[xxx.xxx.xxx.xxx]> <port number[xxxx]> ");
         exit(EXIT_FAILURE);
     }
 
@@ -312,7 +335,10 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    serverIp = getServerIp();
+    if (strcmp(serverIp, "****************") == 0) {
+        serverIp = getServerIp();
+    }
+
     printf("IP SERVER: %s - IP PORT: %d\n", serverIp, serverPort);
 
     // marks the socket as a passive socket and it is ready to accept connections
@@ -323,7 +349,7 @@ int main(int argc, char **argv)
     }
 
     // creates memory for pids
-    pids = calloc( (size_t) CHILDREN_NUM,sizeof(pid_t));
+    pids = calloc( (size_t) CHILDREN_NUM, sizeof(pid_t));
 
     // initialize lock on template filename for child processes
     lock_init("/tmp/lock.XXXXXX");

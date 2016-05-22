@@ -41,8 +41,10 @@ const in_port_t DEFAULT_PORT;
 const int BACKLOG;
 /*  number of days after which an image will be deleted from server cache  */
 const int TIMEOUT;
+/*  default number of child processes of server to manage requests  */
+const int DEFAULT_CHILDREN;
 /*  number of child processes of server to manage requests  */
-const int CHILDREN_NUM;
+int CHILDREN_NUM;
 /*  successfully HTTP request   */
 const char *HTTP_OK;
 /*  error in serving HTTP request */

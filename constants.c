@@ -26,8 +26,8 @@ const size_t MAXLINE =           1024;
 const int MAX_CACHE_ROWS_NUM =   50000;
 /*  number of days after which an image will be deleted from server cache  */
 const int TIMEOUT =              15;
-/*  number of child processes of server to manage requests  */
-const int CHILDREN_NUM =         2;
+/*  default number of child processes of server to manage requests  */
+const int DEFAULT_CHILDREN =     2;
 /*  successfully HTTP request   */
 const char *HTTP_OK =           "HTTP/1.1 200 OK";
 /*  error in serving HTTP request */
