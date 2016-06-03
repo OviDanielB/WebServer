@@ -212,7 +212,6 @@ void child_main(int index, int listenfd, int addrlen, char *serverIp, in_port_t 
 
     for(;;){
         //clilen = (socklen_t) addrlen;
-        //clientRequest = fopen("/home/ovi/Desktop/request.txt","a");
         // file lock
         lock_wait();
         connfd = accept(listenfd, cliaddr, &clilen);
