@@ -1,43 +1,11 @@
-//
-// Created by ovi on 4/7/16.
-//
 
 #include "db_cache.h"
 
-
 /*  Callback by isFull to verify TABLE STATUS result saved in size_T *rows passed as void *, later casted back */
-int cache_check_status(void *data, int argc, char **argv, char **azColName)
+int getRowsNum(void *data, int argc, char **argv, char **azColName)
 {
     int *rows = (int *) data;
-    *rows = argc;
-    printf("rows: %d\n",*rows);
-    /*int i;
-    size_t rows = (size_t) data;
-    printf(argv[1]);
-    rows = (size_t ) atoi(argv[1]);
-    /*  SHOW TABLE STATUS output has the following column "Row" to describe actual number of rows of db table */
-    /*for(i = 0; i < argc; i++) {
-        if (strcmp(azColName[i], "Rows") == 0) {
-            sscanf(argv[i], "%ld", &rows);
-        }
-    }*/
-
-    return 0;
-}
-
-/*  Callback by isInCache to verify SELECT result saved in char *result passed as void *, later casted back */
-int cache_check_result(void *data, int argc, char **argv, char **azColName)
-{
-    int i;
-    char *result = (char *) data;
-    printf("into the CALLBACKKKKKKKKK e result: %s\n", result);
-
-    for(i = 0; i < argc; i++){
-        if (strcmp(azColName[i],"Name") == 0) {
-            sscanf("200", "%s", result);
-        }
-        printf("result = %s\n", argv[i]);
-    }
+    sscanf(argv[0], "%d", rows);
 
     return 0;
 }
@@ -74,34 +42,38 @@ int isInCache(struct conv_img *im)
     return FALSE;
 }
 
-
-/*  Check if server cache is full (CONV_IMG has reached max number of rows) */
+/*  Verify if CACHE table's size is greater than limit defined, counting number of its rows */
 int isFull()
 {
     char *statement;
-    int rows = 0;
+    int *rows = malloc(sizeof(int));
+    if (rows == NULL) {
+        perror("malloc error");
+        exit(EXIT_FAILURE);
+    }
+    *rows=0;
 
     statement = (char *) malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
-        perror("Malloc error. \n");
-        return 0; // FALSE
+        perror("delete image by name malloc error");
+        return -1;
     }
 
-    sprintf(statement,"SELECT COUNT('Name') FROM 'CONV_IMG';");
+    sprintf(statement, "SELECT (COUNT (*)) FROM 'CACHE';");
 
-    dbExecuteStatement(statement, cache_check_status, &rows);
+    dbExecuteStatement(statement, getRowsNum, (void *) rows);
     free(statement);
 
-    printf("rows dopo op:%d\n",rows);
+    printf("Numero di righe nella CACHE: %d\n", *rows);
 
-    if (rows <= MAX_CACHE_ROWS_NUM) {
-        return 0; // FALSE
+    if (*rows <= MAX_CACHE_ROWS_NUM) {
+        return FALSE;
     }
 
-    return 1;   // true
+    return TRUE;
 }
 
-/*  Delete from CONV_IMG table the older image inserted (with greater lifetime)   */
+/*  Delete from CACHE table the older image inserted (with greater lifetime)   */
 void deleteByAge()
 {
     char *statement;
@@ -112,7 +84,7 @@ void deleteByAge()
         return;
     }
 
-    sprintf(statement, "DELETE FROM CONV_IMG WHERE Last_Modified=( SELECT MIN(Last_Modified) FROM CONV_IMG);");
+    sprintf(statement, "DELETE FROM CACHE WHERE Last_Modified=( SELECT MIN(Last_Modified) FROM CACHE);");
 
     dbExecuteStatement(statement, 0, 0);
     free(statement);
@@ -129,7 +101,7 @@ void deleteByTimeout()
         perror("malloc error\n");
         return;
     }
-    sprintf(statement, "DELETE FROM CONV_IMG WHERE "
+    sprintf(statement, "DELETE FROM CACHE WHERE "
             "((strftime('%%d','YYYY-MM-DD') - strftime('%%d','Last_Modified')) >= %d);",TIMEOUT);
 
     dbExecuteStatement(statement, 0, 0);
@@ -152,7 +124,7 @@ void updateDate(struct conv_img *adaptedImg)
         return;
     }
 
-    sprintf(statement, "UPDATE CONV_IMG SET Last_Modified='%s' WHERE Name=%lu;",
+    sprintf(statement, "UPDATE 'CACHE' SET Last_Modified='%s' WHERE Name=%lu;",
             adaptedImg->last_modified,adaptedImg->name_code);
 
     dbExecuteStatement(statement, 0, 0);
@@ -168,9 +140,8 @@ void updateDate(struct conv_img *adaptedImg)
 void updateCache()
 {
     // check if cache memory is full
-    //if (isFull()) {
-    if (CACHENUM >= MAX_CACHE_ROWS_NUM) {
-        printf("checkes full cache\n");
+    if (isFull()) {
+        printf("check for cache's size\n");
         // delete by time of insertion (older saved element)
         deleteByAge();
     }

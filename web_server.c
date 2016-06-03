@@ -76,7 +76,6 @@ void serveRequest(int sockfd, struct img **images, char *serverIp, in_port_t ser
 {
     char result[50];
     char status[4];
-    //char final_string[100] = "";
 
     struct conv_img *adaptedImage = (struct conv_img * ) malloc(sizeof(struct conv_img));
     if (adaptedImage == NULL) {
@@ -112,7 +111,7 @@ void serveRequest(int sockfd, struct img **images, char *serverIp, in_port_t ser
         /*  first client request to get view of server content  */
         if (strcmp(request->resource,INDEX) ==0 ) {
             /*  using field of struct conv_img to pass server info (IP address and port number) */
-            sprintf(adaptedImage->last_modified, getServerIp());
+            sscanf(serverIp,"%s", adaptedImage->last_modified);
             adaptedImage->width = (size_t) serverPort;
 
             writeResponse(sockfd, (char *)INDEX, NULL, adaptedImage, images);
@@ -188,9 +187,9 @@ void serveRequest(int sockfd, struct img **images, char *serverIp, in_port_t ser
         perror("error in creating thread for log");
     }
 
-    if (pthread_join(thread, NULL)){
+/*    if (pthread_join(thread, NULL)){
         perror("error in joining thread for log");
-    }
+    }*/
 }
 
 void child_main(int index, int listenfd, int addrlen, char *serverIp, in_port_t serverPort, struct img **images);
@@ -238,6 +237,7 @@ void child_main(int index, int listenfd, int addrlen, char *serverIp, in_port_t 
         /*log IPAddr*/
         sprintf(log->ip_host, clientIPAddr);
 
+        printf("IP SERVER PRIMA SERVE: %s\n", serverIp);
         serveRequest(connfd, images, serverIp, serverPort, log);
 
         close(connfd);
@@ -257,6 +257,7 @@ pid_t child_make(int i, int listenfd, int addrlen, char *serverIp, in_port_t ser
 
     pid = getpid();
 
+    printf("IP SERVER PRIMA CHILDMAIN %s\n",serverIp);
     child_main(i, listenfd, addrlen, serverIp, serverPort, images);
 
     return pid;
@@ -272,7 +273,7 @@ int main(int argc, char **argv)
         perror("malloc error\n");
         exit(EXIT_FAILURE);
     }
-    memset(serverIp, '*', strlen(serverIp));
+    sprintf(serverIp, "***.***.***.***");
 
     in_port_t serverPort;
 
@@ -335,12 +336,6 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    if (strcmp(serverIp, "****************") == 0) {
-        serverIp = getServerIp();
-    }
-
-    printf("IP SERVER: %s - IP PORT: %d\n", serverIp, serverPort);
-
     // marks the socket as a passive socket and it is ready to accept connections
     // BACKLOG max number of allowed connections. if max reached the user will get an error
     if(listen(listensd, BACKLOG) < 0){
@@ -354,9 +349,15 @@ int main(int argc, char **argv)
     // initialize lock on template filename for child processes
     lock_init("/tmp/lock.XXXXXX");
 
+
+    if (strcmp(serverIp, "***.***.***.***") == 0) {
+        sprintf(serverIp, getServerIp());
+    }
+    printf("IP SERVER: %s - IP PORT: %d\n", serverIp, serverPort);
+
+
     // create pids array with children pids
     for(i = 0; i < CHILDREN_NUM; i++ ){
-        //serverIp = getServerIp();
 
         pids[i] = child_make(i, listensd, addrlen, serverIp, serverPort, images);
     }

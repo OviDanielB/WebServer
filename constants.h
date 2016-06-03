@@ -13,12 +13,6 @@
 #include <wchar.h>
 #include <netinet/in.h>
 
-/*  TODO alternative mode number of rows in cache table   */
-int CACHENUM;
-/*  IP address of server    */
-char *SERVER_IP;
-/*  Port number of server   */
-in_port_t SERVER_PORT;
 /* number of images loaded in the server database   */
 int IMAGESNUM;
 /*  path of images' directory    */

@@ -162,6 +162,7 @@ struct conv_img *adaptImageTo(struct req *request)
     } else {
         /*  query PHP process to get device's information  */
         getDeviceByUserAgent(request->userAgent, dev);
+        printf("device info: w %ld h %ld ...\n", dev->width, dev->height);
         /*  update database with new User-Agent */
         dbInsertUserAgent(request->userAgent, dev);
     }

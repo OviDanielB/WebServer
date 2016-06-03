@@ -18,21 +18,21 @@ char *composeHomePage(struct img **images, struct conv_img *info)
 
     sprintf(home,"<!DOCTYPE html>"
             "<html>"
-            "<body>"
-            "<p>Click on image</p><br>");
+            "<body bgcolor=\"#99ccff\">"
+            "<center><h1 style=\"color:#000066;\"> Choose your image! </h1><br>"
+            "<p  style=\"color:#000080\"><i> Click on the name of image you want to download. </i></p></center><br>");
 
     int i;
     for (i = 0; i < IMAGESNUM; i++) {
         char div[MAXLINE];
-        sprintf(div, "<div><a href = \"http://%s:%ld/%s.%s\">"
-                "%d: %s"
-                //"<img src = \"/Images/mare.jpg\" alt = \"mare\" style=\"width:80px;height:80px;border:1;\">"
-                " </a></div><br>", info->last_modified, info->width, images[i]->name, images[i]->type, i+1, images[i]->name);
+        sprintf(div, "<center><div><a href = \"http://%s:%ld/%s.%s\">"
+                " %d: %s "
+                " </a></div></center><br>", info->last_modified, info->width, images[i]->name, images[i]->type, i+1, images[i]->name);
         strcat(home,div);
     }
     strcat(home,
-            " </body>"
-            " </html>\n");
+            " </body> "
+            " </html> \n");
     return home;
 }
 

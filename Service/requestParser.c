@@ -72,19 +72,20 @@ struct req *parseRequest(int sockfd)
 
             continue;
         }
-        if (strncmp(line,USER_AGENT,strlen(USER_AGENT))==0) {
+        if (strncmp(line,USER_AGENT,strlen(USER_AGENT)) == 0) {
 
             printf("reading user-agent line...\n");
             n+=1;
 
-            // read entity line with device's description
-            strcpy(request->userAgent,line+strlen(USER_AGENT)+1);
+            // read entity line with device's description\n
+            //strncpy(request->userAgent, line+strlen(USER_AGENT)+1, strlen(line)-strlen(USER_AGENT)-1);
+            sprintf(request->userAgent, strtok(line+strlen(USER_AGENT)+1, "\n"));
             printf("device user-agent: %s\n",request->userAgent);
             continue;
         }
 
         // read resource's type from Accept line
-        if (strncmp(line,ACCEPT,strlen(ACCEPT))==0) {
+        if (strncmp(line, ACCEPT, strlen(ACCEPT)) == 0) {
 
             printf("reading accept line...\n");
             n+=1;
