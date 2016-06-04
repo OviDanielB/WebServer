@@ -72,7 +72,7 @@ void sig_handler(int sig){
  *
  *  @param sockfd: file descriptor for connection socket
  */
-void serveRequest(int sockfd, struct img **images, char *serverIp, in_port_t serverPort, struct logline *log)
+void serveRequest(int sockfd, struct img **images, char *serverIp, in_port_t serverPort, struct logline *log, char *log_buffer)
 {
     char result[50];
     char status[4];
@@ -162,7 +162,9 @@ void serveRequest(int sockfd, struct img **images, char *serverIp, in_port_t ser
         }
     }
 
-    pthread_t log_thread;
+    logonfile(log, log_buffer);
+
+    //pthread_t log_thread;
     /*int sched, prio;
 
     sched = sched_getscheduler(log_thread);
@@ -183,9 +185,9 @@ void serveRequest(int sockfd, struct img **images, char *serverIp, in_port_t ser
     }
 
     /* thread which log on file */
-    if (pthread_create(&log_thread, NULL, (void *)logonfile, (void *)log)){
+    /*if (pthread_create(&log_thread, NULL, (void *)logonfile, (void *)log)){
         perror("error in creating thread for log");
-    }
+    }*/
 
 /*    if (pthread_join(thread, NULL)){
         perror("error in joining thread for log");
@@ -200,6 +202,11 @@ void child_main(int index, int listenfd, int addrlen, char *serverIp, in_port_t 
     struct sockaddr * cliaddr;
     time_t ticks;
     char buff[MAXLINE];
+    char log_buffer[50];
+
+    for(int i = 0; i < sizeof(log_buffer)+1; i++){
+        log_buffer[i]=NULL;
+    }
 
     char * clientIPAddr;
     struct sockaddr_in * addr;
@@ -237,7 +244,7 @@ void child_main(int index, int listenfd, int addrlen, char *serverIp, in_port_t 
         sprintf(log->ip_host, clientIPAddr);
 
         printf("IP SERVER PRIMA SERVE: %s\n", serverIp);
-        serveRequest(connfd, images, serverIp, serverPort, log);
+        serveRequest(connfd, images, serverIp, serverPort, log, log_buffer);
 
         close(connfd);
     }
