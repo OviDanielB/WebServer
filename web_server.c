@@ -56,6 +56,7 @@ void sig_handler(int sig){
                 }
                 printf("pid = %ld killed by SIGINT\n", (long) pids[i]);
             }
+            dbDeleteAll();
             exit(EXIT_SUCCESS);
 
         default:
@@ -72,7 +73,7 @@ void sig_handler(int sig){
  *
  *  @param sockfd: file descriptor for connection socket
  */
-void serveRequest(int sockfd, struct img **images, char *serverIp, in_port_t serverPort, struct logline *log, char *log_buffer)
+void serveRequest(int sockfd, struct img **images, char *serverIp, in_port_t serverPort, struct logline *log, char **log_buffer)
 {
     char result[50];
     char status[4];
@@ -119,6 +120,7 @@ void serveRequest(int sockfd, struct img **images, char *serverIp, in_port_t ser
         } else {
             printf("begin adaptation...\n");
             adaptedImage = adaptImageTo(request);
+            sprintf(adaptedImage->type, request->type);
 
             printf("end adaptation.\n");
 
@@ -202,10 +204,11 @@ void child_main(int index, int listenfd, int addrlen, char *serverIp, in_port_t 
     struct sockaddr * cliaddr;
     time_t ticks;
     char buff[MAXLINE];
-    char log_buffer[50];
+    char log_buffer[2][300];
 
-    for(int i = 0; i < sizeof(log_buffer)+1; i++){
-        log_buffer[i]=NULL;
+    int i;
+    for(i = 0; i < sizeof(log_buffer)/ sizeof(*log_buffer)+1; i++){
+        strcpy(log_buffer[i], "");
     }
 
     char * clientIPAddr;
@@ -218,7 +221,6 @@ void child_main(int index, int listenfd, int addrlen, char *serverIp, in_port_t 
     printf("child process %ld starting \n", (long) getpid());
 
     for(;;){
-        //clilen = (socklen_t) addrlen;
         // file lock
         lock_wait();
         connfd = accept(listenfd, cliaddr, &clilen);
@@ -243,7 +245,6 @@ void child_main(int index, int listenfd, int addrlen, char *serverIp, in_port_t 
         /*log IPAddr*/
         sprintf(log->ip_host, clientIPAddr);
 
-        printf("IP SERVER PRIMA SERVE: %s\n", serverIp);
         serveRequest(connfd, images, serverIp, serverPort, log, log_buffer);
 
         close(connfd);
@@ -263,7 +264,6 @@ pid_t child_make(int i, int listenfd, int addrlen, char *serverIp, in_port_t ser
 
     pid = getpid();
 
-    printf("IP SERVER PRIMA CHILDMAIN %s\n",serverIp);
     child_main(i, listenfd, addrlen, serverIp, serverPort, images);
 
     return pid;
@@ -300,29 +300,25 @@ int main(int argc, char **argv)
     } else if (argc == 3) {
         // use specified number of helper
         CHILDREN_NUM = atoi(argv[2]);
-        // use specified IP address
-        sscanf(argv[3], "%s", serverIp);
-        // if not specified, use default port
-        serverPort = DEFAULT_PORT;
+        // use specified port
+        serverPort = (in_port_t) atoi(argv[3]);
     } else if (argc == 4) {
         // use specified number of helper
         CHILDREN_NUM = atoi(argv[2]);
-        // use specified IP address
-        sscanf(argv[3], "%s", serverIp);
         // use specified port
-        serverPort = (in_port_t) atoi(argv[4]);
+        serverPort = (in_port_t) atoi(argv[3]);
+        // use specified IP address
+        sscanf(argv[4], "%s", serverIp);
     } else {
-        printf("Usage : ./web_server <helper number> <ip Address[xxx.xxx.xxx.xxx]> <port number[xxxx]> ");
+        printf("Usage : ./web_server <helper number> <port number[xxxx]> <ip Address[xxx.xxx.xxx.xxx]>");
         exit(EXIT_FAILURE);
     }
 
     /* load all server images that are in a specified directory */
     struct img **images = dbLoadAllImages((char *) PATH);
-    /* load all server images previously manipulated that are in a specified directory */
-    //db_load_cache_images((char *) CACHE_PATH);
 
     // creates a listening socket
-    if((listensd=socket(AF_INET,SOCK_STREAM,0)) < 0){
+    if ((listensd=socket(AF_INET,SOCK_STREAM,0)) < 0){
         perror("Error in listening socket");
         exit(EXIT_FAILURE);
     }
@@ -337,14 +333,14 @@ int main(int argc, char **argv)
 
     addrlen = sizeof(servaddr);
     // bind the listening socket to the address; needs casting to sockaddr *
-    if(bind(listensd, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0){
+    if (bind(listensd, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0){
         perror("Error in Bind");
         exit(EXIT_FAILURE);
     }
 
     // marks the socket as a passive socket and it is ready to accept connections
     // BACKLOG max number of allowed connections. if max reached the user will get an error
-    if(listen(listensd, BACKLOG) < 0){
+    if (listen(listensd, BACKLOG) < 0) {
         perror("Error in listen");
         exit(EXIT_FAILURE);
     }
@@ -355,16 +351,14 @@ int main(int argc, char **argv)
     // initialize lock on template filename for child processes
     lock_init("/tmp/lock.XXXXXX");
 
-
     if (strcmp(serverIp, "***.***.***.***") == 0) {
         sprintf(serverIp, getServerIp());
     }
-    printf("IP SERVER: %s - IP PORT: %d\n", serverIp, serverPort);
 
+    printf("IP SERVER: %s - IP PORT: %d\n", serverIp, serverPort);
 
     // create pids array with children pids
     for(i = 0; i < CHILDREN_NUM; i++ ){
-
         pids[i] = child_make(i, listensd, addrlen, serverIp, serverPort, images);
     }
 

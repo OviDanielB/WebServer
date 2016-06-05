@@ -47,6 +47,12 @@ static int jpg(char *ext)
  * from the resource name, where are indicated the adapted values or the original ones.  */
 unsigned long getHashCode(unsigned char *name);
 
+void removeFromDisk(char *name);
+
+void removeAllCacheFromDisk();
+
+int readline(int fd, void *buf, int maxlen);
+
 char *getServerIp();
 
 /*  Calculation of image's dimensions, maintaining the aspect ratio  */

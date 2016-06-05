@@ -26,6 +26,63 @@ unsigned long getHashCode(unsigned char *name)
     return hash;
 }
 
+void removeFromDisk(char *name)
+{
+    char *filename = (char *) malloc(MAXLINE*sizeof(char));
+    if (filename == NULL) {
+        perror("malloc error");
+        exit(EXIT_FAILURE);
+    }
+
+    sprintf(filename, "%s%s.*", CACHE_PATH, name);
+
+    if (remove(filename) == -1) {
+        perror("remove error");
+        exit(EXIT_FAILURE);
+    }
+}
+
+/******/
+int readline(int fd, void *buf, int maxlen)
+{
+    int n;
+    ssize_t rc;
+    char c, *ptr;
+
+    ptr = buf;
+    for (n = 1; n < maxlen; n++) {
+        if ((rc = read(fd, &c, 1)) == 1) {
+            *ptr++ = c;
+            if (c == '\n') break;	/* letto newline */
+        }
+        else
+        if (rc == 0) {		/* read ha letto l'EOF */
+            if (n == 1) return(0);	/* esce senza aver letto nulla */
+            else break;
+        }
+        else return(-1);		/* errore */
+    }
+
+    *ptr = 0;	/* per indicare la fine dell'input */
+    return(n);	/* restituisce il numero di byte letti */
+}
+
+void removeAllCacheFromDisk()
+{
+    char *filename = (char *) malloc(MAXLINE*sizeof(char));
+    if (filename == NULL) {
+        perror("malloc error");
+        exit(EXIT_FAILURE);
+    }
+
+    sprintf(filename, "%s*", CACHE_PATH);
+
+    if (remove(filename) == -1) {
+        perror("remove error");
+        exit(EXIT_FAILURE);
+    }
+}
+
 size_t dim[2];
 /*  Calculation of image's dimensions, maintaining the aspect ratio
  *

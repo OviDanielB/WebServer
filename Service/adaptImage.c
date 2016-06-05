@@ -4,9 +4,7 @@
  Implementations of functions to images adaptation
 */
 
-#include <wand/MagickWand.h>
 #include "adaptImage.h"
-#include "../php/wurfl.h"
 
 /*  Manipulation of original image, based on characteristics specified in input.
  *
@@ -173,7 +171,7 @@ struct conv_img *adaptImageTo(struct req *request)
             dev->gif && gif(req_image->type)) {
         sprintf(adaptedImg->type, req_image->type);
     } else {
-
+        sprintf(adaptedImg->type, req_image->type);
     }
 
     if (dev->width != 0) {
@@ -210,9 +208,9 @@ struct conv_img *adaptImageTo(struct req *request)
         unsigned long res = adapt(req_image, adaptedImg);
         /*   check result of adaptation */
         if (res != 200) {
+            dbDeleteByImageName(adaptedImg->original_name, adaptedImg->name_code); // if error in adapting, to delete from database
             /* if not OK, return error code */
             adaptedImg->name_code = res;
-            dbDeleteByImageName(adaptedImg->original_name, adaptedImg->name_code); // if error in adapting, to delete from database
         } /*else {
             /*  add adapted img to server cache /
             dbInsertImg(NULL,adaptedImg);

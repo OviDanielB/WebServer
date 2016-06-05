@@ -75,12 +75,12 @@ int dbInsertUserAgent(char *userAgent, struct device *dev)
     }
 
     if (dev != NULL) {
-        sprintf(statement, "UPDATE 'USERAGENT' " \
-            "SET 'Device'='%s', 'Colors'=%ld, 'Width'=%ld, 'Height'=%ld, 'Jpg'=%d, 'Png'=%d, 'Gif'=%d "
+        sprintf(statement, "UPDATE USERAGENT " \
+            "SET Device='%s', Colors=%ld, Width=%ld, Height=%ld, Jpg=%d, Png=%d, Gif=%d "
                 "WHERE Line='%s';",
                     dev->id, dev->colors, dev->width, dev->height, dev->jpg, dev->png, dev->gif, userAgent);
     } else {
-        sprintf(statement, "INSERT INTO 'USERAGENT' ('Line') " \
+        sprintf(statement, "INSERT INTO USERAGENT (Line) " \
             "VALUES ('%s');",
                 userAgent);
     }
@@ -151,28 +151,6 @@ int fillConvImgStruct(void *data, int argc, char **argv, char **azColName)
     return 0;
 }
 
-/* Fill a conv_img struct from database info.
- *
- * @param code: unsigned long as hashcode of the manipulated image to search in server cache
- * @param image: struct conv_img * previously allocated with malloc(sizeof(struct conv_img))
-*/
-void db_get_conv_image_by_code(unsigned long code,struct conv_img *image)
-{
-    char *statement;
-
-    statement = (char *) malloc(MAXLINE * sizeof(char));
-    if(statement == NULL){
-        perror("Malloc error. \n");
-        exit(EXIT_FAILURE);
-    }
-    memset(statement,'\0',strlen(statement));
-
-    sprintf(statement,"SELECT * FROM CONV_IMG WHERE Name='%lu';", code);
-
-    dbExecuteStatement(statement, fillConvImgStruct, image);
-
-    //free(statement);
-}
 
 /* Callback by dbGetImageByName to fill the img struct passed as (void *), later casted back */
 int fillImgStruct(void *data, int argc, char **argv, char **azColName)
@@ -241,7 +219,7 @@ void dbGetDeviceByUserAgent(char *userAgent, struct device *device)
     }
     memset(statement,'\0',strlen(statement));
 
-    sprintf(statement,"SELECT * FROM 'USERAGENT' WHERE 'Line'='%s';", userAgent);
+    sprintf(statement,"SELECT * FROM USERAGENT WHERE Line='%s';", userAgent);
 
     dbExecuteStatement(statement, fillDeviceStructFromDb, device);
 }
@@ -285,51 +263,15 @@ void dbDeleteByImageName(char *name, unsigned long code)
         return;
     }
 
-    if (code == NULL) {
-        sprintf(statement, "DELETE FROM 'IMAGES' WHERE Name='%s';", name);
+    if (code == 0) {
+        sprintf(statement, "DELETE FROM IMAGES WHERE Name='%s';", name);
     } else {
-        sprintf(statement, "DELETE FROM 'CACHE' WHERE 'Original_Name'='%s' AND 'Name'=%lu;", name, code);
+        sprintf(statement, "DELETE FROM CACHE WHERE Original_Name='%s' AND Name=%lu;", name, code);
     }
 
     dbExecuteStatement(statement, 0, 0);
-    //free(statement);
-}
 
-/* Set name, type, quality and size of the image
- *
- * @param img: struct conv_img* to fill with info
- * @param complete path: image path
- * @param fullname: image name (type included)
- */
-void setConvImgInfo(struct conv_img *img, char *complete_path, char *fullname)
-{
-    printf("in convimg info\n");
-
-    MagickWand *m_wand = NULL;
-    m_wand = NewMagickWand();
-
-    if(MagickReadImage(m_wand,complete_path) == MagickFalse){
-        perror("MagickReadImage error");
-        exit(EXIT_FAILURE);
-    }
-
-    char name[256];
-    if (memset(name,'\0',256)==NULL) {
-        perror("memset error\n");
-        exit(EXIT_FAILURE);
-    }
-    readNameAndType(fullname, name, img->type);
-
-    printf("in convimg info2\n");
-
-    sscanf(name, "%lu", &img->name_code);
-    img->width = MagickGetImageWidth(m_wand);
-    img->height = MagickGetImageHeight(m_wand);
-    img->length = img->width*img->height;
-//    img->quality = MagickGetCompressionQuality(m_wand);
-
-    MagickRemoveImage(m_wand);
-    DestroyMagickWand(m_wand);
+    free(statement);
 }
 
 
@@ -423,4 +365,25 @@ struct img ** dbLoadAllImages(char *path)
         exit(EXIT_FAILURE);
     }
     return images;
+}
+
+/* Delete all elements in CACHE and IMAGES table, after a signal of SIGINT received by main process */
+void dbDeleteAll()
+{
+    char *statement;
+
+    statement = (char *) malloc(MAXLINE * sizeof(char));
+    if(statement == NULL){
+        perror("Malloc error. \n");
+        exit(EXIT_FAILURE);
+    }
+    memset(statement,'\0',strlen(statement));
+
+    sprintf(statement,"DELETE FROM CACHE; DELETE FROM IMAGES;");
+
+    dbExecuteStatement(statement, 0, 0);
+
+    free(statement);
+
+    removeAllCacheFromDisk();
 }

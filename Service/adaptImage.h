@@ -17,6 +17,8 @@ Interface to function to images adaption.
 #include "../constants.h"
 #include "../helper/calendar.h"
 #include "../DataBase/db_helper.h"
+#include <wand/MagickWand.h>
+#include "../php/wurfl.h"
 
 /*  Function prototypes  */
 

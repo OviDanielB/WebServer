@@ -73,6 +73,52 @@ int isFull()
     return TRUE;
 }
 
+/*  Callback by getOlder to get name of older image saved in char *older passed as void *, later casted back */
+int fillOlderName(void *data, int argc, char **argv, char **azColName)
+{
+    char *older = (char *) data;
+    sscanf(argv[0], "%s", older);
+
+    return 0;
+}
+
+
+/*  Get from CACHE table the older image inserted (with greater lifetime)   */
+char *getOlder()
+{
+    char *statement;
+
+    statement = (char *) malloc(MAXLINE * sizeof(char));
+    if(statement == NULL) {
+        perror("malloc error");
+        exit(EXIT_FAILURE);
+    }
+
+    char *older = (char *) malloc(256*sizeof(char));
+    if (older == NULL) {
+        perror("malloc error");
+        exit(EXIT_FAILURE);
+    }
+
+    sprintf(statement, "SELECT Name FROM CACHE WHERE Last_Modified=( SELECT MIN(Last_Modified) FROM CACHE);");
+
+    dbExecuteStatement(statement, fillOlderName, older);
+
+    free(statement);
+
+    return older;
+}
+
+/*  Callback by getOlder to get name of older image saved in char *older passed as void *, later casted back */
+int fillExpiredName(void *data, int argc, char **argv, char **azColName)
+{
+    char *exp = (char *) data;
+
+    sscanf(argv[0], "%s", exp);
+
+    return 0;
+}
+
 /*  Delete from CACHE table the older image inserted (with greater lifetime)   */
 void deleteByAge()
 {
@@ -84,13 +130,56 @@ void deleteByAge()
         return;
     }
 
-    sprintf(statement, "DELETE FROM CACHE WHERE Last_Modified=( SELECT MIN(Last_Modified) FROM CACHE);");
+    char *older = getOlder();
+
+    sprintf(statement, "DELETE FROM CACHE WHERE Name = '%s';", older);
 
     dbExecuteStatement(statement, 0, 0);
+
     free(statement);
+
+    removeFromDisk(older);
 }
 
-/*  Delete from CONV_IMG table all the image where number of days between today and last modify date
+/*  Delete from CACHE table all the image where number of days between today and last modify date
+ *  is greater than TIMEOUT value  */
+char *getExpired()
+{
+    char *statement;
+
+    statement = (char *) malloc(MAXLINE * sizeof(char));
+    if(statement == NULL){
+        perror("malloc error\n");
+        exit(EXIT_FAILURE);
+    }
+
+    char *exp = (char *) malloc(256*sizeof(char));
+    if (exp == NULL) {
+        perror("malloc error");
+        exit(EXIT_FAILURE);
+    }
+
+    sprintf(exp, "*");
+
+    sprintf(statement, "SELECT Name FROM CACHE WHERE (SELECT julianday('now') - julianday(Last_Modified)) >= %d;",
+            TIMEOUT);
+
+    dbExecuteStatement(statement, fillExpiredName, exp);
+
+    free(statement);
+
+    if (strcmp(exp,"*") != 0) {
+
+        removeFromDisk(exp);
+
+        return exp;
+    }
+
+    return NULL;
+}
+
+
+/*  Delete from CACHE table all the image where number of days between today and last modify date
  *  is greater than TIMEOUT value  */
 void deleteByTimeout()
 {
@@ -101,10 +190,16 @@ void deleteByTimeout()
         perror("malloc error\n");
         return;
     }
-    sprintf(statement, "DELETE FROM CACHE WHERE "
-            "((strftime('%%d','YYYY-MM-DD') - strftime('%%d','Last_Modified')) >= %d);",TIMEOUT);
 
-    dbExecuteStatement(statement, 0, 0);
+    char *exp = getExpired();
+
+    if (exp != NULL) {
+        sprintf(statement, "DELETE FROM CACHE WHERE Name = %s);", exp);
+
+        dbExecuteStatement(statement, 0, 0);
+
+        removeFromDisk(exp);
+    }
 
     free(statement);
 }
@@ -124,7 +219,7 @@ void updateDate(struct conv_img *adaptedImg)
         return;
     }
 
-    sprintf(statement, "UPDATE 'CACHE' SET Last_Modified='%s' WHERE Name=%lu;",
+    sprintf(statement, "UPDATE CACHE SET Last_Modified='%s' WHERE Name=%lu;",
             adaptedImg->last_modified,adaptedImg->name_code);
 
     dbExecuteStatement(statement, 0, 0);

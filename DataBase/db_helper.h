@@ -31,6 +31,8 @@ void dbGetImageByName(char *name, struct img *image);
 void dbGetDeviceByUserAgent(char *userAgent, struct device *device);
 /*  Deleting image from database    */
 void dbDeleteByImageName(char *name, unsigned long code);
+/* Delete all elements in CACHE and IMAGES table, after a signal of SIGINT received by main process */
+void dbDeleteAll();
 /*  Loading into Database all images contained in the server directory of file  */
 struct img **dbLoadAllImages(char *path);
 

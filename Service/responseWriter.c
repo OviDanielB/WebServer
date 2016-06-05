@@ -166,15 +166,16 @@ void writeResponse(int connfd, char *result, char *method, struct conv_img *imag
                 printf("Bytes sent %d \n", (int) n);
             }
 
+        } else if (strcmp(result, HTTP_NOT_FOUND) == 0) {
+            write(connfd, HTML_404, strlen(HTML_404));
+
+        } else if (strcmp(result, HTTP_BAD_REQUEST) == 0) {
+            write(connfd, HTML_400, strlen(HTML_400));
+
         } else {
 
             FILE *imgfd;
             char path[MAXLINE];
-            /*if (strcmp(result, FAVICON) == 0) {
-                sprintf(path, "%s%s.ico", HOME, FAVICON);
-            } else {
-                sprintf(path, "%s%lu.%s", CACHE_PATH, image->name_code, image->type);
-            }*/
 
             sprintf(path, "%s%lu.%s", CACHE_PATH, image->name_code, image->type);
 
@@ -182,7 +183,8 @@ void writeResponse(int connfd, char *result, char *method, struct conv_img *imag
 
             if ((imgfd = fopen(path, "rb")) == NULL) {
                 perror("error in fopen\n");
-                strcpy(result, HTTP_BAD_REQUEST);
+                write(connfd, HTML_400, strlen(HTML_400));
+                return;
             }
             fseek(imgfd,0,0);
 
@@ -225,10 +227,6 @@ void writeResponse(int connfd, char *result, char *method, struct conv_img *imag
                         }
                     }
                 }
-            } else if (strcmp(result, HTTP_NOT_FOUND) == 0) {
-                write(connfd, HTML_404, strlen(HTML_404));
-            } else if (strcmp(result, HTTP_BAD_REQUEST) == 0) {
-                write(connfd, HTML_400, strlen(HTML_400));
             }
         }
     }
