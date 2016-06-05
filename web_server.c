@@ -5,10 +5,15 @@
  *              (2) send the response to the client's request
  *              (3) close the connection
  *              (4) go back to step (1)
- * Syntax:    server [ port ]
+ * Syntax:    webserver [number of children] [port] [IP address]
  *               port  - protocol port number to use
- * Note:      The port argument is optional.  If no port is specified,
- *            the server uses the default given by DEFAULT_PORT.
+ * Note:      The three arguments are optional.
+ *            If no children number is specified, the server uses
+ *            the default given by DEFAULT_CHILDREN.
+ *            If no port is specified, the server uses the default
+ *            given by DEFAULT_PORT.
+ *            If no IP address is specified, the server uses that one
+ *            assigned by the LAN which it's connected to.
  *------------------------------------------------------------------------ */
 
 
@@ -21,33 +26,29 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <signal.h>
-#include <pthread.h>
 
 #include "logging.h"
 #include "DataBase/db_helper.h"
 #include "helper/locking.h"
 #include "Service/responseWriter.h"
 #include "Service/requestParser.h"
-#include "php/wurfl.h"
 
-// define sigfunc to simplify signal sys call
-typedef void sigfunc(int);
-typedef struct sqlite sqlite;
 
 static pid_t *pids;
 
-/* generic function for signal handling
+/** generic function for signal handling
  * define behavior in case: SIGNALNUMBER for specific signal
  * call signal(sig,sig_handler)
+ *
+ * @param sig : number of signal to manage
  */
-void sig_handler(int sig){
-    int i ;
+void sig_handler(int sig)
+{
+    int i;
 
     switch (sig) {
-
         /* kills all children processes and the father itself; call on terminal ^C (ctrl-C)
-         * within the process or by "kill -SIGINT <father pid>"
-         */
+         * within the process or by "kill -SIGINT <father pid>" */
         case SIGINT:
             for (i = 0; i < sizeof(pids) / sizeof(pid_t); i++) {
                  if (kill(pids[i], SIGKILL) == -1) {
@@ -56,88 +57,93 @@ void sig_handler(int sig){
                 }
                 printf("pid = %ld killed by SIGINT\n", (long) pids[i]);
             }
+            /*  eliminate all elements into database cache  */
             dbDeleteAll();
             exit(EXIT_SUCCESS);
 
         default:
             fprintf(stderr,"no action for sig num %d\n", sig);
     }
-
 }
 
-/*  Server work for serving a client's request:
- *  1)Parsing client request
- *  2)Elaborating request (adaptation on client device)
- *  3)Caching
+/*  Server service to manage a client's request:
+ *  1)Parsing request
+ *  2)Elaborating request (adaptation based on client device)
+ *  3)Caching of adapted content
  *  4)Sending response
  *
- *  @param sockfd: file descriptor for connection socket
+ *  @param sockFd: file descriptor of the connection socket
+ *  @param images : list of all server images
+ *  @param serverPort : server port number
+ *  @param log : struct log to fill
+ *  @param logBuffer: list of struct log to write
  */
-void serveRequest(int sockfd, struct img **images, char *serverIp, in_port_t serverPort, struct logline *log, char **log_buffer)
+void serveRequest(int sockFd, struct img **images, char *serverIp, in_port_t serverPort, struct log *log, struct log **logBuffer)
 {
+    /*  HTTP message of request elaboration */
     char result[50];
+    /*  HTTP status of request elaboration  */
     char status[4];
 
+    /*  initialization of struct to info of image to adapt  */
     struct conv_img *adaptedImage = (struct conv_img * ) malloc(sizeof(struct conv_img));
     if (adaptedImage == NULL) {
         perror("error in malloc\n");
         exit(EXIT_FAILURE);
     }
 
-    printf("begin reading request...\n");
-    struct req *request = parseRequest(sockfd);
-    printf("end reading request...\n");
+    printf("Reading request...\n");
+    struct req *request = parseRequest(sockFd);
 
     if (request == NULL) {
-
-        sprintf(result,HTTP_BAD_REQUEST);
-        writeResponse(sockfd, result, NULL, NULL, NULL);
+        /*  error in reading request */
+        sprintf(result, "%s", HTTP_BAD_REQUEST);
+        /*  sending error message to client */
+        writeResponse(sockFd, result, NULL, NULL, NULL);
 
     } else {
 
-        /*log req line*/
-        log_requestline(log, request);
+        /* save request line on log */
+        sprintf(log->reqLine, "%s /%s.%s %s", request->method, request->resource, request->type, HTTP_1);
 
-        /*   ignoring requests for favicon.ico, generated from browser  */
-        if (strcmp(request->resource,"favicon") == 0) {
+        /*   ignoring requests for favicon.ico, auto-generated from browser  */
+        if (strcmp(request->resource, "favicon") == 0) {
             return;
-            //writeResponse(sockfd, (char *) FAVICON, NULL, NULL, NULL);
         }
 
-        /*  error message for HTTP 1.0 request  */
+        /*  error message for HTTP 1.0 request not supported  */
         if (strcmp(request->resource, HTTP_0) == 0) {
-            writeResponse(sockfd, (char *) HTML_NOT_SUPPORTED, NULL, NULL, NULL);
+            writeResponse(sockFd, (char *) HTML_NOT_SUPPORTED, NULL, NULL, NULL);
         }
 
         /*  first client request to get view of server content  */
-        if (strcmp(request->resource,INDEX) ==0 ) {
+        if (strcmp(request->resource,INDEX) == 0) {
             /*  using field of struct conv_img to pass server info (IP address and port number) */
-            sscanf(serverIp,"%s", adaptedImage->last_modified);
+            sscanf(serverIp, "%s", adaptedImage->last_modified);
             adaptedImage->width = (size_t) serverPort;
 
-            writeResponse(sockfd, (char *)INDEX, NULL, adaptedImage, images);
+            writeResponse(sockFd, (char *)INDEX, NULL, adaptedImage, images);
 
         } else {
-            printf("begin adaptation...\n");
+            /* adaptation of request resource */
             adaptedImage = adaptImageTo(request);
             sprintf(adaptedImage->type, request->type);
 
-            printf("end adaptation.\n");
-
+            /* saved into name_code adaptation result */
             switch (adaptedImage->name_code) {
                 case 400 :
+                    /*  generic error   */
                     sprintf(result, HTTP_BAD_REQUEST);
-
                     sprintf(status, "400");
 
-                    /*log status*/
+                    /* save status on log */
                     sprintf(log->status, result);
-                    /*log size*/
+                    /* save number of bytes sent on log */
                     log->size = 0;
 
                     break;
-
                 case 404 :
+                    /*  resource not found  */
                     sprintf(result, HTTP_NOT_FOUND);
 
                     /*log status*/
@@ -146,7 +152,6 @@ void serveRequest(int sockfd, struct img **images, char *serverIp, in_port_t ser
                     log->size = 0;
 
                     break;
-
                 default :
                     sprintf(result, HTTP_OK);
 
@@ -158,122 +163,127 @@ void serveRequest(int sockfd, struct img **images, char *serverIp, in_port_t ser
                     break;
             }
 
-
-            printf("begin response...\n");
-            writeResponse(sockfd, result, request->method, adaptedImage, NULL);
+            printf("Sending response...\n");
+            writeResponse(sockFd, result, request->method, adaptedImage, NULL);
         }
     }
 
-    logonfile(log, log_buffer);
-
-    //pthread_t log_thread;
-    /*int sched, prio;
-
-    sched = sched_getscheduler(log_thread);
-
-    if (sched!=0){
-        perror("error in getting scheduler");
-    }
-
-    prio = sched_get_priority_min(sched);
-
-    if(prio!=0){
-        perror("error in getting priority");
-    }
-
-    /* set thread priority to minimal value */
-    /*if (pthread_setschedprio(log_thread, prio)!=0){
-        perror("error in setting priority");
-    }
-
-    /* thread which log on file */
-    /*if (pthread_create(&log_thread, NULL, (void *)logonfile, (void *)log)){
-        perror("error in creating thread for log");
-    }*/
-
-/*    if (pthread_join(thread, NULL)){
-        perror("error in joining thread for log");
-    }*/
+    /* saved into the buffer log for this request */
+    logOnFile(log, logBuffer);
 }
 
-void child_main(int index, int listenfd, int addrlen, char *serverIp, in_port_t serverPort, struct img **images);
-void child_main(int index, int listenfd, int addrlen, char *serverIp, in_port_t serverPort, struct img **images)
+/** Helper process main.
+ *
+ * @param listenFd : file descriptor of listening socket
+ * @param addrlen : address length
+ * @param serverIp: server IP address
+ * @param serverPort : server port number
+ * @param images : list of all server images
+ * */
+void child_main(int listenFd, int addrlen, char *serverIp, in_port_t serverPort, struct img **images);
+void child_main(int listenFd, int addrlen, char *serverIp, in_port_t serverPort, struct img **images)
 {
-    int connfd;
-    socklen_t clilen;
-    struct sockaddr * cliaddr;
-    time_t ticks;
-    char buff[MAXLINE];
-    char log_buffer[2][300];
+    struct sockaddr *cliaddr = (struct sockaddr *) malloc((size_t)addrlen);
+    if (cliaddr == NULL) {
+        perror("malloc error");
+        exit(EXIT_FAILURE);
+    }
+    socklen_t clilen = sizeof(cliaddr);
+    struct sockaddr_in * addr;
+    /*  IP address of client requesting service */
+    char * clientIPAddr;
 
+    /*  file descriptor of connection socket    */
+    int connFd;
+
+    /*  initialization of buffer for saving line of log to write    */
+    struct log **logBuffer = (struct log **) malloc(BUFFER_LOG*sizeof(struct log *));
+    if (logBuffer == NULL) {
+        perror("malloc error");
+        exit(EXIT_FAILURE);
+    }
     int i;
-    for(i = 0; i < sizeof(log_buffer)/ sizeof(*log_buffer)+1; i++){
-        strcpy(log_buffer[i], "");
+    for(i = 0; i < (int) BUFFER_LOG; i++){
+        logBuffer[i] = (struct log *) malloc(BUFFER_LOG*sizeof(struct log));
+        if (logBuffer[i] == NULL) {
+            perror("malloc error");
+            exit(EXIT_FAILURE);
+        }
+        sprintf(logBuffer[i]->ip_host, "*");
     }
 
-    char * clientIPAddr;
-    struct sockaddr_in * addr;
-
-    memset(buff,'0', MAXLINE);
-    cliaddr = (struct sockaddr *) malloc((size_t)addrlen);
-    clilen = sizeof(cliaddr);
-
-    printf("child process %ld starting \n", (long) getpid());
+    printf("Child process %ld starting service\n", (long) getpid());
 
     for(;;){
-        // file lock
+        /* acquire lock */
         lock_wait();
-        connfd = accept(listenfd, cliaddr, &clilen);
-        // file unlock
+        connFd = accept(listenFd, cliaddr, &clilen);
+        /* unlock  */
         lock_release();
 
-        // convert sockaddr to sockaddr_in
+        /* convert sockaddr to sockaddr_in  */
         addr = (struct sockaddr_in *) cliaddr;
-        // use ntoa to convert client address from binary form to readable string
+        /* use ntoa to convert client address from binary form to readable string   */
         clientIPAddr = inet_ntoa(addr->sin_addr);
 
         printf("server process %ld accepted request from client %s\n", (long) getpid(), clientIPAddr);
 
-        struct logline *log = (struct logline *) malloc(sizeof(struct logline));
+        /*  initialization of log structure to memorize information about request and response  */
+        struct log *log = (struct log *) malloc(sizeof(struct log));
         if (log == NULL) {
             perror("error in malloc\n");
             exit(EXIT_FAILURE);
         }
 
-        /*log date*/
-        sprintf(log->date, getTodayToHTTPLine());
-        /*log IPAddr*/
-        sprintf(log->ip_host, clientIPAddr);
+        /* save today date on log */
+        sprintf(log->date, "%s", getTodayToHTTPLine());
+        /* save client IP address on log    */
+        sprintf(log->ip_host, "%s", clientIPAddr);
 
-        serveRequest(connfd, images, serverIp, serverPort, log, log_buffer);
+        /*  starting elaboration of request    */
+        serveRequest(connFd, images, serverIp, serverPort, log, logBuffer);
 
-        close(connfd);
+        /*  closing connection at the end of the response   */
+        close(connFd);
     }
 }
 
-pid_t child_make(int i, int listenfd, int addrlen, char *serverIp, in_port_t serverPort, struct img **images);
-pid_t child_make(int i, int listenfd, int addrlen, char *serverIp, in_port_t serverPort, struct img **images)
+/** Creation of pool of children processes to manage several and concurrent requests.
+ *
+ * @param i : integer to get count of number of processes created
+ * @param listenFd : file descriptor of listening socket
+ * @param addrelen : address length
+ * @param serverIp : server IP address
+ * @param serverPort : server port number
+ * @param images : list of all server images loaded into database
+ *
+ * */
+pid_t child_make(int i, int listenFd, int addrlen, char *serverIp, in_port_t serverPort, struct img **images);
+pid_t child_make(int i, int listenFd, int addrlen, char *serverIp, in_port_t serverPort, struct img **images)
 {
     pid_t pid;
 
-    // if it's father return pid
+    /*  if it's father, function returns pid   */
     if ((pid = fork()) > 0) {
-
         return pid;
     }
 
     pid = getpid();
 
-    child_main(i, listenfd, addrlen, serverIp, serverPort, images);
+    /* launch of helper process main */
+    child_main(listenFd, addrlen, serverIp, serverPort, images);
 
     return pid;
 }
 
+/*  Web server main  */
 int main(int argc, char **argv)
 {
-    int listensd, i;
+    int listenSd, i;
     struct sockaddr_in servaddr;
-    socklen_t addrlen;
+    socklen_t addrLen;
+
+    /*  string to maintain IP address associated to the server (chosen as argument or assigned by LAN) */
     char *serverIp = (char *) malloc (sizeof(char)*16);
     if (serverIp == NULL) {
         perror("malloc error\n");
@@ -281,11 +291,8 @@ int main(int argc, char **argv)
     }
     sprintf(serverIp, "***.***.***.***");
 
+    /*  port number (default one or chosen as argument)  */
     in_port_t serverPort;
-
-    time_t ticks;
-
-    //pid_t child_make(int, int, int, char *, in_port_t, struct img **);
 
     if (argc == 1) {
         // if not specified, use default port
@@ -294,89 +301,104 @@ int main(int argc, char **argv)
         CHILDREN_NUM = DEFAULT_CHILDREN;
     } else if (argc == 2) {
         // use specified number of helper
-        CHILDREN_NUM = atoi(argv[2]);
+        CHILDREN_NUM = atoi(argv[1]);
+        /* if number is not between 1 and 8 */
+        if (CHILDREN_NUM < 1 || CHILDREN_NUM > 8) {
+            printf("Insert a number of children between 1 and 8.\n"
+                           "Usage : ./web_server <helper number> <port number[xxxx]> <ip Address[xxx.xxx.xxx.xxx]>");
+            exit(EXIT_FAILURE);
+        }
         // if not specified, use default port
         serverPort = DEFAULT_PORT;
     } else if (argc == 3) {
-        // use specified number of helper
-        CHILDREN_NUM = atoi(argv[2]);
-        // use specified port
-        serverPort = (in_port_t) atoi(argv[3]);
+        /* use specified number of helper   */
+        CHILDREN_NUM = atoi(argv[1]);
+        /* use specified port   */
+        serverPort = (in_port_t) atoi(argv[2]);
     } else if (argc == 4) {
-        // use specified number of helper
-        CHILDREN_NUM = atoi(argv[2]);
-        // use specified port
-        serverPort = (in_port_t) atoi(argv[3]);
-        // use specified IP address
-        sscanf(argv[4], "%s", serverIp);
+        /* use specified number of helper   */
+        CHILDREN_NUM = atoi(argv[1]);
+        /* use specified port   */
+        serverPort = (in_port_t) atoi(argv[2]);
+        /* use specified IP address */
+        sscanf(argv[3], "%s", serverIp);
     } else {
         printf("Usage : ./web_server <helper number> <port number[xxxx]> <ip Address[xxx.xxx.xxx.xxx]>");
         exit(EXIT_FAILURE);
     }
 
-    /* load all server images that are in a specified directory */
+    /* load all server images that are in a specified directory into database   */
     struct img **images = dbLoadAllImages((char *) PATH);
 
-    // creates a listening socket
-    if ((listensd=socket(AF_INET,SOCK_STREAM,0)) < 0){
+    /* creates a listening socket   */
+    if ((listenSd=socket(AF_INET,SOCK_STREAM,0)) < 0){
         perror("Error in listening socket");
         exit(EXIT_FAILURE);
     }
 
-    // set all bytes of the sockaddr_in struct to 0 with memset
-    memset((void *)&servaddr,0,sizeof(servaddr));
-    // initialize all struct fields
+    /* set all bytes of the sockaddr_in struct to 0 with memset */
+    memset((void *)&servaddr, 0, sizeof(servaddr));
+    /* initialization of all struct fields */
     servaddr.sin_family = AF_INET; // AF_INET = IPv4 with 32-bit address and 16-bit port number (in_port_t)
-    // INADDR_ANY allows the program to work without knowing the ip address of the machine it is running on
+    /* INADDR_ANY allows the program to work without knowing the IP address of the machine it is running on */
     servaddr.sin_addr.s_addr = htonl(INADDR_ANY); // returns host_uint32 converted to network byte order
     servaddr.sin_port = htons(serverPort); // returns host_uint16 converted to network byte order
 
-    addrlen = sizeof(servaddr);
-    // bind the listening socket to the address; needs casting to sockaddr *
-    if (bind(listensd, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0){
+    addrLen = sizeof(servaddr);
+
+    /* bind the listening socket to the address; needs casting to sockaddr * */
+    if (bind(listenSd, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0){
         perror("Error in Bind");
         exit(EXIT_FAILURE);
     }
 
-    // marks the socket as a passive socket and it is ready to accept connections
-    // BACKLOG max number of allowed connections. if max reached the user will get an error
-    if (listen(listensd, BACKLOG) < 0) {
+    /* marks the socket as a passive socket and it is ready to accept until
+     * a maximum of BACKLOG connections.
+     * If max reached the user will get an error */
+    if (listen(listenSd, BACKLOG) < 0) {
         perror("Error in listen");
         exit(EXIT_FAILURE);
     }
 
-    // creates memory for pids
-    pids = calloc( (size_t) CHILDREN_NUM, sizeof(pid_t));
-
-    // initialize lock on template filename for child processes
+    /*  initialize lock on template filename for child processes    */
     lock_init("/tmp/lock.XXXXXX");
 
+    /* if IP address not specified as argument, know that assigned by server LAN */
     if (strcmp(serverIp, "***.***.***.***") == 0) {
         sprintf(serverIp, getServerIp());
     }
 
     printf("IP SERVER: %s - IP PORT: %d\n", serverIp, serverPort);
 
-    // create pids array with children pids
-    for(i = 0; i < CHILDREN_NUM; i++ ){
-        pids[i] = child_make(i, listensd, addrlen, serverIp, serverPort, images);
+    /* create array with children pids */
+    pids = calloc( (size_t) CHILDREN_NUM, sizeof(pid_t));
+    if (pids == NULL) {
+        perror("calloc error");
+        exit(EXIT_FAILURE);
     }
 
+    for(i = 0; i < CHILDREN_NUM; i++ ){
+        pids[i] = child_make(i, listenSd, addrLen, serverIp, serverPort, images);
+    }
+
+    /*  father creates a new PHP process and two FIFO file to communication
+     * between the new process and the children ones   */
     initializeFifo(pids);
 
-    // when SIGINT arrives (press ctrl-C) the father process and the children terminate
-    if(signal(SIGINT,sig_handler) == SIG_ERR){
+    /* when SIGINT arrives (press ctrl-C) the father process and the children terminate */
+    if (signal(SIGINT,sig_handler) == SIG_ERR){
         perror("error in signal SIGINT");
         exit(EXIT_FAILURE);
     }
 
     printf("Father pid = %ld\n", (long) getpid());
 
-    for(;;){
+    for (;;) {
 
         pause();
     }
-    return 0;
 
-    close(listensd);
+    /*  never reached   */
+    close(listenSd);
+    return 0;
 }

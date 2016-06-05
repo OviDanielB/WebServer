@@ -1,6 +1,6 @@
-//
-// Created by ovi on 4/7/16.
-//
+/**
+ * Prototypes of functions to manage CACHE in server database.
+ */
 
 #ifndef WEBSERVER_DB_CACHE_H
 #define WEBSERVER_DB_CACHE_H

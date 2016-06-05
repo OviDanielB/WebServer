@@ -1,29 +1,15 @@
-//
-// Created by laura_trive on 01/04/16.
-//
-
 /**
- * Implementations of functions to manage file locking, to avoid more than one connection
- * accepted by the server listening socket.
+ * Implementations of functions to manage file locking.
  */
 
 #include "locking.h"
-
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <fcntl.h>
-
-#include <errno.h>
 
 static struct flock lock_it, unlock_it;
 
 static int lock_fd = -1;
 /* fcntl() will fail if lock_init() not called */
 
-/* This function initialize lock on file created from template specified.
+/* Initialize lock on file created from template specified.
  *
  * @param pathname: template to generate a unique filename
  */
@@ -59,7 +45,7 @@ void lock_init(char *pathname)
     unlock_it.l_len = 0;
 }
 
-/*  This function acquires the lock, obtaining exclusive access to file */
+/*  Lock on file acquired, obtaining exclusive access to file */
 void lock_wait()
 {
     while ( (fcntl(lock_fd, F_SETLKW, &lock_it)) < 0) {
@@ -71,7 +57,7 @@ void lock_wait()
     }
 }
 
-/*  This function releases the lock on file */
+/*  Lock on file released   */
 void lock_release()
 {
     if (fcntl(lock_fd, F_SETLKW, &unlock_it) < 0) {

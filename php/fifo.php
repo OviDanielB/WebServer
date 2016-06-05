@@ -1,9 +1,10 @@
 <?php
 /**
- * Created by PhpStorm.
- * User: ovidiudanielbarba
- * Date: 11/05/16
- * Time: 17:01
+ * Process PHP:
+ * 1) opening FIFO
+ * 2) waiting for something to read
+ * 3) reading message (user-agent) and use it to query wurfl.xml
+ * 4) elaborating query results and write back the response to other process
  */
 
 define('FIFO_FILE', '/tmp/');
@@ -20,7 +21,6 @@ if($argc == 1){
     exit(0);
 }
 
-
 for($i = 0; $i < $argc - 1; $i++) {
     $original_r[$i] = fopen(FIFO_FILE . $argv[$i + 1] . "w", 'r+');
 
@@ -31,18 +31,15 @@ for($i = 0; $i < $argc - 1; $i++) {
     }
 }
 
-
 $wurlf = $wurflManager;
 
 echo "Pipe(s) successfuly opened for reading!\n";
-
 
 // Original array of sockets
 $r = $original_r;
 $w = null;
 $e = null;
 $s = null;
-
 
 while (stream_select($r, $w , $e , $s ) !== 0)
 {
@@ -78,22 +75,22 @@ while (stream_select($r, $w , $e , $s ) !== 0)
         $r = $original_r;
 }
 
-function getWriteFifo($read_fifo,$write_array){
+/* Find writing FIFO associated to process that interrupt the select   */
+function getWriteFifo($read_fifo, $write_array){
     $meta = stream_get_meta_data($read_fifo);
 
     $wFifo_name = str_replace("w","r",$meta['uri']);
 
-    foreach ($write_array as $value){
-
+    foreach ($write_array as $value) {
         $meta_d = stream_get_meta_data($value);
         if($wFifo_name == $meta_d['uri']){
             return $value;
         }
-
     }
 }
 
-/**
+/** Composing response message to write on FIFO
+ *
  * @param $device WURFL_CustomDevice got by wurfl query
  * @return $final string
  */
@@ -105,6 +102,5 @@ function compose_response($device ){
     $final .= $device->getCapability('jpg') . "|" . $device->getCapability('png') . "|" . $device->getCapability('gif') . "?!";
 
     return $final;
-
 }
 ?>

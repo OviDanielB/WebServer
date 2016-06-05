@@ -1,99 +1,94 @@
-/*
- * Functions implementation to parse lines of client's HTTP request.
+/**
+ * Implementation of functions to parse lines of client's HTTP message request.
  */
 
 #include "requestParser.h"
 
 
-/* This function implement the HTTP request parser,
- * reading information about method requested, client's device,
- * type and quality of file requested.
+/* HTTP request parser reading information about method requested, client's device,
+ * type and quality of file requested
  *
  * @param sockfd: file descriptor of connection socket
  */
-struct req *parseRequest(int sockfd)
+struct req *parseRequest(int sockFd)
 {
+    /*  initialization of struct request to collect information read from received message  */
     struct req *request;
     if ((request = malloc(sizeof(struct req)))==NULL) {
         perror("error in malloc\n");
         return NULL;
     }
-
     memset(request->resource,'\0',strlen(request->resource));
     memset(request->type,'\0',strlen(request->type));
     memset(request->userAgent,'\0',strlen(request->userAgent));
     memset(request->method,'\0',strlen(request->method));
 
+    /* reading buffer */
     char line[MAXLINE];
     memset(line,'\0',sizeof(line));
 
-    int n=0;
-    //while (1) {
-    while (n!=3) {
-        if ((readline(sockfd, line, (int) MAXLINE)) == 0) {
+    int n = 0; // counter of necessary rows
+    while (n != 3) {
+        /*  reading line by line of message */
+        if ((readline(sockFd, line, (int) MAXLINE)) == 0) {
             printf("Client quit connection\n");
             return NULL;
         }
 
-        printf("%s\n",line);
-
-        if (strstr(line,HTTP_0)!=NULL) {
-            //not supported protocol
+        /* request line HTTP 1.0   */
+        if (strstr(line,HTTP_0) != NULL) {
+            /*  not supported protocol  */
             sprintf(request->resource, HTTP_0);
             return request;
         }
 
-        if (strstr(line,HTTP_1)!=NULL) {
-            //read request method GET or HEAD of file requested
-
-            printf("reading request line...\n");
+        /* request line HTTP 1.1    */
+        if (strstr(line,HTTP_1) != NULL) {
+            /*  read request method GET or HEAD of file requested */
             n += 1;
 
             char *method;
             char *resource;
             char *type;
 
+            /*  request method  */
             method = strtok(line, " ");
             sprintf(request->method, method);
-            printf("METHOD %s ",request->method);
 
+            /* resource name from URI   */
             resource = strtok(NULL, ".");
             resource++;
             sprintf(request->resource, resource);
-            printf("NAME %s ",request->resource);
 
-            if (strcmp(resource,INDEX)==0) {
+            /*  if requested index page, stop parsing   */
+            if (strcmp(resource, INDEX) == 0) {
                 return request;
             }
 
+            /* resource format  */
             type = strtok(NULL, " ");
             sprintf(request->type, type);
-            printf("TYPE %s\n",request->type);
 
             continue;
         }
-        if (strncmp(line,USER_AGENT,strlen(USER_AGENT)) == 0) {
 
-            printf("reading user-agent line...\n");
+        /* user-agent line  */
+        if (strncmp(line, USER_AGENT, strlen(USER_AGENT)) == 0) {
+
             n+=1;
-
-            // read entity line with device's description\n
-            //strncpy(request->userAgent, line+strlen(USER_AGENT)+1, strlen(line)-strlen(USER_AGENT)-1);
+            /* read entity line with device's description   */
             sprintf(request->userAgent, strtok(line+strlen(USER_AGENT)+1, "\n"));
-            printf("device user-agent: %s\n",request->userAgent);
             continue;
         }
 
-        // read resource's type from Accept line
+        /* read resource's type from Accept line as preference  */
         if (strncmp(line, ACCEPT, strlen(ACCEPT)) == 0) {
-
-            printf("reading accept line...\n");
             n+=1;
 
-            /* check if requested jpeg image format;
-             * if yes, server response will be adapted to factor of quality q
+            /* check if requested jpeg image format:
+             * -if yes, server response will be adapted to factor of quality q
              * defined in this line;
-             * if not, server response will be adapted to client device described by user-agent line    */
+             * -if not, server response will be adapted to client device described by user-agent line    */
             char *t;
             if ((t = strstr(line,"image/jpeg")) == NULL
                 && (t = strstr(line,"image/jpg")) == NULL
@@ -121,14 +116,6 @@ struct req *parseRequest(int sockfd)
 
                 printf("factor of quality q: %f\n", factor);
             }
-        }
-
-        /* end while cycle when "\n\n" read as index of request's end   */
-        if (strstr(line,"\n\n") != NULL) {
-
-            printf("end request...\n");
-
-            break;
         }
     }
     return request;

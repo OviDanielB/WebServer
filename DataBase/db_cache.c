@@ -1,3 +1,6 @@
+/**
+ * Functions to manage CACHE in server database.
+ */
 
 #include "db_cache.h"
 
@@ -34,11 +37,10 @@ int isInCache(struct conv_img *im)
 {
     /*  if adapted image wasn't just added in cache table, insert it   */
     if (dbInsertImg(NULL, im) == SQLITE_CONSTRAINT) { // if UNIQUE constraints failed
-        printf("IN CACHE\n");
+        /*  in cache    */
         return TRUE;
     }
-
-    printf("NOT IN CACHE\n");
+    /* not in cache */
     return FALSE;
 }
 
@@ -99,6 +101,7 @@ char *getOlder()
         perror("malloc error");
         exit(EXIT_FAILURE);
     }
+    sprintf(older, "*");
 
     sprintf(statement, "SELECT Name FROM CACHE WHERE Last_Modified=( SELECT MIN(Last_Modified) FROM CACHE);");
 
@@ -132,13 +135,14 @@ void deleteByAge()
 
     char *older = getOlder();
 
-    sprintf(statement, "DELETE FROM CACHE WHERE Name = '%s';", older);
+    if (strcmp(older, "*") != 0) {
+        sprintf(statement, "DELETE FROM CACHE WHERE Name = '%s';", older);
 
-    dbExecuteStatement(statement, 0, 0);
+        dbExecuteStatement(statement, 0, 0);
+        removeFromDisk(older);
+    }
 
     free(statement);
-
-    removeFromDisk(older);
 }
 
 /*  Delete from CACHE table all the image where number of days between today and last modify date
@@ -168,13 +172,10 @@ char *getExpired()
 
     free(statement);
 
+    /* check if the file expired exists */
     if (strcmp(exp,"*") != 0) {
-
-        removeFromDisk(exp);
-
         return exp;
     }
-
     return NULL;
 }
 
@@ -193,6 +194,7 @@ void deleteByTimeout()
 
     char *exp = getExpired();
 
+    /* if the file expired exists delete it */
     if (exp != NULL) {
         sprintf(statement, "DELETE FROM CACHE WHERE Name = %s);", exp);
 
@@ -234,12 +236,11 @@ void updateDate(struct conv_img *adaptedImg)
  */
 void updateCache()
 {
-    // check if cache memory is full
+    /* check if cache memory is full */
     if (isFull()) {
-        printf("check for cache's size\n");
-        // delete by time of insertion (older saved element)
+        /* delete by time of insertion (older saved element) */
         deleteByAge();
     }
-    // delete by timeout if there are expired ones
+    /* delete by timeout if there are expired ones  */
     deleteByTimeout();
 }

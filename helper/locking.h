@@ -1,14 +1,16 @@
-//
-// Created by laura_trive on 01/04/16.
-//
-
 /**
- * Functions prototypes to manage file locking, to avoid more than one connection
- * accepted by the server listening socket.
+ * Functions prototypes to manage file locking.
  */
 
 #ifndef WEBSERVER_LOCKING_H
 #define WEBSERVER_LOCKING_H
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <fcntl.h>
 
 /* This function initialize lock on file created from template specified.   */
 void lock_init(char *pathname);

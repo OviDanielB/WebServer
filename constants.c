@@ -1,7 +1,5 @@
 /**
-* Created by laura_trive on 21/03/16.
-*
-* Definition of system constant.
+* Definition of all server constants.
 */
 
 #include "constants.h"
@@ -12,22 +10,26 @@ const char *PATH =               "/home/laura_trive/Scrivania/ProgettoIIW/Server
 const char *CACHE_PATH =         "/home/laura_trive/Scrivania/ProgettoIIW/ServerFiles/Cache/";
 /*  path of server's database of images */
 const char *DB_PATH =            "/home/laura_trive/ClionProjects/WebServer/DataBase/serverContent.db";
-/*  name of server's database of images */
-const char *DB_NAME =            "serverContent";
 /*  path of log file    */
 const char *LOG_PATH =           "/home/laura_trive/Scrivania/ProgettoIIW/ServerFiles/Log/log.txt";
+/* path of file PHP to execute  */
+const char *FIFO_PATH =          "/home/laura_trive/ClionProjects/WebServer/php/fifo.php";
+/*  path of PHP program */
+const char *PHP_PATH =           "/usr/bin/php";
 /* default protocol port number */
 const in_port_t DEFAULT_PORT =   5193;
 /* size of request queue        */
 const int BACKLOG =              10;
+/* size of buffer for writing lines on log file  */
+const size_t BUFFER_LOG =        50;
 /*  line length */
 const size_t MAXLINE =           1024;
-/* size of database cache table (CONV_IMG) as number of rows   */
+/* size of database cache table (CACHE) as number of rows   */
 const int MAX_CACHE_ROWS_NUM =   50000;
 /*  number of days after which an image will be deleted from server cache  */
 const int TIMEOUT =              15;
 /*  default number of child processes of server to manage requests  */
-const int DEFAULT_CHILDREN =        2;
+const int DEFAULT_CHILDREN =     2;
 /*  successfully HTTP request   */
 const char *HTTP_OK =           "HTTP/1.1 200 OK";
 /*  error in serving HTTP request */

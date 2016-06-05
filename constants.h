@@ -1,7 +1,5 @@
 /**
- * Created by laura_trive on 16/03/16.
- *
- * System constants.
+ * Definition of all server constants and structures.
 */
 
 #ifndef WEBSERVER_CONSTANTS_H
@@ -13,6 +11,9 @@
 #include <wchar.h>
 #include <netinet/in.h>
 
+
+/* size of buffer for log line  */
+const size_t BUFFER_LOG;
 /* number of images loaded in the server database   */
 int IMAGESNUM;
 /*  path of images' directory    */
@@ -23,8 +24,6 @@ const char *CACHE_PATH;
 const char *LOG_PATH;
 /*  path of server's database of images */
 const char *DB_PATH;
-/*  name of server's database of images */
-const char *DB_NAME;
 /* size of a line   */
 const size_t MAXLINE;
 /* size of database cache table (CONV_IMG) as number of rows   */
@@ -35,6 +34,10 @@ const in_port_t DEFAULT_PORT;
 const int BACKLOG;
 /*  number of days after which an image will be deleted from server cache  */
 const int TIMEOUT;
+/* path of file PHP to execute  */
+const char *FIFO_PATH;
+/*  path of PHP program */
+const char *PHP_PATH;
 /*  default number of child processes of server to manage requests  */
 const int DEFAULT_CHILDREN;
 /*  number of child processes of server to manage requests  */
@@ -71,7 +74,7 @@ typedef struct  img {
     size_t  length;
 };
 
-/*  Image adaptation    */
+/*  Image adapted struct   */
 typedef struct conv_img {
     char             original_name[256];
     unsigned long    name_code; // result hash function
@@ -93,14 +96,12 @@ typedef struct req {
     char    userAgent[1024];
 };
 
-
 /* boolean definition */
 typedef int bool;
 #define TRUE 1
 #define FALSE 0
 
-//#define NUM_CHILD 4
-
+/*  Device characteristics and capabilities struct */
 typedef struct device {
     char id[100];
     size_t width;
@@ -112,11 +113,11 @@ typedef struct device {
 } device ;
 
 /* Log file line struct */
-typedef struct logline
+typedef struct log
 {
     char ip_host[16];   // IP address of the client
     char date[30];      // current date and time
-    char reqline[300];  // HTTP request line
+    char reqLine[300];  // HTTP request line
     char status[50];    // HTTP response status
     size_t size;        // number of bytes sent
 };

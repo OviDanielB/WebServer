@@ -1,13 +1,7 @@
-//
-// Created by laura_trive on 21/03/16.
-//
-
 /**
  *  Implementation of helper functions.
  */
 
-#include <ifaddrs.h>
-#include <arpa/inet.h>
 #include "helper.h"
 
 /* Hash function to calculate an (almost) unique identifier for every manipulated image
@@ -26,6 +20,7 @@ unsigned long getHashCode(unsigned char *name)
     return hash;
 }
 
+/*  remove from file system file in server cache identified by name */
 void removeFromDisk(char *name)
 {
     char *filename = (char *) malloc(MAXLINE*sizeof(char));
@@ -42,7 +37,7 @@ void removeFromDisk(char *name)
     }
 }
 
-/******/
+/*  read a line of data of length maxlen    */
 int readline(int fd, void *buf, int maxlen)
 {
     int n;
@@ -67,6 +62,7 @@ int readline(int fd, void *buf, int maxlen)
     return(n);	/* restituisce il numero di byte letti */
 }
 
+/*  delete all images in server cache directory in file system  */
 void removeAllCacheFromDisk()
 {
     char *filename = (char *) malloc(MAXLINE*sizeof(char));
@@ -112,6 +108,7 @@ size_t *proportionalSize(size_t original_w, size_t original_h, size_t adapted_w,
     return dim;
 }
 
+/*  get IP address of server acquired in LAN */
 char *getServerIp()
 {
     struct ifaddrs * ifAddrStruct=NULL;
@@ -128,24 +125,12 @@ char *getServerIp()
         if (ifa->ifa_addr->sa_family == AF_INET) { // check it is IP4
             // is a valid IP4 Address
             tmpAddrPtr=&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
-            //char addressBuffer[INET_ADDRSTRLEN];
             inet_ntop(AF_INET, tmpAddrPtr, addressBuffer, INET_ADDRSTRLEN);
-            //printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
-
+            /* considered only LAN  */
             if (strcmp(ifa->ifa_name, "wlan0") == 0) {
                 return &addressBuffer[0];
             }
-        } /*else if (ifa->ifa_addr->sa_family == AF_INET6) { // check it is IP6
-            // is a valid IP6 Address
-            tmpAddrPtr=&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
-            char addressBuffer[INET6_ADDRSTRLEN];
-            inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
-            printf("%s IP Address %s\n", ifa->ifa_name, addressBuffer);
-
-            if (strcmp(addressBuffer, "wlan0") == 0) {
-                return addressBuffer;
-            }
-        }*/
+        }
     }
     if (ifAddrStruct!=NULL) freeifaddrs(ifAddrStruct);
 }

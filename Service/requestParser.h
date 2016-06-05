@@ -1,9 +1,5 @@
-//
-// Created by laura_trive on 23/03/16.
-//
-
-/*
- * Functions prototypes to parse lines of client's HTTP request.
+/**
+ * Functions prototypes to parse lines of client's HTTP message request.
  */
 
 #include <stdio.h>
@@ -15,10 +11,8 @@
 #ifndef WEBSERVER_REQUESTPARSER_H
 #define WEBSERVER_REQUESTPARSER_H
 
-/* This function implement the HTTP request parser,
- * reading information about method requested, client's device,
- * type and quality of file requested.
- */
-struct req *parseRequest(int sockfd);
+/* HTTP request parser reading information about method requested, client's device,
+ * type and quality of file requested */
+struct req *parseRequest(int sockFd);
 
 #endif //WEBSERVER_REQUESTPARSER_H

@@ -1,6 +1,10 @@
-//
-// Created by ovi on 4/5/16.
-//
+/**
+ * Prototypes of functions to manage interactions with server database:
+ * 1) inserting
+ * 2) deleting
+ * 3) updating
+ * 4) reading data
+ */
 
 #ifndef WEBSERVER_DB_HELPER_H
 #define WEBSERVER_DB_HELPER_H

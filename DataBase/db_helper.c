@@ -1,3 +1,10 @@
+/**
+ * Functions to manage interactions with server database:
+ * 1) inserting
+ * 2) deleting
+ * 3) updating
+ * 4) reading data
+ */
 
 #include "db_helper.h"
 
@@ -34,8 +41,9 @@ void dbClose(sqlite3 *db)
 
 /*  Executing a SQLite statement.
  *
- * @param: db = database to be queried
- * @param: sql = statement to execute
+ * @param sql : statement to execute
+ * @param callback : optional callback function (0 if null)
+ * @param arg : optional argument of callback function (0 if null)
  */
 int dbExecuteStatement(const char *sql, int (*callback)(void *, int, char **, char **), void *arg)
 {
@@ -47,7 +55,6 @@ int dbExecuteStatement(const char *sql, int (*callback)(void *, int, char **, ch
     printf("%s\n",sql);
 
     rc = sqlite3_exec(db, sql, callback, arg, &zErrorMsg);
-    printf("\nstatement result:%d\n",rc);
     if (rc != SQLITE_OK) {
         fprintf(stderr, "SQL error %d: %s\n", rc, sqlite3_errmsg(db));
         sqlite3_free(zErrorMsg);
@@ -68,8 +75,8 @@ int dbExecuteStatement(const char *sql, int (*callback)(void *, int, char **, ch
 int dbInsertUserAgent(char *userAgent, struct device *dev)
 {
     char *statement;
-
-    if ((statement = (char *) malloc(MAXLINE * sizeof(char)))==NULL) {
+    /* initialization of buffer for SQLite statement    */
+    if ((statement = (char *) malloc(MAXLINE * sizeof(char))) == NULL) {
         perror("error in malloc \n");
         exit(EXIT_FAILURE);
     }
@@ -95,11 +102,9 @@ int dbInsertUserAgent(char *userAgent, struct device *dev)
  */
 int dbInsertImg(struct img *originalImg, struct conv_img *convImg)
 {
-    printf("insert img....\n");
-
     char *statement;
-
-    if ((statement = (char *) malloc(MAXLINE * sizeof(char)))==NULL) {
+    /* initialization of buffer for SQLite statement    */
+    if ((statement = (char *) malloc(MAXLINE * sizeof(char))) == NULL) {
         perror("error in malloc \n");
         exit(EXIT_FAILURE);
     }
@@ -120,37 +125,6 @@ int dbInsertImg(struct img *originalImg, struct conv_img *convImg)
 
     return dbExecuteStatement(statement, 0, 0);
 }
-
-/* Callback by db_get_conv_image_by_code to fill the conv_img struct passed as (void *), later casted back */
-int fillConvImgStruct(void *data, int argc, char **argv, char **azColName)
-{
-    int i;
-    struct conv_img *image = (struct conv_img *) data;
-
-    for(i = 0; i < argc; i++){
-        if (strcmp(azColName[i],"Original_Name") == 0) {
-            sscanf(argv[i], "%s", image->original_name);
-        } else if (strcmp(azColName[i],"Name") == 0) {
-            sscanf(argv[i], "%lu", &image->name_code);
-        } else if(strcmp(azColName[i],"Type") == 0){
-            sscanf(argv[i], "%s", image->type);
-        } else if(strcmp(azColName[i],"Last_Modified") == 0){
-            sscanf(argv[i], "%s", image->last_modified);
-        } else if(strcmp(azColName[i],"Width") == 0){
-            image->width = (size_t) atoll(argv[i]);
-        } else if(strcmp(azColName[i],"Height") == 0){
-            image->height = (size_t) atoll(argv[i]);
-        } else if(strcmp(azColName[i],"Length") == 0) {
-            image->length = (size_t) atoll(argv[i]);
-        } else if(strcmp(azColName[i],"Quality") == 0) {
-            image->quality = (size_t) atoll(argv[i]);
-        }
-
-        printf("%s = %s\n", azColName[i], argv[i]);
-    }
-    return 0;
-}
-
 
 /* Callback by dbGetImageByName to fill the img struct passed as (void *), later casted back */
 int fillImgStruct(void *data, int argc, char **argv, char **azColName)
@@ -211,7 +185,7 @@ int fillDeviceStructFromDb(void *data, int argc, char **argv, char **azColName)
 void dbGetDeviceByUserAgent(char *userAgent, struct device *device)
 {
     char *statement;
-
+    /* initialization of buffer for SQLite statement    */
     statement = (char *) malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
         perror("Malloc error. \n");
@@ -222,6 +196,8 @@ void dbGetDeviceByUserAgent(char *userAgent, struct device *device)
     sprintf(statement,"SELECT * FROM USERAGENT WHERE Line='%s';", userAgent);
 
     dbExecuteStatement(statement, fillDeviceStructFromDb, device);
+
+    free(statement);
 }
 
 /* Fill an img struct fro database info.
@@ -245,7 +221,7 @@ void dbGetImageByName(char *name, struct img *image)
 
     dbExecuteStatement(statement, fillImgStruct, image);
 
-    //free(statement);
+    free(statement);
 }
 
 /*  Deleting image from database.
@@ -256,7 +232,7 @@ void dbGetImageByName(char *name, struct img *image)
 void dbDeleteByImageName(char *name, unsigned long code)
 {
     char *statement;
-
+    /* initialization of buffer for SQLite statement    */
     statement = malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
         perror("delete image by name malloc error");
@@ -371,7 +347,7 @@ struct img ** dbLoadAllImages(char *path)
 void dbDeleteAll()
 {
     char *statement;
-
+    /* initialization of buffer for SQLite statement    */
     statement = (char *) malloc(MAXLINE * sizeof(char));
     if(statement == NULL){
         perror("Malloc error. \n");

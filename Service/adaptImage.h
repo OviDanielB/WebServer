@@ -1,8 +1,5 @@
-/*
- Created by laura_trive on 14/03/16.
-
-Interface to function to images adaption.
-
+/**
+ * Prototypes of functions for images adaption.
 */
 
 #ifndef WEBSERVER_MANAGE_IMG_H
@@ -20,15 +17,13 @@ Interface to function to images adaption.
 #include <wand/MagickWand.h>
 #include "../php/wurfl.h"
 
-/*  Function prototypes  */
-
-/*  Composition of the command to execute for manipulating image, based on characteristics in input. */
+/*  Adaptation of image's based on:
+ * - characteristics to client's device, optimizing width, length, number of colors
+ * - requested quality for image/jpeg
+ */
 unsigned long adapt(struct img *req_image, struct conv_img *adaptImg);
 
-
-/*  This function adapts image's characteristics to client's device,
- *  optimizing width, length, number of colors and quality.
- */
+/*  Start of adaptation process based on receives request   */
 struct conv_img *adaptImageTo(struct req *request);
 
 #endif //WEBSERVER_MANAGE_IMG_H

@@ -1,12 +1,12 @@
-/*
- Created by laura_trive on 13/03/16.
-
- Implementations of functions to images adaptation
+/**
+ * Implementations of functions for images' adaptation
 */
 
 #include "adaptImage.h"
 
-/*  Manipulation of original image, based on characteristics specified in input.
+/*  Adaptation of image's based on:
+ * - characteristics to client's device, optimizing width, length, number of colors
+ * - requested quality for image/jpeg (if quality factor != 0)
  *
  * @param: req_image = requested image;
  * @param: adaptImg = image adapted on device characteristics
@@ -16,7 +16,6 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
     char filename[MAXLINE];
     sprintf(filename, "%s%s.%s", PATH, req_image->name, req_image->type);
 
-//    MagickWandGenesis();
     MagickWand *magickWand = NULL;
     magickWand = NewMagickWand();
 
@@ -32,9 +31,9 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
     char tmpFilename[MAXLINE];
     char destination[MAXLINE];
 
-
-    // check if is requested JPG format to convert before manipulating, avoiding data loss due to compression.
-    if (jpg(adaptImg->type)){
+    /* check if is requested JPG format to convert before manipulating, avoiding data loss due to compression   */
+    if (jpg(adaptImg->type)) {
+        /* temporary image manipulated in GIF format before final saving in JPEG format, as requested   */
         sprintf(tmpFilename,"/tmp/%s.gif",req_image->name);
 
         status = MagickWriteImage(magickWand,tmpFilename);
@@ -59,11 +58,9 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
 
     /*  resizing original image if it's necessary    */
     if (req_image->width!=adaptImg->width || req_image->height!=adaptImg->height) {
+        /* calculating dimensions to respect original image's aspect ratio */
         size_t *dim = proportionalSize(req_image->width,req_image->height,adaptImg->width,adaptImg->height);
         status = MagickScaleImage(magickWand,dim[0],dim[1]);
-        /*ExceptionInfo exception;
-        Image *image= GetImageFromMagickWand(magickWand);
-        ThumbnailImage(image,dim[0],dim[1],&exception);*/
         if (status == MagickFalse) {
             perror("error in scaling image\n");
             return 400; // ERROR
@@ -79,7 +76,6 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
         }
     }
 
-
     /* using factor of quality just if specified into the request for JPEG images   */
     if (adaptImg->quality != 0) {
         /* For the JPEG and MPEG image formats, quality is
@@ -94,35 +90,33 @@ unsigned long adapt(struct img *req_image, struct conv_img *adaptImg)
 
     sprintf(destination,"%s%lu.%s",CACHE_PATH,adaptImg->name_code,req_image->type);
 
-    printf("destination: %s\n",destination);
-
     MagickWriteImage(magickWand,destination);
 
     DestroyMagickWand(magickWand);
-    //MagickWandTerminus();
 
     return 200; // OK
 }
 
-/*  This function adapts image's characteristics to client's device,
- *  optimizing width, length, number of colors and quality.
+/*  Start of adaptation process based on receives request
  *
- *  @param image: image to adapt, containing info of requested quality and type
  *  @param request: HTTP request to get device's and requested file's info (size and quality and format) from
  */
 struct conv_img *adaptImageTo(struct req *request)
 {
+    /*  initialization of struct conv_img for image to adapt informations   */
     struct conv_img *adaptedImg;
     if ((adaptedImg = (struct conv_img *) malloc(sizeof(struct conv_img)))==NULL) {
         perror("error in malloc");
         return NULL;
     }
+    /* initialization of struct image for original image requested informations */
     struct img *req_image = (struct img *) malloc(sizeof(struct img));
     if (req_image== NULL) {
         perror("error in malloc\n");
         exit(EXIT_FAILURE);
     }
 
+    /*  string composed as input of hash function to calculate index of the manipulated image   */
     unsigned char nameToHash[256];
 
     /*  Load information about image from database   */
@@ -134,6 +128,7 @@ struct conv_img *adaptImageTo(struct req *request)
         return adaptedImg;
     }
 
+    /* choose way of adaptation between quality factor conversion (if specified and not -1) or user-agent  */
     if (request->quality == -1) {
         adaptedImg->quality = 0;
     } else {
@@ -144,9 +139,7 @@ struct conv_img *adaptImageTo(struct req *request)
 
     sprintf(adaptedImg->original_name, req_image->name);
 
-    /*int write_fd = openChildOwnFifo_w();
-    int read_fd = openChildOwnFifo_r();*/
-
+    /*  initialization of struct device to collect device info obtained from wurfl.xml  */
     struct device *dev = malloc(sizeof(struct device));
     if (dev == NULL) {
         perror("Malloc error\n");
@@ -160,7 +153,6 @@ struct conv_img *adaptImageTo(struct req *request)
     } else {
         /*  query PHP process to get device's information  */
         getDeviceByUserAgent(request->userAgent, dev);
-        printf("device info: w %ld h %ld ...\n", dev->width, dev->height);
         /*  update database with new User-Agent */
         dbInsertUserAgent(request->userAgent, dev);
     }
@@ -171,19 +163,23 @@ struct conv_img *adaptImageTo(struct req *request)
             dev->gif && gif(req_image->type)) {
         sprintf(adaptedImg->type, req_image->type);
     } else {
-        sprintf(adaptedImg->type, req_image->type);
+        adaptedImg->name_code = 400; // BAD REQUEST: requested format not supported by device
+        return adaptedImg;
     }
 
+    /*  check if requested width is different from the original one or not specified    */
     if (dev->width != 0) {
         adaptedImg->width = dev->width;
     } else {
         adaptedImg->width = req_image->width;
     }
+    /*  check if requested height is different from the original one or not specified   */
     if (dev->height != 0) {
         adaptedImg->height = dev->height;
     } else {
         adaptedImg->height = req_image->height;
     }
+    /*  check if requested number of colors is different from the original one or not specified   */
     if (dev->colors != 0) {
         adaptedImg->colors = (size_t) dev->colors;
     } else {
@@ -191,30 +187,28 @@ struct conv_img *adaptImageTo(struct req *request)
     }
     adaptedImg->length = adaptedImg->width*adaptedImg->height;
 
-    // string <nomeoriginale><width><height><colors><q100><type> to hash
+    /* input string of hash function format: <nomeoriginale><width><height><colors><q100><type> */
     sprintf((char *)nameToHash, "%s%ld%ld%ld%ld%s",
             adaptedImg->original_name, adaptedImg->width, adaptedImg->height,
             adaptedImg->colors, adaptedImg->quality,adaptedImg->type);
 
+    /*  get value of hash function  */
     adaptedImg->name_code = getHashCode(nameToHash);
 
+    /*  date of today in SQL format */
     char *date = getTodayToSQL();
     sprintf(adaptedImg->last_modified,date);
 
-    printf("before check cache...\n");
-
+    /*  check through value of hash calculated, if requested image has just been inserted in cache  */
     if (!isInCache(adaptedImg)) {
-
+        /*  adaptation process  */
         unsigned long res = adapt(req_image, adaptedImg);
         /*   check result of adaptation */
         if (res != 200) {
             dbDeleteByImageName(adaptedImg->original_name, adaptedImg->name_code); // if error in adapting, to delete from database
             /* if not OK, return error code */
             adaptedImg->name_code = res;
-        } /*else {
-            /*  add adapted img to server cache /
-            dbInsertImg(NULL,adaptedImg);
-        }*/
+        }
     } else {
         /*  update last modified date at img in cache   */
         updateDate(adaptedImg);
